@@ -38,6 +38,33 @@ export const T = {
     loading: "Cargando datos del área",
   },
 
+  intro: {
+    title: "Presentación",
+    kicker: "TermalWave",
+    hola: "Hola. Soy el mago del radar. Te ayudo a leer el cambio en la superficie con imágenes NISAR.",
+    askName: "¿Cómo te llamás? Así te hablo en serio y no como manual.",
+    askTrade: "¿En qué rubro trabajás? Ajusto las pistas, pero podés cambiar de capa cuando quieras.",
+    ready: (n) => `Listo, ${n}. Afino el mapa y quedo en la esquina para ayudarte.`,
+    guest: "visitante",
+    namePh: "Tu nombre",
+    continue: "Seguir",
+    start: "Empezar",
+  },
+
+  moni: {
+    buddy: "Abrir consejos del mago",
+    close: "Cerrar",
+    soundOn: "Sonido on",
+    soundOff: "Sonido off",
+    welcome: (n) => `Hola, ${n}. Tocá Entrar al área o Explorar el mundo cuando quieras.`,
+    territory: "Usa la línea de tiempo para comparar fechas. Las flechas mueven punto a punto.",
+    gap: "Sin imagen en este punto. Revisa otra fecha o cambiá de capa.",
+    noSeries: "Sin dato numérico en la ficha. La capa igual se ve en el mapa.",
+    noSources: "Sin registro de fuentes en esta corrida. Revisa más tarde si falta provenance.",
+    emptySeg: "Tramo sin datos. Mira otro período en la línea de tiempo.",
+    loading: "Cargando datos… Cuando termine, elegí capa y fecha.",
+  },
+
   entry: {
     kicker: "Área de estudio",
     lead: "Mira cómo ha cambiado la superficie de este territorio a lo largo del tiempo, con radar satelital NISAR (NASA e ISRO).",
@@ -75,7 +102,14 @@ export const T = {
     deg: (n) => `${n}°`,
   },
 
-  layers: { title: "Capas", gapHere: "Sin imagen en este punto", partial: "Imagen parcial" },
+  layers: {
+    title: "Capas",
+    lead: "Elegí qué fenómeno ves sobre el terreno. Cada capa usa otra fuente y otra escala.",
+    help: "Ayuda de capas",
+    reading: "Lectura por oficio",
+    gapHere: "Sin imagen en este punto",
+    partial: "Imagen parcial",
+  },
   legend: { title: "Leyenda" },
 
   // agregado: la interfaz es opcional frente al globo
@@ -92,7 +126,7 @@ export const T = {
   sources: {
     lead: "De dónde salen los datos de esta área y cuáles se usaron.",
     updated: (d) => `Actualizado el ${d}`,
-    empty: "Este conjunto de datos no trae información de fuentes.",
+    empty: "Sin dato de fuentes en esta corrida. Revisa la configuración o volvé a intentar más tarde.",
     selected: "Fuentes usadas",
     tried: "Consultadas",
     none: "ninguna cumplió el criterio de selección",
@@ -100,7 +134,12 @@ export const T = {
     fromCache: "Desde copia guardada",
     failed: "Sin respuesta",
     kind: { fires: "Focos de calor", weather: "Clima", optical: "Imagen óptica", radar: "Radar" },
-    status: { ok: "Disponible", cache: "Copia guardada", unavailable: "No disponible" },
+    status: {
+      ok: "Disponible",
+      cache: "Copia guardada",
+      unavailable: "No disponible",
+      unused: "Sin datos usados",
+    },
     strategy: {
       union_dedupe: "Se juntan todas las fuentes y se quitan los repetidos",
       first_available: "Se usa la primera fuente que responde",
@@ -126,8 +165,12 @@ export const T = {
     open: "Abrir ficha",
     close: "Plegar ficha",
     value: "Valor medio en el área",
+    valuePoint: "Valor en el punto",
+    valueClickHint:
+      "La capa se ve en el mapa. Tocá un marcador para leer el valor en ese lugar.",
     noValue: "Sin dato",
-    noSeries: "Todavía no hay valores publicados para esta capa. La imagen se ve en el mapa y los números aparecerán cuando estén disponibles.",
+    noSeries:
+      "Todavía no hay valores publicados para esta capa. La imagen se ve en el mapa y los números aparecerán cuando estén disponibles.",
     delta: (d, label) => `${d} respecto de ${label}`,
     noChange: (label) => `Sin cambio respecto de ${label}`,
     deltaNone: "Sin punto anterior para comparar",
@@ -142,7 +185,7 @@ export const T = {
     qualityPartial: "Parcial",
     meters: (n) => `${n} m`,
     bounds: "Límites",
-    readingLead: "Elige un oficio para leer qué mirar en esta área.",
+    readingLead: "Elegí un oficio para leer qué mirar en esta área.",
     readingSample: "Texto de ejemplo",
     readingEmpty: "Todavía no se han cargado textos para esta área.",
   },
@@ -162,10 +205,28 @@ export const T = {
   map: {
     label: (layer, tick) => `${layer} · ${tick}`,
     gap: (layer) => `Sin imagen de ${layer} en este punto`,
-    gapHint: "Elige otro punto o mira otra capa.",
+    gapHint: "Proba otro punto o mira otra capa.",
     approach: "Aproximación al área",
     orbit: "Tierra completa",
     loading: "Cargando imágenes del área",
+    territoryCampo: "Vista de campo · área completa",
+    territoryUrbano: "Vista urbana · más cerca del terreno",
+    detail: (spot) => `Detalle · ${spot}`,
+  },
+
+  explore: {
+    group: "Explorar el cambio en el mapa",
+    campo: "Campo",
+    urbano: "Urbano",
+    campoHint: "Mirá el área completa con contexto.",
+    urbanoHint: "Acercate al relieve y a las manchas de cambio.",
+    compare: "Comparar fechas",
+    compareOn: "Cortina activa · arrastrá el control",
+    hotspots: (n) =>
+      n === 0 ? "Sin puntos marcados" : n === 1 ? "1 punto de cambio" : `${n} puntos de cambio`,
+    nextHotspot: "Siguiente punto",
+    series: "Serie del lugar",
+    peek: "Valor en este momento",
   },
 
   detail: { close: "Cerrar tarjeta", layer: "Capa", at: "Momento", delta: "Cambio" },
@@ -182,6 +243,9 @@ export const T = {
     scopeSeg: "Este tramo",
     compare: "Comparar",
     compareOff: "Dejar de comparar",
+    compareIdle: "Comparar dos momentos: cortina en el mapa",
+    compareActive: "Cortina activa: arrastrá en el mapa o elegí el punto B",
+    layersHere: "Capas en este punto",
     target: "Punto que se mueve",
     a: "A",
     b: "B",
@@ -193,7 +257,7 @@ export const T = {
     kindAcquisition: "Pasada",
     gapLegend: "Sin imagen",
     event: (label) => `Evento: ${label}`,
-    emptySeg: "Sin datos en este tramo",
+    emptySeg: "Sin dato en este tramo. Mira otro período en la línea de tiempo.",
     singlePoint: "Hay un solo punto disponible.",
     loading: "Cargando línea de tiempo",
     missing: (list) => `Sin imagen: ${list}`,
@@ -216,6 +280,7 @@ export const T = {
       ["Espacio", "Reproducir o pausar"],
       ["C", "Comparar"],
       ["O", "Volver a la Tierra completa"],
+      ["1 · 2", "Vista de campo o urbana"],
       ["H", "Ocultar o mostrar la interfaz"],
       ["Esc", "Cerrar tarjeta, ficha o ayuda"],
       ["?", "Mostrar u ocultar esta ayuda"],

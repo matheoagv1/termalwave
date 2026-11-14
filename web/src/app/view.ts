@@ -1,5 +1,6 @@
+import { sourceNote } from "../data/layer-defaults";
 import { F, T } from "../tw/catalog.es-AR.js";
-import type { LayerDef, SceneApi, SearchResult, TimeSegment } from "../tw/contract";
+import type { LayerDef, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
 import type { AppState, Flat } from "./types";
 
 // Todo lo que la interfaz necesita saber del modelo. App lo implementa.
@@ -23,6 +24,8 @@ export interface Model {
   goResult(r: SearchResult): void;
   onQ(value: string): void;
   onQKey(key: string): void;
+  setViewScale(scale: ViewScale): void;
+  cycleHotspot(): void;
 }
 
 const MOBILE = 760;
@@ -36,6 +39,7 @@ export function buildView(m: Model) {
   const isM = W < MOBILE;
   const hit = isM ? 44 : 32;
   const cam = sc.camera;
+  const viewScale = sc.viewScale ?? "campo";
   const pad = isM ? 8 : 12;
   const hasDs = !!ds;
   const err = S.err;
@@ -75,6 +79,8 @@ export function buildView(m: Model) {
     tlL: pad + "px",
     tlR: pad + "px",
     tlB: isM ? "52px" : "12px",
+    exploreB: (isM ? 52 + S.tlH + 14 : S.tlH + 22) + "px",
+    exploreL: isM ? pad + "px" : S.dockOpen ? "248px" : "64px",
     toastB: imm ? "12px" : (isM ? 52 : 12) + S.tlH + 12 + "px",
     entL: isM ? "8px" : "12px",
     entR: isM ? "8px" : "auto",
@@ -111,6 +117,7 @@ export function buildView(m: Model) {
       id: l.id,
       label: l.label,
       unit: l.unit,
+      note: l.note,
       on,
       gap,
       grad: grad(l),
@@ -119,6 +126,7 @@ export function buildView(m: Model) {
       go: () => m.scene?.set({ layer: l.id }),
     };
   });
+  const activeLayer = L;
 
   // ficha y valor
   const fb: Flat | null = ds && sc.compare ? (m.flat[m.idx[sc.compare.tickId] ?? -1] ?? null) : null;
@@ -130,10 +138,30 @@ export function buildView(m: Model) {
   const noSeries = !!sp && sp.length > 0 && sp.every((p) => p.value == null);
   const spA = sp ? sp[iA] : undefined;
   const dec = L?.decimals ?? 0;
-  const valueText =
-    spA && spA.value != null && L ? F.value(spA.value, L.unit, dec) : L ? T.card.noValue : "";
+  const hasFrame = !!(fa && L && fa.tick.frames[L.id]);
+  const pickHit =
+    S.pick && L
+      ? S.hotspots.find((h) => h.id === S.pick && h.layer === L.id && h.tickId === sc.tickId)
+      : undefined;
+  const meanValue = spA && spA.value != null && L ? F.value(spA.value, L.unit, dec) : "";
+  let valueText = "";
+  let areaValueLabel = L ? T.card.value : "";
+  let areaValueHint = "";
+  let areaShowDelta = false;
+  if (meanValue) {
+    valueText = meanValue;
+    areaShowDelta = true;
+  } else if (pickHit) {
+    valueText = pickHit.value;
+    areaValueLabel = T.card.valuePoint;
+    areaShowDelta = !!pickHit.delta;
+  } else if (L) {
+    if (hasFrame && !noSeries) areaValueHint = T.card.valueClickHint;
+    else if (!noSeries) valueText = T.card.noValue;
+  }
   let deltaText = "";
-  if (spA && spA.value != null && L && sp) {
+  if (pickHit?.delta) deltaText = pickHit.delta;
+  else if (spA && spA.value != null && L && sp) {
     let j = iA - 1;
     while (j >= 0 && sp[j]?.value == null) j -= 1;
     const prev = j >= 0 ? sp[j] : undefined;
@@ -293,10 +321,14 @@ export function buildView(m: Model) {
           ]
             .filter(Boolean)
             .join(" · ");
+          const hot = isA || isB;
           return {
             key: tk.id,
             title,
             cur: isA,
+            hot,
+            h: hot ? 28 : 26,
+            ring: hot ? `inset 0 0 0 2px ${isA ? "var(--acc-fg)" : "var(--accB)"}` : "none",
             bg: layersBg.length ? layersBg.join(",") + "," + base : base,
             go: () => m.tickClick(tk.id, seg.id),
             pips: collapsed
@@ -361,6 +393,19 @@ export function buildView(m: Model) {
         .join(" · ")
     : "";
   const tgtB = S.cmpTarget === "B";
+  const selPips = fa
+    ? layers.map((l) => {
+        const f = fa.tick.frames[l.id];
+        return {
+          key: l.id,
+          label: l.label,
+          on: !!f,
+          partial: f?.quality === "partial",
+          swatch: swatch(l),
+          active: l.id === sc.layer,
+        };
+      })
+    : [];
   const tl = {
     ox: zs ? "auto" : "hidden",
     segs,
@@ -421,39 +466,50 @@ export function buildView(m: Model) {
         : ""
       : cam === "approach"
         ? T.map.approach
-        : !ds
-          ? T.map.loading
-          : fa && L
-            ? T.map.label(L.label, nameOf(fa))
-            : "";
-  const entryLines =
-    ds && firstSeg && lastSeg
-      ? [
-          T.entry.coords(F.lat(ds.area.center[1]), F.lon(ds.area.center[0])),
-          T.entry.range(F.year(firstSeg.from), F.year(lastSeg.to)),
-          `${T.entry.layers(layers.length)} · ${T.entry.points(totalPts)}`,
-        ]
-      : [];
+        : cam === "detail" && hp
+          ? T.map.detail(hp.title)
+          : cam === "territory"
+            ? viewScale === "urbano"
+              ? T.map.territoryUrbano
+              : T.map.territoryCampo
+            : !ds
+              ? T.map.loading
+              : fa && L
+                ? T.map.label(L.label, nameOf(fa))
+                : "";
+  const entryLines: string[] = [];
   // fuentes de datos (provenance del backend)
   const lookup = (table: object, key: string): string => (table as Record<string, string>)[key] ?? key;
   const provName = (id: string): string =>
     id.split("+").map((p) => lookup(T.sources.provider, p)).join(" + ");
-  const sources = (ds?.sources ?? []).map((g) => ({
-    key: g.kind,
-    label: lookup(T.sources.kind, g.kind),
-    statusText: lookup(T.sources.status, g.status),
-    statusColor: g.status === "ok" ? "var(--ok)" : g.status === "cache" ? "var(--acc-fg)" : "var(--warn)",
-    strategy: lookup(T.sources.strategy, g.strategy),
-    selected: g.selected.map(provName),
-    tried: g.tried.map((x) => ({
-      key: x.provider,
-      name: provName(x.provider),
-      ok: x.ok,
-      note: x.ok ? T.sources.records(x.count ?? 0) : T.sources.failed,
-    })),
-    count: T.sources.records(g.count),
-    fromCache: g.fromCache,
-  }));
+  const sourceUnused = (g: { selected: string[]; count: number; status: string }): boolean =>
+    g.status === "ok" && g.selected.length === 0 && g.count === 0;
+  const sources = (ds?.sources ?? []).map((g) => {
+    const unused = sourceUnused(g);
+    return {
+      key: g.kind,
+      label: lookup(T.sources.kind, g.kind),
+      statusText: unused ? T.sources.status.unused : lookup(T.sources.status, g.status),
+      statusColor: unused
+        ? "var(--warn)"
+        : g.status === "ok"
+          ? "var(--ok)"
+          : g.status === "cache"
+            ? "var(--acc-fg)"
+            : "var(--warn)",
+      strategy: lookup(T.sources.strategy, g.strategy),
+      selected: g.selected.map(provName),
+      tried: g.tried.map((x) => ({
+        key: x.provider,
+        name: provName(x.provider),
+        ok: x.ok,
+        note: x.ok ? T.sources.records(x.count ?? 0) : T.sources.failed,
+        hint: sourceNote(x.provider) ?? "",
+      })),
+      count: T.sources.records(g.count),
+      fromCache: g.fromCache,
+    };
+  });
   const sourcesAt =
     ds?.sourcesAt && !Number.isNaN(+new Date(ds.sourcesAt))
       ? T.sources.updated(
@@ -463,11 +519,26 @@ export function buildView(m: Model) {
   const tilt = st.terrain ? sc.tilt : 0;
   const online = st.online;
   const mock = !!(ds && ds.isMock);
+  const curSegEmpty = fa ? !!segs.find((sg) => sg.id === fa.seg.id)?.empty : false;
+  const guest = S.userName || T.intro.guest;
+  let moniTip = "";
+  if (S.introDone && !S.introOpen) {
+    if (!ds && !err) moniTip = T.moni.loading;
+    else if (cam === "orbit" && !S.explore) moniTip = T.moni.welcome(guest);
+    else if (gapOn) moniTip = T.moni.gap;
+    else if (noSeries && hud) moniTip = T.moni.noSeries;
+    else if (curSegEmpty && hud) moniTip = T.moni.emptySeg;
+    else if (S.tab === "sources" && sources.length === 0 && hud) moniTip = T.moni.noSources;
+    else if (hud) moniTip = T.moni.territory;
+  }
 
   return {
     theme, t: T, lay, isM, isD: !isM,
     hasDs, noDs: !hasDs && !err, areaName: ds ? ds.area.name : "", mock,
-    brandOn: (!isM || !S.searchOpen) && !imm, showName: !isM && hasDs,
+    brandOn: (!isM || !S.searchOpen) && !imm,
+    brandMark: "./brand/icon-32.png",
+    showName: false,
+    layerHint: activeLayer?.note ?? "",
     searchField, searchBtn: isM && !S.searchOpen && !imm, searchClose: isM && S.searchOpen && !imm,
     immersive: imm, dockOpen: S.dockOpen, tlOpen: S.tlOpen, hudToggleOn: hud,
     hudToggleLabel: imm ? T.hud.show : T.hud.hide,
@@ -479,7 +550,14 @@ export function buildView(m: Model) {
     statusText: online ? T.status.online : T.status.offline,
     statusDetail: online ? T.status.online : T.status.offlineDetail,
     showStatusText: !isM, noTerrain: !st.terrain,
-    showEntry: cam === "orbit" && !S.explore && !err,
+    sceneSoft: S.introOpen,
+    introOpen: S.introOpen,
+    moniOn: S.introDone && !S.introOpen && !imm,
+    moniTip,
+    moniOpen: S.moniOpen,
+    soundOn: S.soundOn,
+    userName: S.userName,
+    showEntry: cam === "orbit" && !S.explore && !err && S.introDone,
     showExplore: cam === "orbit" && S.explore && !err,
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
@@ -505,12 +583,20 @@ export function buildView(m: Model) {
     cardToggleGlyph: cardOpen ? (isM ? "↓" : "–") : "+",
     boundsText: b ? `${F.lat(b.south)} a ${F.lat(b.north)} · ${F.lon(b.west)} a ${F.lon(b.east)}` : "",
     layerName: L ? L.label : "", momentName: fa ? nameOf(fa) : "",
-    valueText, deltaText, ser, imgRows, trades,
+    valueText,
+    areaValueLabel,
+    areaValueHint,
+    areaShowDelta,
+    deltaText,
+    ser,
+    imgRows,
+    trades,
     tradeText: ds && ds.context[S.trade] ? ds.context[S.trade]?.text ?? "" : "",
     sample: mock && !!(ds && ds.context.length),
     noTrades: !!ds && ds.context.length === 0, leg,
     dc, toast: S.toast,
-    showKey: W >= 1240, tlOn: chrome, tlLoading: !ds && !err, tlReady: !!ds, tl,
+    showKey: W >= 1240, tlOn: chrome, tlLoading: !ds && !err, tlReady: !!ds, tl, selPips,
+    compareHint: compareOn ? T.timeline.compareActive : T.timeline.compareIdle,
     playing: S.playing,
     scopeAll: S.scope === "all", scopeSeg: S.scope === "seg",
     scopeAllBg: S.scope === "all" ? "var(--sel)" : "transparent",
@@ -521,6 +607,15 @@ export function buildView(m: Model) {
     cmpText: compareOn ? T.timeline.compareOff : T.timeline.compare,
     help: S.help, helpKeys: (T.help.keys as string[][]).map(([k, d]) => ({ k: k ?? "", d: d ?? "" })),
     tiltValue: sc.tilt, northUp: sc.northUp, terrain: st.terrain,
+    exploreOn: hud,
+    viewCampo: viewScale === "campo",
+    viewUrbano: viewScale === "urbano",
+    hotspotCount: S.hotspots.length,
+    exploreHasHotspots: S.hotspots.length > 0,
+    exploreHasSer: !!L && !!sp && !noSeries,
+    exploreValue: valueText,
+    exploreDelta: deltaText,
+    explorePeekOn: hud && !!valueText && !noSeries,
   };
 }
 
