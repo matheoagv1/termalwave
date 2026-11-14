@@ -78,15 +78,15 @@ export function buildView(m: Model) {
     toastB: imm ? "12px" : (isM ? 52 : 12) + S.tlH + 12 + "px",
     entL: isM ? "8px" : "12px",
     entR: isM ? "8px" : "auto",
-    entT: isM ? "auto" : "50%",
-    entB: isM ? "8px" : "auto",
-    entW: isM ? "auto" : "380px",
-    entTf: isM ? "none" : "translateY(-50%)",
+    entT: isM ? "auto" : "auto",
+    entB: isM ? "8px" : "12px",
+    entW: isM ? "auto" : "340px",
+    entTf: "none",
     cL: isM ? "0" : "auto",
     cR: isM ? "0" : "12px",
     cT: isM ? "auto" : "64px",
     cB: isM ? "0" : S.tlH + 24 + "px",
-    cW: isM ? "auto" : "300px",
+    cW: isM ? "auto" : "280px",
     cH: isM ? (cardOpen ? "70%" : "44px") : "auto",
     cJ: isM ? "flex-start" : "space-between",
     cPE: isM ? "auto" : "none",
@@ -401,10 +401,11 @@ export function buildView(m: Model) {
       dc.right = "8px";
       dc.bottom = 52 + S.tlH + 20 + "px";
     } else {
-      const w = 240;
+      const w = 220;
       dc.w = w + "px";
-      const lx = pp.x + 24 + w > W - 324 ? pp.x - 24 - w : pp.x + 24;
-      dc.left = Math.max(250, lx) + "px";
+      const edge = S.ficha ? 300 : 56;
+      const lx = pp.x + 24 + w > W - edge ? pp.x - 24 - w : pp.x + 24;
+      dc.left = Math.max(S.dockOpen ? 236 : 56, lx) + "px";
       dc.top = Math.max(64, Math.min(S.H - S.tlH - 200, pp.y - 70)) + "px";
     }
   }

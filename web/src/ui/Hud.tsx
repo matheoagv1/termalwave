@@ -6,9 +6,10 @@ import { Timeline } from "./Timeline";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
 
-const PANEL = "background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px)";
+const PANEL = "background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px)";
 const PRIMARY = "border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600";
 const SECONDARY = "border:1px solid var(--line2);background:transparent;cursor:pointer";
+const MONI = "./brand/monigote.png";
 
 export function Hud({ v, a, tlRef }: P): React.ReactElement {
   const { t, lay } = v;
@@ -27,35 +28,60 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         </button>
       )}
 
-      {v.showEntry && (
+      {v.showEntry && v.noDs && (
+        <section
+          aria-busy="true"
+          aria-live="polite"
+          aria-label={t.status.loading}
+          style={s(
+            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:16px 18px;display:flex;align-items:center;gap:14px`,
+          )}
+        >
+          <img
+            className="tw-bob"
+            src={MONI}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            style={s("flex:none;height:96px;width:auto;image-rendering:pixelated")}
+          />
+          <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px")}>
+            <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--acc-fg)")}>
+              {t.brand}
+            </div>
+            <div style={s("font:13px/1.35 var(--sans);color:var(--fg)")}>{t.status.loading}</div>
+            <div className="tw-pulse" style={s("height:6px;width:72%;background:var(--line2)")} />
+          </div>
+        </section>
+      )}
+
+      {v.showEntry && !v.noDs && (
         <section
           aria-label={t.entry.kicker}
           style={s(
-            `position:absolute;left:${lay.entL};right:${lay.entR};top:${lay.entT};bottom:${lay.entB};width:${lay.entW};transform:${lay.entTf};pointer-events:auto;${PANEL};padding:20px;display:flex;flex-direction:column;gap:12px`,
+            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:18px;display:flex;flex-direction:column;gap:10px;overflow:visible`,
           )}
         >
           <img
             className="tw-float"
-            src="./brand/monigote.png"
+            src={MONI}
             alt=""
             aria-hidden="true"
             decoding="async"
-            style={s("position:absolute;right:16px;top:-104px;height:128px;width:auto;image-rendering:pixelated;pointer-events:none")}
+            style={s("position:absolute;right:12px;top:-92px;height:112px;width:auto;image-rendering:pixelated;pointer-events:none")}
           />
-          <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.entry.kicker}</div>
-          {v.hasDs && <h1 style={s("margin:0;font:500 32px/1.1 var(--sans)")}>{v.areaName}</h1>}
-          {v.noDs && <div className="tw-pulse" style={s("height:35px;width:70%;background:var(--line)")} />}
-          <p style={s("margin:0;color:var(--fg2);max-width:46ch;text-wrap:pretty")}>{t.entry.lead}</p>
-          {v.hasDs && (
-            <div style={s("display:flex;flex-direction:column;gap:2px;font:11px var(--mono);color:var(--fg2)")}>
-              {v.entryLines.map((ln: string) => (
-                <div key={ln}>{ln}</div>
-              ))}
-            </div>
-          )}
-          {v.noDs && <div style={s("font:11px var(--mono);color:var(--fg3)")}>{t.status.loading}</div>}
-          <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:4px")}>
-            <button onClick={a.enter} disabled={v.noDs} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
+          <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--fg2)")}>
+            {t.entry.kicker}
+          </div>
+          <h1 style={s("margin:0;font:600 28px/1.15 var(--sans);letter-spacing:-0.02em")}>{v.areaName}</h1>
+          <p style={s("margin:0;color:var(--fg2);max-width:42ch;text-wrap:pretty")}>{t.entry.lead}</p>
+          <div style={s("display:flex;flex-direction:column;gap:2px;font:11px var(--mono);color:var(--fg2)")}>
+            {v.entryLines.map((ln: string) => (
+              <div key={ln}>{ln}</div>
+            ))}
+          </div>
+          <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:2px")}>
+            <button onClick={a.enter} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
               {t.entry.enter}
             </button>
             <button
@@ -72,7 +98,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
       {v.showExplore && (
         <section
           style={s(
-            `position:absolute;left:${lay.entL};right:${lay.entR};top:${lay.entT};bottom:${lay.entB};width:${lay.entW};transform:${lay.entTf};pointer-events:auto;${PANEL};padding:14px;display:flex;flex-direction:column;gap:10px`,
+            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:14px;display:flex;flex-direction:column;gap:10px`,
           )}
         >
           <button onClick={a.enter} disabled={v.noDs} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
@@ -113,7 +139,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         <div
           role="radiogroup"
           aria-label={t.layers.title}
-          style={s(`position:absolute;left:12px;top:64px;width:220px;pointer-events:auto;${PANEL}`)}
+          style={s(`position:absolute;left:12px;top:64px;width:208px;pointer-events:auto;${PANEL}`)}
         >
           <button
             className="tw-hov"
@@ -123,7 +149,9 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             aria-label={v.dockToggleLabel}
             style={s("display:flex;width:100%;align-items:center;padding:0 12px;height:32px;border:0;background:transparent;cursor:pointer;font:11px var(--mono);color:var(--fg2);text-align:left")}
           >
-            <span style={s("flex:1")}>{t.layers.title}</span>
+            <span className="tw-pixel" style={s("flex:1;font-size:8px;line-height:1.5")}>
+              {t.layers.title}
+            </span>
             <span aria-hidden="true">{v.dockOpen ? "–" : "+"}</span>
           </button>
           {v.dockOpen && v.layerItems.map((l) => (
@@ -173,7 +201,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               aria-checked={l.on}
               onClick={l.go}
               style={s(
-                `flex:none;display:flex;gap:8px;align-items:center;height:44px;padding:0 12px;border:1px solid var(--line);background:${l.chipBg};backdrop-filter:blur(10px);cursor:pointer`,
+                `flex:none;display:flex;gap:8px;align-items:center;height:44px;padding:0 12px;border:1px solid var(--line);background:${l.chipBg};backdrop-filter:blur(8px);cursor:pointer`,
               )}
             >
               <span style={s(`width:12px;height:12px;background:${l.grad};border:1px solid var(--line2)`)} />
@@ -193,7 +221,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         <div
           role="status"
           aria-live="polite"
-          style={s(`display:${v.labelDisplay};padding:4px 12px;font:13px var(--mono);${PANEL}`)}
+          style={s(`display:${v.labelDisplay};padding:6px 12px;font:11px var(--mono);letter-spacing:0.02em;${PANEL}`)}
         >
           {v.mapLabel}
         </div>
@@ -313,7 +341,11 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
             height={20}
             style={s("image-rendering:pixelated;flex:none;display:block")}
           />
-          {v.showName && <span style={s("color:var(--fg2)")}>{v.areaName}</span>}
+          {v.showName && (
+            <span className="tw-pixel" style={s("font-size:8px;line-height:1.4;color:var(--fg2)")}>
+              {v.areaName}
+            </span>
+          )}
           {v.mock && (
             <span title={t.mock.detail} style={s("font:11px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
               {t.mock.tag}
@@ -330,7 +362,7 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
             placeholder={t.top.search}
             aria-label={t.top.search}
             autoComplete="off"
-            style={s(`width:100%;height:40px;padding:0 12px;border:1px solid var(--line);${"background:var(--panel);backdrop-filter:blur(10px)"};color:var(--fg);font:13px var(--sans);border-radius:0`)}
+            style={s(`width:100%;height:40px;padding:0 12px;border:1px solid var(--line);${"background:var(--panel);backdrop-filter:blur(8px)"};color:var(--fg);font:13px var(--sans);border-radius:0`)}
           />
           {v.showResults && (
             <div role="listbox" style={s("position:absolute;left:0;right:0;top:44px;background:var(--panel-solid);border:1px solid var(--line2)")}>

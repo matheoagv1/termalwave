@@ -41,7 +41,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     searchOpen: false,
     toast: "",
     help: false,
-    ficha: true,
+    ficha: false,
     sheet: false,
     tab: "area",
     trade: 0,
@@ -378,8 +378,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       ? { top: 112, left: 8, right: 60, bottom: 52 + S.tlH + 20 }
       : {
           top: 64,
-          left: S.dockOpen ? 250 : 60,
-          right: S.ficha ? 330 : 60,
+          left: S.dockOpen ? 236 : 56,
+          right: S.ficha ? 300 : 56,
           bottom: S.tlH + 28,
         };
   }

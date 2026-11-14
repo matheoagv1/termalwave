@@ -1,5 +1,13 @@
 /* Tokens de la interfaz. El tema oscuro sale de brand/palette.md; el claro es del diseño. */
 
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("../brand/PressStart2P-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 html,
 body {
   margin: 0;
@@ -9,18 +17,19 @@ body {
 [data-tw-theme] {
   --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --pixel: "Press Start 2P", ui-monospace, monospace;
 }
 
 [data-tw-theme="dark"] {
   --bg: #070b12;
-  --panel: rgba(14, 21, 34, 0.86);
+  --panel: rgba(14, 21, 34, 0.72);
   --panel-solid: #0e1522;
-  --sel: rgba(244, 241, 232, 0.07);
-  --line: #1d2840;
-  --line2: #34425f;
+  --sel: rgba(244, 241, 232, 0.09);
+  --line: #24314a;
+  --line2: #3d4e6e;
   --fg: #f4f1e8;
-  --fg2: #b7bcc9;
-  --fg3: #8b93a7;
+  --fg2: #c4c9d6;
+  --fg3: #98a0b4;
   --acc: #f0a014;
   --acc-ink: #120c02;
   --acc-fg: #ffd020;
@@ -43,14 +52,14 @@ body {
 
 [data-tw-theme="light"] {
   --bg: #e7eaec;
-  --panel: rgba(248, 249, 250, 0.9);
+  --panel: rgba(248, 249, 250, 0.78);
   --panel-solid: #f6f7f8;
-  --sel: rgba(0, 0, 0, 0.05);
-  --line: #cdd3d8;
-  --line2: #9aa4ad;
+  --sel: rgba(0, 0, 0, 0.06);
+  --line: #c5cdd1;
+  --line2: #8e99a3;
   --fg: #0e1215;
-  --fg2: #47515a;
-  --fg3: #5d6770;
+  --fg2: #3a434c;
+  --fg3: #55606a;
   --acc: #f0a014;
   --acc-ink: #14110a;
   --acc-fg: #7a4a00;
@@ -112,13 +121,33 @@ body {
   color: var(--acc-fg);
 }
 
+.tw-pixel {
+  font-family: var(--pixel);
+  image-rendering: pixelated;
+  letter-spacing: 0;
+}
+
 .tw-float {
   animation: tw-float 2.4s ease-in-out infinite;
 }
 
 @keyframes tw-float {
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+  }
+}
+
+.tw-bob {
+  animation: tw-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes tw-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 
