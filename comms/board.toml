@@ -44,9 +44,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T013"
 owner = "vps"
-status = "blocked"
+status = "done"
 title = "GitHub private repo + push master"
-notes = "Blocked: gh auth. Device flow started; need approve https://github.com/login/device then create private repo + push."
+notes = "https://github.com/matheoagv1/termalwave (private)"
 updated = "2026-11-14"
 
 [[task]]
