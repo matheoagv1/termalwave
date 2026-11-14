@@ -1,10 +1,10 @@
 [
-  {"trade":"Agricultura","text":"Mové la línea de tiempo y cambiá de capa para marcar dónde conviene una recorrida. El radar solo no te dice rendimiento, plagas ni cuánta agua tiene el cultivo."},
-  {"trade":"Ganadería y pasturas","text":"Mirá cómo cambia la cobertura entre estaciones y cruzalo con lluvias y lo que ves en el potrero. Forraje en cantidad y calidad se mide en el lugar."},
-  {"trade":"Gestión del agua","text":"Compará extensión de agua y estado del terreno entre fechas. Cada pasada muestra lo de ese día; niveles, caudales y drenaje piden otras fuentes."},
-  {"trade":"Ambiente y conservación","text":"Buscá cambios que se sostienen en el tiempo y zonas húmedas, y contrastalos con registros del área. Una imagen orienta la visita; no nombra especies ni causa de pérdida de hábitat."},
+  {"trade":"Agricultura","text":"Usa la línea de tiempo y cambia de capa para marcar dónde conviene una recorrida. El radar solo no te dice rendimiento, plagas ni cuánta agua tiene el cultivo."},
+  {"trade":"Ganadería y pasturas","text":"Mira cómo cambia la cobertura entre estaciones y cruzalo con lluvias y lo que ves en el potrero. Forraje en cantidad y calidad se mide en el lugar."},
+  {"trade":"Gestión del agua","text":"Compara extensión de agua y estado del terreno entre fechas. Cada pasada muestra lo de ese día; niveles, caudales y drenaje piden otras fuentes."},
+  {"trade":"Ambiente y conservación","text":"Busca cambios que se sostienen en el tiempo y zonas húmedas, y contrastalos con registros del área. Una imagen orienta la visita; no nombra especies ni causa de pérdida de hábitat."},
   {"trade":"Gestión de emergencias","text":"Fijate la fecha y la cobertura antes de señalar sectores a inspeccionar después de un evento. Lo que pasó entre pasadas no aparece, y esto no reemplaza los avisos oficiales."},
-  {"trade":"Ordenamiento territorial","text":"Compará el territorio entre años y relacioná lo que ves con mapas de uso y datos locales. La imagen no fija límites de propiedad ni dice si una actividad es legal."},
-  {"trade":"Infraestructura","text":"Revisá cambios cerca de caminos e instalaciones junto con mantenimiento y campo. Una mancha en la capa no prueba daño estructural."},
-  {"trade":"Ciencia y educación","text":"Antes de comparar, mirá fuente, fecha, escala y cobertura. Usá las series para armar preguntas que después puedas contrastar con mediciones propias."}
+  {"trade":"Ordenamiento territorial","text":"Compara el territorio entre años y relaciona lo que ves con mapas de uso y datos locales. La imagen no fija límites de propiedad ni dice si una actividad es legal."},
+  {"trade":"Infraestructura","text":"Revisa cambios cerca de caminos e instalaciones junto con mantenimiento y campo. Una mancha en la capa no prueba daño estructural."},
+  {"trade":"Ciencia y educación","text":"Antes de comparar, mira fuente, fecha, escala y cobertura. Usa las series para armar preguntas que después puedas contrastar con mediciones propias."}
 ]
