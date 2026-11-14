@@ -12,36 +12,50 @@ const PBKDF2_ITERS = 100_000;
  */
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
-
-    if (path === "/auth" || path === "/auth/") {
-      const mode = url.searchParams.get("mode") === "register" ? "register" : "login";
-      const next = safeNext(url.searchParams.get("next") || "/");
-      return html(authPage(env.APP_NAME || "TermalWave Preview", null, { next, mode }));
+    try {
+      return await handle(request, env);
+    } catch (err) {
+      const msg = err && err.message ? String(err.message) : "error";
+      console.error("preview_gate", msg);
+      return new Response("preview gate failed", { status: 500 });
     }
-    if (path === "/auth/register" && request.method === "POST") {
-      return handleRegister(request, env);
-    }
-    if (path === "/auth/login" && request.method === "POST") {
-      return handleLogin(request, env);
-    }
-    if (path === "/auth/logout") {
-      return handleLogout(request, env);
-    }
-
-    const session = await readSession(request, env);
-    if (!session) {
-      const next = encodeURIComponent(path + url.search);
-      return Response.redirect(new URL(`/auth?next=${next}`, url).toString(), 302);
-    }
-
-    if (!env.ASSETS) {
-      return new Response("ASSETS binding missing", { status: 500 });
-    }
-    return env.ASSETS.fetch(request);
   },
 };
+
+/**
+ * @param {Request} request
+ * @param {Env} env
+ */
+async function handle(request, env) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  if (path === "/auth" || path === "/auth/") {
+    const mode = url.searchParams.get("mode") === "register" ? "register" : "login";
+    const next = safeNext(url.searchParams.get("next") || "/");
+    return html(authPage(env.APP_NAME || "TermalWave Preview", null, { next, mode }));
+  }
+  if (path === "/auth/register" && request.method === "POST") {
+    return handleRegister(request, env);
+  }
+  if (path === "/auth/login" && request.method === "POST") {
+    return handleLogin(request, env);
+  }
+  if (path === "/auth/logout") {
+    return handleLogout(request, env);
+  }
+
+  const session = await readSession(request, env);
+  if (!session) {
+    const next = encodeURIComponent(path + url.search);
+    return Response.redirect(new URL(`/auth?next=${next}`, url).toString(), 302);
+  }
+
+  if (!env.ASSETS) {
+    return new Response("ASSETS binding missing", { status: 500 });
+  }
+  return env.ASSETS.fetch(request);
+}
 
 /**
  * @typedef {{
@@ -123,12 +137,7 @@ async function handleLogout(request, env) {
   if (token) {
     await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(token).run();
   }
-  const res = Response.redirect(new URL("/auth", request.url).toString(), 302);
-  res.headers.append(
-    "Set-Cookie",
-    `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
-  );
-  return res;
+  return redirectWithCookie(new URL("/auth", request.url).toString(), clearCookie());
 }
 
 async function readSession(request, env) {
@@ -157,12 +166,21 @@ async function createSession(env, userId) {
 }
 
 function redirectWithSession(request, next, token) {
-  const res = Response.redirect(new URL(next, request.url).toString(), 302);
-  res.headers.append(
-    "Set-Cookie",
+  // Response.redirect() is immutable on Workers; build a fresh 302
+  const location = new URL(next, request.url).toString();
+  return redirectWithCookie(
+    location,
     `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}`,
   );
-  return res;
+}
+
+function clearCookie() {
+  return `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+}
+
+function redirectWithCookie(location, setCookie) {
+  const headers = new Headers({ Location: location, "Set-Cookie": setCookie });
+  return new Response(null, { status: 302, headers });
 }
 
 async function hashPassword(password, salt) {
