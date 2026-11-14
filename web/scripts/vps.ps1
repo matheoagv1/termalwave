@@ -80,7 +80,8 @@ switch ($Cmd) {
     Remote "cd web && npx tsc --noEmit 2>&1 | head -25; echo EXIT=`${PIPESTATUS[0]}" 25
   }
   "build" {
-    Remote "cd web && npm run build 2>&1 | grep -E 'error|Error|built in|brand:|TS[0-9]+' | head -20" 20
+    # Se compila a web/.build-tmp: web/dist puede ser de otro usuario y lo despliega el VPS.
+    Remote "cd web && node scripts/sync-brand.mjs >/dev/null 2>&1; npx tsc --noEmit 2>&1 | head -15; npx vite build --configLoader runner --outDir .build-tmp --emptyOutDir 2>&1 | grep -E 'error|Error|built in|EACCES' | head -10" 20
   }
   "commit" {
     $msg = $Rest -join " "
