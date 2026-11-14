@@ -33,12 +33,13 @@ Hooks Cursor inyectan briefing lean (NOW + tus tasks).
 
 ## De que se trata
 
-TermalWave es una app interactiva que usa radar **NISAR** (NASA-ISRO, SAR) para **ver cambio de superficie** en el tiempo: overlays georreferenciados sobre un mapa MapLibre, con timeline tipo Timelapse y capas por fenomeno.
+TermalWave es una app interactiva que usa radar **NISAR** (NASA-ISRO, SAR) para **ver cambio de superficie** en el tiempo. La escena principal es un **globo 3D** (norte: Gods Eye View en `references/`, solo codigo). Las capas SAR y de fenomeno se **amoldan al terreno** del globo. La UI 2D (timeline, capas, fuentes, rangos) es **opcional**: sirve para elegir datos y parametros, no para reemplazar la vista.
 
 - Enunciado NASA (alcance): app interactiva; datos NISAR SAR; track/visualize surface change; audiencia amplia; medio digital usable.
 - AOI por defecto: **Santiago del Estero** (`config/santiago.toml`). Cualquier zona del mundo = otro TOML (bounds, paths, stems, web). Cero ciudad hardcodeada en el codigo de UI: sale de `app-config.json`.
 - Pipeline: HDF5 → PNG + JSON (numpy/h5py/Pillow vendored, Python 3.11, sin GDAL). Offline real.
-- UI: MapLibre GL + barra de anos + capas `radar`, `suelo`, `contaminacion`, `incendios` + panel lateral.
+- UI: MapLibre GL **globo** + cortina/timeline + capas `radar`, `suelo`, `contaminacion`, `incendios` + panel lateral colapsable.
+- Analisis en escena: hotspots, series, comparar fechas, leer estado del lugar y factores (clima, fuego, suelo, radar) sin sacar al usuario del globo. Predicciones = capas/series derivadas cuando el dato alcanza; no inventar certeza en copy.
 
 ## Por que lo estamos haciendo
 
@@ -70,21 +71,22 @@ Disená features, demos y narrativa tecnica para que cada arquetipo encuentre al
 
 ### Pilares de diseno (si guian UI, sin nombrar audiencias)
 
-1. Ver el cambio en el territorio (mapa, AOI, overlay, anos).
-2. Confiar en el dato (origen, capa, bounds).
-3. Correr sin circo (Python 3.11 + vendor; internet opcional salvo teselas base).
-4. Oficios distintos, misma escena (capas/paneles por tarea).
-5. Transferible (alguien de afuera entiende el flujo).
+1. **Globo primero.** La verdad visual es 3D sobre la Tierra; paneles 2D son controles, no el producto.
+2. Ver el cambio en el territorio (AOI, capa drapada, anos, cortina).
+3. Confiar en el dato (origen, capa, bounds, provenance).
+4. Correr sin circo (Python 3.11 + vendor; internet opcional salvo teselas base).
+5. Oficios distintos, misma escena (contextos/capas por tarea, sin sacar del globo).
+6. Transferible (alguien de afuera entiende el flujo).
 
 ### Challenge NASA → nuestro mapeo
 
 | Pedido NASA | Nuestro approach |
 |---|---|
-| App interactiva | Mapa + controles laterales + timeline + capas |
-| NISAR SAR | HDF5 → overlays PNG georref |
-| Surface change | Timeline multi-ano; capas de fenomeno |
+| App interactiva | Globo 3D + controles laterales opcionales + timeline + capas |
+| NISAR SAR | HDF5 → overlays PNG georref drapados al globo |
+| Surface change | Timeline multi-ano; capas de fenomeno en escena |
 | Audiencia amplia | UI neutra; contextos por oficio (cricri); portable |
-| Insights accionables | Scrub temporal, capas, AOI estable, offline |
+| Insights accionables | Scrub temporal, hotspots, series, AOI estable, offline |
 
 Vocabulario preferido en copy visible: radar, NISAR, backscatter, capa, cambio, suelo, agua, fecha, area de estudio. Evitar meta de challenge en la UI.
 

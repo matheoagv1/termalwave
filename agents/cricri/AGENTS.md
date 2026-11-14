@@ -10,6 +10,7 @@ Tester de gusto + contexto por rubro + monigote.
 ## Toca
 
 - `web/src/context/` (briefings por capa/fuente: FIRMS, Open-Meteo, NISAR, etc.; sin jurado)
+- Textos orientados al **globo**: estado del lugar, factores (fuego, suelo, clima, radar), sin pitch de panel 2D
 - `brand/monigote/` (depositar monigote; ver README ahi)
 - `comms/cricri/{inbox,outbox,archive}/` + board via CLI
 

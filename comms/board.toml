@@ -6,7 +6,7 @@ id = "T003"
 owner = "cricri"
 status = "open"
 title = "Deposit monigote PNG in brand/monigote/"
-notes = "See brand/monigote/README.md and inbox monigote-brand"
+notes = "See brand/monigote/README.md. Globo-first: monigote puede vivir en chrome, no tapa la escena."
 updated = "2026-11-14"
 
 [[task]]
@@ -14,15 +14,15 @@ id = "T008"
 owner = "cricri"
 status = "open"
 title = "Context copy for data sources / layers (no jury in UI)"
-notes = "Can draft context in parallel with carne panel polish"
+notes = "Copy habla del fenomeno en el territorio (globo), no de paneles. ES-AR-SGO."
 updated = "2026-11-14"
 
 [[task]]
 id = "T010"
 owner = "carne"
-status = "open"
+status = "in_progress"
 title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "Reemplaza la escena DOM interina. Requiere MapLibre 5.x para globo. Pausado: Emir termino tanda; retoma despues."
+notes = "P0 norte Gods Eye View. Capas drapadas al globo (image source + bounds). HUD 2D opcional/colapsable. MapLibre 5.x OK. Retomar ya."
 updated = "2026-11-14"
 
 [[task]]
@@ -30,7 +30,7 @@ id = "T011"
 owner = "vps"
 status = "open"
 title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
-notes = "Ver outbox carne 20261114-1745. Mientras tanto la UI adapta app-config.json a un tramo anual."
+notes = "Alimenta setDataset/setHotspots del globo. Frames con url+bounds listos para drapear."
 updated = "2026-11-14"
 
 [[task]]
@@ -38,5 +38,5 @@ id = "T012"
 owner = "cricri"
 status = "open"
 title = "Lectura por oficio en web/src/context/trades.json"
-notes = "Formato [{trade,text}], ES-AR-SGO. La UI ya lo lee."
+notes = "Formato [{trade,text}]. Textos de analisis/estado/factores utiles con el globo a la vista."
 updated = "2026-11-14"
