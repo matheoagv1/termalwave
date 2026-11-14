@@ -1,0 +1,745 @@
+import maplibregl, {
+  type GeoJSONSource,
+  type ImageSource,
+  type MapSourceDataEvent,
+  type Marker,
+  type StyleSpecification,
+} from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import type {
+  CameraMode,
+  Dataset,
+  FrameRef,
+  Hotspot,
+  Padding,
+  SceneApi,
+  SceneOptions,
+  SceneState,
+  TimeTick,
+} from "../tw/contract";
+
+export interface BasemapTiles {
+  url: string;
+  tileSize: number;
+  maxzoom: number;
+  attribution: string;
+}
+
+export interface MapSceneOptions extends SceneOptions {
+  basemapTiles?: BasemapTiles;
+  // plantilla de teselas de relieve (codificacion terrarium). Opcional.
+  demTiles?: string;
+}
+
+type Coords = [[number, number], [number, number], [number, number], [number, number]];
+type Slot = { src: string; layer: string };
+
+const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+const clamp = (v: number, a: number, b: number): number => Math.min(b, Math.max(a, v));
+const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
+
+function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
+  return [
+    [b.west, b.north],
+    [b.east, b.north],
+    [b.east, b.south],
+    [b.west, b.south],
+  ];
+}
+
+function absolute(url: string): string {
+  return url.startsWith("data:") ? url : new URL(url, window.location.href).href;
+}
+
+export class MapLibreScene implements SceneApi {
+  private o: MapSceneOptions;
+  private s: SceneState = { camera: "orbit", layer: "", tickId: "", tilt: 35, northUp: true };
+  private cbC = new Set<(s: SceneState) => void>();
+  private cbP = new Set<(id: string | null) => void>();
+  private ds: Dataset | null = null;
+  private ticks: Record<string, TimeTick> = {};
+  private pad: Padding = { top: 60, right: 20, bottom: 20, left: 460 };
+  private host!: HTMLElement;
+  private mapEl!: HTMLDivElement;
+  private map!: maplibregl.Map;
+  private ready = false;
+  private queue: Array<() => void> = [];
+  private markers: Marker[] = [];
+  private ring: Marker | null = null;
+  private handle!: HTMLDivElement;
+  private raf = 0;
+  private lastT = 0;
+  private interacting = false;
+  private resumeT: number | undefined;
+  private flyId = 0;
+  private slots: Slot[] = [
+    { src: "tw-img-a", layer: "tw-img-a" },
+    { src: "tw-img-b", layer: "tw-img-b" },
+  ];
+  private front = 0;
+  private hasFront = false;
+  private token = 0;
+  private pending: ((e: MapSourceDataEvent) => void) | null = null;
+  private images = new Map<string, HTMLImageElement>();
+  private cmpRaf = 0;
+  private territoryZoom = 11;
+  private dragCurtain = false;
+
+  constructor(o: Partial<MapSceneOptions> = {}) {
+    this.o = {
+      online: true,
+      terrain: false,
+      basemap: true,
+      reducedMotion: false,
+      labels: { curtain: "Cortina" },
+      ...o,
+    };
+  }
+
+  // ciclo de vida
+
+  mount(el: HTMLElement): void {
+    this.host = el;
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    this.mapEl = document.createElement("div");
+    this.mapEl.style.cssText = "position:absolute;inset:0;background:var(--bg)";
+    el.appendChild(this.mapEl);
+
+    this.map = new maplibregl.Map({
+      container: this.mapEl,
+      style: this.baseStyle(),
+      center: [-64.25, -27.8],
+      zoom: this.orbitZoom(),
+      minZoom: 0.6,
+      maxZoom: 17,
+      maxPitch: 70,
+      attributionControl: false,
+      dragRotate: false,
+      pitchWithRotate: false,
+    });
+    this.map.touchZoomRotate.disableRotation();
+    this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+
+    this.handle = document.createElement("div");
+    this.handle.style.cssText =
+      "position:absolute;left:0;top:0;width:24px;height:44px;margin:-22px 0 0 -12px;display:none;cursor:ew-resize;touch-action:none;z-index:2";
+    this.handle.tabIndex = 0;
+    this.handle.setAttribute("role", "slider");
+    this.handle.setAttribute("aria-label", this.o.labels.curtain);
+    this.handle.setAttribute("aria-valuemin", "0");
+    this.handle.setAttribute("aria-valuemax", "100");
+    this.handle.setAttribute("data-scene-handle", "1");
+    this.handle.innerHTML =
+      '<div style="position:absolute;left:4px;top:14px;width:16px;height:16px;border:2px solid var(--acc);background:var(--bg)"></div>';
+    el.appendChild(this.handle);
+    this.bindHandle();
+
+    this.map.on("style.load", () => this.onStyle());
+    this.map.on("dragstart", () => this.touch());
+    this.map.on("zoomstart", (e) => {
+      if ((e as { originalEvent?: unknown }).originalEvent) this.touch();
+    });
+    this.map.on("move", () => {
+      this.placeHandle();
+      this.cbMove();
+    });
+    this.map.on("error", (e) => {
+      const msg = String((e.error as Error | undefined)?.message ?? "").toLowerCase();
+      if (msg.includes("tile") || msg.includes("dem")) this.degrade();
+    });
+    this.raf = requestAnimationFrame(this.loop);
+  }
+
+  destroy(): void {
+    cancelAnimationFrame(this.raf);
+    cancelAnimationFrame(this.cmpRaf);
+    window.clearTimeout(this.resumeT);
+    this.markers.forEach((m) => m.remove());
+    this.ring?.remove();
+    this.map?.remove();
+    this.mapEl?.remove();
+    this.handle?.remove();
+    this.cbC.clear();
+    this.cbP.clear();
+  }
+
+  // estilo
+
+  private css(name: string, fallback: string): string {
+    const v = getComputedStyle(this.host).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  private baseStyle(): StyleSpecification {
+    const sources: StyleSpecification["sources"] = {};
+    const layers: StyleSpecification["layers"] = [
+      { id: "tw-bg", type: "background", paint: { "background-color": this.css("--scene-ground", "#0b1220") } },
+    ];
+    const bt = this.o.basemapTiles;
+    if (this.o.basemap && this.o.online && bt) {
+      sources["tw-base"] = {
+        type: "raster",
+        tiles: [bt.url],
+        tileSize: bt.tileSize,
+        maxzoom: bt.maxzoom,
+        attribution: bt.attribution,
+      };
+      layers.push({ id: "tw-base", type: "raster", source: "tw-base" });
+    }
+    return {
+      version: 8,
+      projection: { type: "globe" },
+      sources,
+      layers,
+      sky: {
+        "sky-color": this.css("--scene-sphere", "#082460"),
+        "horizon-color": this.css("--scene-grid", "#2474ec"),
+        "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
+      },
+    } as StyleSpecification;
+  }
+
+  private onStyle(): void {
+    const map = this.map;
+    if (!map.getSource("tw-curtain")) {
+      map.addSource("tw-curtain", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    }
+    if (this.o.terrain && this.o.online && this.o.demTiles && !map.getSource("tw-dem")) {
+      map.addSource("tw-dem", {
+        type: "raster-dem",
+        tiles: [this.o.demTiles],
+        tileSize: 256,
+        maxzoom: 13,
+        encoding: "terrarium",
+      });
+      map.setTerrain({ source: "tw-dem", exaggeration: 1.4 });
+    }
+    // las capas del dataset se arman cuando hay limites
+    this.ready = true;
+    if (this.s.camera === "orbit") this.go("orbit", { fly: false, ms: 0 });
+    this.buildLayers();
+    this.refreshStyle();
+    const q = this.queue;
+    this.queue = [];
+    q.forEach((f) => {
+      try {
+        f();
+      } catch (e) {
+        console.warn("escena: tarea pendiente falló", e);
+      }
+    });
+  }
+
+  private buildLayers(): void {
+    const map = this.map;
+    if (!this.ds || !this.ready || map.getSource("tw-area")) return;
+    const b = this.ds.area.bounds;
+    const ring = [
+      [b.west, b.north],
+      [b.east, b.north],
+      [b.east, b.south],
+      [b.west, b.south],
+      [b.west, b.north],
+    ];
+    map.addSource("tw-area", {
+      type: "geojson",
+      data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [ring] } },
+    });
+    const blank = coordsOf(b);
+    for (const sl of this.slots) {
+      map.addSource(sl.src, { type: "image", url: BLANK, coordinates: blank });
+      map.addLayer({ id: sl.layer, type: "raster", source: sl.src, paint: { "raster-opacity": 0, "raster-fade-duration": 0 } });
+      map.setPaintProperty(sl.layer, "raster-opacity-transition", { duration: this.fade(), delay: 0 });
+    }
+    map.addSource("tw-cmp", { type: "image", url: BLANK, coordinates: blank });
+    map.addLayer({ id: "tw-cmp", type: "raster", source: "tw-cmp", paint: { "raster-opacity": 0, "raster-fade-duration": 0 } });
+    map.addLayer({ id: "tw-gap", type: "fill", source: "tw-area", paint: { "fill-color": this.css("--scene-hatch", "#ffb43a"), "fill-opacity": 0 } });
+    map.addLayer({ id: "tw-area", type: "line", source: "tw-area", paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2 } });
+    map.addLayer({ id: "tw-curtain", type: "line", source: "tw-curtain", paint: { "line-color": this.css("--acc", "#f0a014"), "line-width": 2 } });
+    this.applyFrame();
+    this.applyCompare();
+  }
+
+  refreshStyle(): void {
+    if (!this.ready) return;
+    const map = this.map;
+    const set = (id: string, prop: string, value: string): void => {
+      if (map.getLayer(id)) map.setPaintProperty(id, prop, value);
+    };
+    set("tw-bg", "background-color", this.css("--scene-ground", "#0b1220"));
+    set("tw-gap", "fill-color", this.css("--scene-hatch", "#ffb43a"));
+    set("tw-area", "line-color", this.css("--scene-outline", "#f4f1e8"));
+    set("tw-curtain", "line-color", this.css("--acc", "#f0a014"));
+    map.setSky({
+      "sky-color": this.css("--scene-sphere", "#082460"),
+      "horizon-color": this.css("--scene-grid", "#2474ec"),
+      "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
+    } as never);
+  }
+
+  // Si fallan teselas o relieve se sigue con lo que haya, sin romper la escena.
+  private degrade(): void {
+    if (this.map.getTerrain()) this.map.setTerrain(null);
+  }
+
+  // datos
+
+  setDataset(ds: Dataset): void {
+    this.ds = ds;
+    this.ticks = {};
+    ds.segments.forEach((seg) => seg.ticks.forEach((t) => (this.ticks[t.id] = t)));
+    this.whenReady(() => {
+      this.buildLayers();
+      this.buildRing();
+      this.applyFrame();
+      this.applyCompare();
+      // El arranque desde la URL pide cámara antes de que existan los límites del área.
+      if (!this.map.isMoving()) this.go(this.s.camera === "approach" ? "territory" : this.s.camera, { fly: false, ms: 0 });
+    });
+  }
+
+  // Anillo que marca el área en la vista de la Tierra completa.
+  private buildRing(): void {
+    if (!this.ds || this.ring) return;
+    const el = document.createElement("div");
+    el.className = "tw-ring";
+    el.setAttribute("aria-hidden", "true");
+    this.ring = new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(this.ds.area.center).addTo(this.map);
+    this.updateRing();
+  }
+
+  private updateRing(): void {
+    if (!this.ring) return;
+    const c = this.s.camera;
+    this.ring.getElement().style.display = c === "orbit" || c === "approach" ? "block" : "none";
+  }
+
+  private whenReady(fn: () => void): void {
+    if (this.ready) fn();
+    else this.queue.push(fn);
+  }
+
+  setHotspots(list: Hotspot[]): void {
+    this.markers.forEach((m) => m.remove());
+    this.markers = list.map((h) => {
+      const b = document.createElement("button");
+      b.setAttribute("data-spot", h.id);
+      b.setAttribute("aria-label", h.title);
+      b.dataset.ll = h.lonlat.join(",");
+      b.style.cssText =
+        "width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center";
+      const dot = document.createElement("span");
+      b.appendChild(dot);
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.cbP.forEach((cb) => cb(h.id));
+      });
+      return new maplibregl.Marker({ element: b, anchor: "center" }).setLngLat(h.lonlat).addTo(this.map);
+    });
+    this.applyFocus();
+  }
+
+  private applyFocus(): void {
+    const fl = this.s.focus?.lonlat.join(",");
+    this.markers.forEach((m) => {
+      const el = m.getElement();
+      const on = el.dataset.ll === fl;
+      const dot = el.firstElementChild as HTMLElement | null;
+      if (!dot) return;
+      const z = on ? 16 : 10;
+      dot.style.cssText = `display:block;width:${z}px;height:${z}px;border:2px solid ${on ? "var(--acc)" : "var(--scene-spot)"};background:${on ? "var(--acc)" : "transparent"}`;
+    });
+  }
+
+  // imagenes de capa con fundido
+
+  private fade(): number {
+    return this.o.reducedMotion ? 0 : 280;
+  }
+
+  private frameOf(tickId: string): FrameRef | null {
+    return this.ticks[tickId]?.frames[this.s.layer] ?? null;
+  }
+
+  private setOpacity(layer: string, v: number): void {
+    if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", v);
+  }
+
+  private applyFrame(): void {
+    if (!this.ready || !this.ds || !this.map.getSource("tw-area")) return;
+    const map = this.map;
+    const tick = this.ticks[this.s.tickId];
+    const fr = this.frameOf(this.s.tickId);
+    this.token += 1;
+    const mine = this.token;
+    if (this.pending) map.off("sourcedata", this.pending);
+    this.pending = null;
+    if (map.getLayer("tw-gap")) map.setPaintProperty("tw-gap", "fill-opacity", tick && !fr ? 0.25 : 0);
+    if (!fr) {
+      this.slots.forEach((sl) => this.setOpacity(sl.layer, 0));
+      this.hasFront = false;
+      return;
+    }
+    const target = this.hasFront ? 1 - this.front : this.front;
+    const slot = this.slots[target];
+    if (!slot) return;
+    const url = absolute(fr.url);
+    const coords = coordsOf(fr.bounds);
+    const commit = (): void => {
+      if (mine !== this.token) return;
+      this.slots.forEach((sl) =>
+        map.getLayer(sl.layer) && map.setPaintProperty(sl.layer, "raster-opacity-transition", { duration: this.fade(), delay: 0 }),
+      );
+      const full = fr.quality === "partial" ? 0.7 : 0.92;
+      this.setOpacity(slot.layer, full);
+      if (this.hasFront && target !== this.front) this.setOpacity(this.slots[this.front]?.layer ?? "", 0);
+      this.front = target;
+      this.hasFront = true;
+    };
+    const onData = (e: MapSourceDataEvent): void => {
+      if (e.sourceId !== slot.src || !e.isSourceLoaded) return;
+      map.off("sourcedata", onData);
+      this.pending = null;
+      commit();
+    };
+    this.pending = onData;
+    map.on("sourcedata", onData);
+    (map.getSource(slot.src) as ImageSource).updateImage({ url, coordinates: coords });
+  }
+
+  // comparar (cortina)
+
+  private applyCompare(): void {
+    if (!this.ready || !this.ds || !this.map.getSource("tw-cmp")) return;
+    const c = this.s.compare;
+    if (!c) {
+      this.setOpacity("tw-cmp", 0);
+      (this.map.getSource("tw-curtain") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: [] });
+      this.handle.style.display = "none";
+      return;
+    }
+    const b = this.ds.area.bounds;
+    const lon = b.west + c.split * (b.east - b.west);
+    (this.map.getSource("tw-curtain") as GeoJSONSource).setData({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: [[lon, b.south], [lon, b.north]] },
+    });
+    this.handle.style.display = "block";
+    this.handle.setAttribute("aria-valuenow", String(Math.round(c.split * 100)));
+    this.placeHandle();
+    cancelAnimationFrame(this.cmpRaf);
+    this.cmpRaf = requestAnimationFrame(() => void this.drawCmp());
+  }
+
+  private loadImage(url: string): Promise<HTMLImageElement> {
+    const hit = this.images.get(url);
+    if (hit) return Promise.resolve(hit);
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        this.images.set(url, img);
+        resolve(img);
+      };
+      img.onerror = () => reject(new Error("imagen"));
+      img.src = url;
+    });
+  }
+
+  // La cortina recorta la imagen B en su parte izquierda y la dibuja encima de A.
+  private async drawCmp(): Promise<void> {
+    const c = this.s.compare;
+    if (!c || !this.ds) return;
+    const fr = this.frameOf(c.tickId);
+    if (!fr) {
+      this.setOpacity("tw-cmp", 0);
+      return;
+    }
+    const b = this.ds.area.bounds;
+    const lon = b.west + c.split * (b.east - b.west);
+    const fb = fr.bounds;
+    const f = clamp((lon - fb.west) / (fb.east - fb.west), 0, 1);
+    if (f <= 0.002) {
+      this.setOpacity("tw-cmp", 0);
+      return;
+    }
+    const tickAtStart = c.tickId;
+    const img = await this.loadImage(absolute(fr.url)).catch(() => null);
+    if (!img || this.s.compare?.tickId !== tickAtStart) return;
+    const w = Math.max(1, Math.round(img.naturalWidth * f));
+    const cv = document.createElement("canvas");
+    cv.width = w;
+    cv.height = img.naturalHeight;
+    cv.getContext("2d")?.drawImage(img, 0, 0, w, img.naturalHeight, 0, 0, w, img.naturalHeight);
+    const east = fb.west + f * (fb.east - fb.west);
+    const src = this.map.getSource("tw-cmp") as ImageSource | undefined;
+    src?.updateImage({ url: cv.toDataURL("image/png"), coordinates: coordsOf({ ...fb, east }) });
+    this.setOpacity("tw-cmp", fr.quality === "partial" ? 0.7 : 0.92);
+  }
+
+  private bindHandle(): void {
+    const h = this.handle;
+    h.addEventListener("pointerdown", (e) => {
+      this.dragCurtain = true;
+      h.setPointerCapture(e.pointerId);
+    });
+    h.addEventListener("pointermove", (e) => {
+      if (!this.dragCurtain || !this.s.compare || !this.ds) return;
+      const r = this.host.getBoundingClientRect();
+      const ll = this.map.unproject([e.clientX - r.left, e.clientY - r.top]);
+      const b = this.ds.area.bounds;
+      this.setSplit(clamp((ll.lng - b.west) / (b.east - b.west), 0, 1));
+    });
+    h.addEventListener("pointerup", () => {
+      this.dragCurtain = false;
+    });
+    h.addEventListener("keydown", (e) => {
+      if (!this.s.compare) return;
+      const d = e.key === "ArrowLeft" ? -0.05 : e.key === "ArrowRight" ? 0.05 : 0;
+      if (d) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.setSplit(clamp(this.s.compare.split + d, 0, 1));
+      }
+    });
+  }
+
+  private setSplit(v: number): void {
+    if (!this.s.compare) return;
+    this.s.compare = { ...this.s.compare, split: v };
+    this.applyCompare();
+    this.emit();
+  }
+
+  private placeHandle(): void {
+    const c = this.s.compare;
+    if (!c || !this.ds || this.handle.style.display === "none") return;
+    const b = this.ds.area.bounds;
+    const lon = b.west + c.split * (b.east - b.west);
+    const p = this.map.project([lon, (b.south + b.north) / 2]);
+    this.handle.style.transform = `translate(${p.x}px,${p.y}px)`;
+  }
+
+  // camara
+
+  private orbitZoom(): number {
+    const fw = Math.max(80, (this.host?.clientWidth ?? 900) - this.pad.left - this.pad.right);
+    const fh = Math.max(80, (this.host?.clientHeight ?? 700) - this.pad.top - this.pad.bottom);
+    return Math.log2((0.85 * Math.min(fw, fh) * Math.PI) / 512);
+  }
+
+  private dur(ms: number): number {
+    return this.o.reducedMotion ? 0 : ms;
+  }
+
+  private territoryCam(): { center: [number, number]; zoom: number; pitch: number; bearing: number } | null {
+    if (!this.ds) return null;
+    const b = this.ds.area.bounds;
+    const pitch = this.s.tilt;
+    const bearing = this.s.northUp ? 0 : -18;
+    const box: [[number, number], [number, number]] = [[b.west, b.south], [b.east, b.north]];
+    // Si los paneles ocupan casi todo el lienzo (pantalla chica), se achican los márgenes.
+    const W = this.host.clientWidth;
+    const H = this.host.clientHeight;
+    const kx = Math.min(1, Math.max(0, W - 140) / Math.max(1, this.pad.left + this.pad.right + 24));
+    const ky = Math.min(1, Math.max(0, H - 140) / Math.max(1, this.pad.top + this.pad.bottom + 24));
+    const padding: Padding = {
+      top: Math.floor((this.pad.top + 12) * ky),
+      bottom: Math.floor((this.pad.bottom + 12) * ky),
+      left: Math.floor((this.pad.left + 12) * kx),
+      right: Math.floor((this.pad.right + 12) * kx),
+    };
+    let cam: ReturnType<maplibregl.Map["cameraForBounds"]> | undefined;
+    try {
+      cam = this.map.cameraForBounds(box, { padding, bearing, pitch, maxZoom: 14 });
+    } catch {
+      cam = undefined;
+    }
+    if (!cam || !cam.center) {
+      try {
+        cam = this.map.cameraForBounds(box, { bearing, pitch, maxZoom: 14 });
+      } catch {
+        cam = undefined;
+      }
+    }
+    if (!cam || !cam.center) return null;
+    const c = maplibregl.LngLat.convert(cam.center as [number, number]);
+    return { center: [c.lng, c.lat], zoom: cam.zoom ?? 11, pitch, bearing };
+  }
+
+  private go(camera: CameraMode, opt: { fly: boolean; ms: number }): void {
+    try {
+      this.goUnsafe(camera, opt);
+    } catch (e) {
+      // Un fallo de cámara no debe tumbar la interfaz.
+      console.warn("escena: no se pudo mover la cámara", e);
+    }
+  }
+
+  private goUnsafe(camera: CameraMode, opt: { fly: boolean; ms: number }): void {
+    if (!this.ready) return;
+    const map = this.map;
+    const dur = this.dur(opt.ms);
+    const area = this.ds?.area.center ?? [-64.25, -27.8];
+    if (camera === "orbit") {
+      const f = this.s.focus;
+      const center = f ? f.lonlat : area;
+      const z = f ? this.orbitZoom() * 1.0 : this.orbitZoom();
+      map.easeTo({ center: center as [number, number], zoom: z, pitch: 0, bearing: 0, padding: this.pad, duration: dur, essential: true });
+      return;
+    }
+    if (camera === "detail" && this.s.focus) {
+      const z = this.territoryZoom + Math.log2(this.s.focus.zoom || 1.7);
+      map.easeTo({ center: this.s.focus.lonlat as [number, number], zoom: z, pitch: this.s.tilt, bearing: this.s.northUp ? 0 : -18, padding: this.pad, duration: dur, essential: true });
+      return;
+    }
+    const cam = this.territoryCam();
+    if (!cam) return;
+    this.territoryZoom = cam.zoom;
+    const opts = { ...cam, padding: ZERO, duration: dur, essential: true };
+    if (opt.fly) map.flyTo(opts);
+    else map.easeTo(opts);
+  }
+
+  flyTo(camera: CameraMode): Promise<void> {
+    return new Promise((resolve) => {
+      this.flyId += 1;
+      const id = this.flyId;
+      const from = this.s.camera;
+      const dur = camera === "orbit" ? 1800 : 2600;
+      this.s.camera = camera === "territory" || camera === "orbit" ? "approach" : camera;
+      this.emit();
+      const finish = (): void => {
+        if (id !== this.flyId) return resolve();
+        this.s.camera = camera;
+        this.emit();
+        resolve();
+      };
+      if (!this.ready) return finish();
+      this.map.once("moveend", finish);
+      this.go(camera, { fly: from === "orbit" || camera === "orbit", ms: dur });
+      // Sin animación (movimiento reducido o cámara que no se pudo calcular) no habrá moveend.
+      window.setTimeout(() => {
+        if (id === this.flyId && !this.map.isMoving()) {
+          this.map.off("moveend", finish);
+          finish();
+        }
+      }, 120);
+    });
+  }
+
+  resetToOrbit(): Promise<void> {
+    if (this.s.focus) delete this.s.focus;
+    this.applyFocus();
+    return this.flyTo("orbit");
+  }
+
+  set(n: Parameters<SceneApi["set"]>[0], opt: { instant?: boolean } = {}): void {
+    const s = this.s;
+    const tiltChanged = n.tilt !== undefined && n.tilt !== s.tilt;
+    const northChanged = n.northUp !== undefined && n.northUp !== s.northUp;
+    if (n.layer !== undefined) s.layer = n.layer;
+    if (n.tickId !== undefined) s.tickId = n.tickId;
+    if (n.tilt !== undefined) s.tilt = n.tilt;
+    if (n.northUp !== undefined) s.northUp = n.northUp;
+    if ("compare" in n) {
+      if (n.compare) s.compare = { ...n.compare };
+      else delete s.compare;
+    }
+    if ("focus" in n) {
+      if (n.focus) s.focus = { ...n.focus };
+      else delete s.focus;
+    }
+    if (n.camera && n.camera !== s.camera) {
+      if (opt.instant) {
+        s.camera = n.camera;
+        this.whenReady(() => {
+          const cam = this.territoryCam();
+          if (cam && n.camera !== "orbit") {
+            this.territoryZoom = cam.zoom;
+            this.map.jumpTo({ ...cam, padding: ZERO });
+          } else this.go(n.camera as CameraMode, { fly: false, ms: 0 });
+        });
+      } else if (n.camera === "detail" || n.camera === "territory") {
+        this.s.camera = n.camera;
+        this.whenReady(() => this.go(n.camera as CameraMode, { fly: false, ms: 700 }));
+      } else void this.flyTo(n.camera);
+    } else if ((tiltChanged || northChanged) && (s.camera === "territory" || s.camera === "detail")) {
+      this.whenReady(() => this.go(s.camera, { fly: false, ms: 700 }));
+    } else if ("focus" in n && s.camera === "orbit") {
+      this.whenReady(() => this.go("orbit", { fly: false, ms: 900 }));
+    }
+    this.whenReady(() => {
+      this.applyFrame();
+      this.applyCompare();
+      this.applyFocus();
+    });
+    this.emit();
+  }
+
+  getState(): SceneState {
+    const s = this.s;
+    return { ...s, compare: s.compare ? { ...s.compare } : undefined, focus: s.focus ? { ...s.focus } : undefined };
+  }
+
+  status(): { online: boolean; terrain: boolean; basemap: boolean } {
+    return { online: this.o.online, terrain: this.o.terrain, basemap: this.o.basemap };
+  }
+
+  onChange(cb: (s: SceneState) => void): () => void {
+    this.cbC.add(cb);
+    return () => this.cbC.delete(cb);
+  }
+
+  onPick(cb: (id: string | null) => void): () => void {
+    this.cbP.add(cb);
+    return () => this.cbP.delete(cb);
+  }
+
+  private emit(): void {
+    this.updateRing();
+    const st = this.getState();
+    this.cbC.forEach((cb) => cb(st));
+  }
+
+  private cbMove(): void {
+    // La tarjeta de detalle se reancla sola; no hay estado que emitir.
+  }
+
+  setPadding(p: Padding): void {
+    this.pad = { ...p };
+    this.host?.style.setProperty("--tw-pad-b", p.bottom + "px");
+    this.host?.style.setProperty("--tw-pad-r", p.right + "px");
+    if (!this.ready) return;
+    const cam = this.s.camera;
+    if (cam === "orbit") this.go("orbit", { fly: false, ms: 300 });
+    else if (cam === "territory" || cam === "detail") this.go(cam, { fly: false, ms: 300 });
+  }
+
+  setReducedMotion(on: boolean): void {
+    this.o.reducedMotion = on;
+  }
+
+  project(ll: [number, number]): { x: number; y: number } | null {
+    if (!this.ready) return null;
+    const p = this.map.project(ll);
+    return { x: p.x, y: p.y };
+  }
+
+  private touch(): void {
+    this.interacting = true;
+    window.clearTimeout(this.resumeT);
+    this.resumeT = window.setTimeout(() => (this.interacting = false), 4000);
+  }
+
+  // El globo gira despacio en orbita, salvo que haya movimiento reducido o se lo esté tocando.
+  private loop = (t: number): void => {
+    this.raf = requestAnimationFrame(this.loop);
+    const dt = Math.min(0.1, (t - (this.lastT || t)) / 1000);
+    this.lastT = t;
+    if (!this.ready || this.s.camera !== "orbit" || this.interacting || this.s.focus || this.o.reducedMotion) return;
+    if (this.map.isMoving()) return;
+    const c = this.map.getCenter();
+    this.map.setCenter([c.lng + 3 * dt, c.lat]);
+  };
+}

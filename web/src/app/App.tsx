@@ -188,7 +188,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const online = typeof navigator === "undefined" ? true : navigator.onLine;
     const status: Status = this.props.allowScenarios
       ? { online: sc !== "sin-conexion", terrain: sc !== "sin-relieve", basemap: sc !== "sin-conexion" }
-      : { online, terrain: false, basemap: online };
+      : { online, terrain: this.props.realTerrain && online, basemap: online };
     this.provider = this.props.makeProvider(sc);
     this.scene = this.props.makeScene({
       ...status,

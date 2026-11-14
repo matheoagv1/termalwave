@@ -96,6 +96,40 @@ body {
   background: var(--sel) !important;
 }
 
+/* La atribución del mapa queda arriba de la línea de tiempo y al lado de la ficha. */
+[data-tw-theme] .maplibregl-ctrl-bottom-right {
+  bottom: var(--tw-pad-b, 0px);
+  right: var(--tw-pad-r, 0px);
+}
+
+[data-tw-theme] .maplibregl-ctrl-attrib {
+  background: var(--panel) !important;
+  color: var(--fg2);
+  font-size: 10px;
+}
+
+[data-tw-theme] .maplibregl-ctrl-attrib a {
+  color: var(--acc-fg);
+}
+
+.tw-ring {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--acc);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: tw-ring 2s ease-out infinite;
+}
+
+@keyframes tw-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(240, 160, 20, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(240, 160, 20, 0);
+  }
+}
+
 [data-tw-theme] .tw-pulse {
   animation: tw-pulse 1.4s infinite;
 }

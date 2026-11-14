@@ -53,6 +53,8 @@ export type AppProps = {
   makeScene: (opts: SceneOptions & Status) => SceneApi;
   // en modo real el escenario siempre es "normal"
   allowScenarios: boolean;
+  // la escena real puede mostrar relieve si hay conexion
+  realTerrain: boolean;
   theme: "dark" | "light";
   reducedMotion: boolean;
 };
