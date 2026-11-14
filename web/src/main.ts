@@ -188,6 +188,7 @@ function createOverlay(map: MapLibreMap, web: AppConfig["web"]) {
   let token = 0;
   let pending: ((event: MapSourceDataEvent) => void) | null = null;
 
+  let opacity = web.overlay_opacity;
   const fadeMs = (): number => (reducedMotion.matches ? 0 : web.overlay_fade_ms);
 
   const cancelPending = (): void => {
@@ -224,6 +225,10 @@ function createOverlay(map: MapLibreMap, web: AppConfig["web"]) {
   };
 
   return {
+    setLevel(value: number): void {
+      opacity = value;
+      if (hasFront) setOpacity(front, opacity);
+    },
     /** Hay que llamarlo cuando cambia el estilo base: se pierden fuentes y capas. */
     reset(): void {
       cancelPending();
@@ -250,7 +255,7 @@ function createOverlay(map: MapLibreMap, web: AppConfig["web"]) {
             });
           }
         }
-        setOpacity(target, web.overlay_opacity);
+        setOpacity(target, opacity);
         if (hasFront && target !== front) setOpacity(front, 0);
         front = target;
         hasFront = true;
@@ -519,6 +524,34 @@ async function init(): Promise<void> {
     layersUi.setLayer(layerId);
     applyFrame();
   });
+
+  const aoiEl = document.querySelector<HTMLElement>("#aoi");
+  const opacityEl = document.querySelector<HTMLInputElement>("#opacity");
+  const opacityLabelEl = document.querySelector<HTMLElement>("#opacity-label");
+  const resetEl = document.querySelector<HTMLButtonElement>("#reset-view");
+  if (aoiEl) {
+    if (cfg.aoi.name) aoiEl.textContent = COPY.aoi(cfg.aoi.name);
+    else aoiEl.hidden = true;
+  }
+  if (opacityLabelEl) opacityLabelEl.textContent = COPY.opacity;
+  if (opacityEl) {
+    opacityEl.value = String(web.overlay_opacity);
+    opacityEl.addEventListener("input", () => {
+      overlay.setLevel(Number(opacityEl.value));
+    });
+  }
+  if (resetEl) {
+    resetEl.textContent = COPY.resetView;
+    resetEl.addEventListener("click", () => {
+      map.fitBounds(
+        [
+          [cfg.aoi.west, cfg.aoi.south],
+          [cfg.aoi.east, cfg.aoi.north],
+        ],
+        { padding: web.fit_padding_px, animate: !reducedMotion.matches },
+      );
+    });
+  }
 
   map.on("style.load", () => {
     styleReady = true;
