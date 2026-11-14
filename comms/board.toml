@@ -20,9 +20,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T007"
 owner = "carne"
-status = "in_progress"
+status = "done"
 title = "Data sources panel reading provenance from app-config"
-notes = "Pestana Fuentes en la ficha, leyendo provenance y data_sources de app-config."
+notes = "Pestana Fuentes en la ficha (provenance y data_sources de app-config). Verificada en preview."
 updated = "2026-11-14"
 
 [[task]]
