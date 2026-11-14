@@ -1,46 +1,46 @@
-# NOW — globe-first (Gods Eye View north star)
+# NOW — preview + github
 
-Updated: 2026-11-14. Producto = datos en el **globo 3D**. UI 2D = controles opcionales.
+Updated: 2026-11-14. Globo MapLibre en master. Preview Cloudflare + GitHub privado en curso.
 
-## Read this turn (and almost nothing else)
+## Read this turn
 
-1. This file (`comms/NOW.md`)
-2. `comms/board.toml` (open tasks only)
-3. New files in your `comms/<rol>/inbox/` (then archive them)
-4. `agents/<rol>/AGENTS.md` only if ownership is unclear
+1. This file
+2. `comms/board.toml` (open only)
+3. New inbox → archive
+4. Role AGENTS only if ownership unclear
 
-## Do not open unless blocked
+## Skip unless blocked
 
-- `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`
-- `references/` (Gods Eye View = referencia de codigo, no doc de turno), `vendor/`, brand binaries
-- Full `AGENTS.md` jury tables
+archives, board.done, STEERS.archive, references/, vendor/
 
-## North star (todos)
+## North star
 
-- Escena principal: **globo MapLibre**, capas amoldadas al terreno (no flat map como default).
-- HUD 2D: elegir capa, rango temporal, fuentes, parametros. Colapsable / no tapa el globo.
-- Analisis en el globo: hotspots, comparar fechas, leer estado del lugar y factores (radar, suelo, fuego, clima). Predicciones solo con dato/serie real; copy sin inventar certeza.
-- Norte visual: `references/` Gods Eye View (codigo). No copiar branding ajeno.
+Globo 3D primero. UI 2D = controles. Capas drapadas.
 
-## Open tasks
+## Done
 
-- **T010** @carne [in_progress] **P0** MapLibreScene globo + territorio + cortina (`SceneApi`)
-- **T011** @vps [open] dataset.json segments/series/hotspots (alimenta capas drapadas)
-- **T003** @cricri [open] monigote PNG
-- **T008** @cricri [open] copy capas/fuentes (habla del fenomeno en el territorio)
-- **T012** @cricri [open] trades.json lecturas por oficio (analisis en escena)
+- **T010** carne MapLibreScene → merged `master` (01163ca)
 
-## Focus by role
+## Open
 
-- **carne (P0)**: retomar T010 ya. MockScene sale; MapLibre 5.x globe + image source drapado por `FrameRef.bounds`. Paneles = chrome, no escena.
-- **vps**: T011 contract → PNG/JSON listos para `setDataset`; no bloquear carne.
-- **cricri**: monigote + textos que ayuden a inferir estado/factores **mirando el globo**, sin jurado en UI.
+- **T014** @vps [in_progress] Workers preview + login/registro (`preview/`)
+- **T013** @vps [blocked] GitHub private (falta `gh auth`)
+- **T011** @vps dataset.json
+- **T003/T008/T012** @cricri (sin commits aun en worktree)
+
+## Cricri status
+
+Worktree `work/cricri` al dia con master. Sin outbox ni PNG/trades nuevos. Inbox con foco globe-first + status-check.
+
+## Deploy notes (vps)
+
+1. Usuario aprueba GitHub device login → `gh repo create` private → push.
+2. `CLOUDFLARE_API_TOKEN` (Workers+D1) → `preview/README.md` → D1 + secret invite + `wrangler deploy`.
+3. Luego conectar repo a Workers Builds para previews por push.
 
 ## Commands
 
 ```bash
 python3 scripts/comms.py status
-python3 scripts/comms.py notify --from <rol> --to <rol|todos> --topic … --body '…'
-python3 scripts/comms.py task set T00N --status done
-python3 scripts/comms.py archive --name <inbox-file.md>
+python3 scripts/comms.py notify --from vps --to … --topic … --body '…'
 ```

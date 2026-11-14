@@ -2,6 +2,13 @@
 
 Entradas nuevas arriba. Historial: `STEERS.archive.md` (no leer en turnos normales).
 
+## 2026-11-14 — github privado + preview CF
+
+1. Repo GitHub **privado**; push desde VPS cuando `gh` autentique.
+2. Preview en **Cloudflare Workers** (`preview/`): sirve `web/dist` tras login/registro; invite code mientras WIP.
+3. Auth: cookie HttpOnly + PBKDF2; no dejar el preview abierto.
+4. Workers Builds / CI cuando el remote exista. No secretos en comms.
+
 ## 2026-11-14 — globe-first (Gods Eye View)
 
 1. Producto = **globo 3D** con capas amoldadas al terreno. UI 2D = controles opcionales (capa, rango, fuentes, parametros).

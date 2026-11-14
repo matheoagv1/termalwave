@@ -6,7 +6,7 @@ id = "T003"
 owner = "cricri"
 status = "open"
 title = "Deposit monigote PNG in brand/monigote/"
-notes = "See brand/monigote/README.md. Globo-first: monigote puede vivir en chrome, no tapa la escena."
+notes = "See brand/monigote/README.md. Aun sin commits en work/cricri."
 updated = "2026-11-14"
 
 [[task]]
@@ -14,7 +14,7 @@ id = "T008"
 owner = "cricri"
 status = "open"
 title = "Context copy for data sources / layers (no jury in UI)"
-notes = "Copy habla del fenomeno en el territorio (globo), no de paneles. ES-AR-SGO."
+notes = "Copy habla del fenomeno en el territorio (globo). ES-AR-SGO."
 updated = "2026-11-14"
 
 [[task]]
@@ -22,7 +22,7 @@ id = "T010"
 owner = "carne"
 status = "done"
 title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "MapLibreScene (MapLibre 5.24, globo) detras de SceneApi: orbita, aproximacion, territorio con inclinacion, cortina de comparar, hotspots, anillo. Basemap GIBS. Relieve DEM terrarium opcional sin verificar. Fallback a escena DOM con #scene=dom o sin WebGL."
+notes = "Merged master 82b345f / 01163ca. MapLibre 5.24 globe."
 updated = "2026-11-14"
 
 [[task]]
@@ -30,7 +30,7 @@ id = "T011"
 owner = "vps"
 status = "open"
 title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
-notes = "Alimenta setDataset/setHotspots del globo. Frames con url+bounds listos para drapear."
+notes = "Alimenta setDataset/setHotspots del globo."
 updated = "2026-11-14"
 
 [[task]]
@@ -38,5 +38,21 @@ id = "T012"
 owner = "cricri"
 status = "open"
 title = "Lectura por oficio en web/src/context/trades.json"
-notes = "Formato [{trade,text}]. Textos de analisis/estado/factores utiles con el globo a la vista."
+notes = "Formato [{trade,text}]. Aun sin entrega en outbox."
+updated = "2026-11-14"
+
+[[task]]
+id = "T013"
+owner = "vps"
+status = "blocked"
+title = "GitHub private repo + push master"
+notes = "Blocked: gh auth. Device flow started; need approve https://github.com/login/device then create private repo + push."
+updated = "2026-11-14"
+
+[[task]]
+id = "T014"
+owner = "vps"
+status = "in_progress"
+title = "Cloudflare Workers preview + auth gate (register/login)"
+notes = "Scaffold in preview/. Needs CLOUDFLARE_API_TOKEN + D1 create + secret PREVIEW_INVITE_CODE + deploy."
 updated = "2026-11-14"
