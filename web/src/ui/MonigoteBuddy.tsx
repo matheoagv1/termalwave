@@ -39,17 +39,17 @@ export function MonigoteBuddy({
         <div
           role="status"
           style={s(
-            "width:min(280px,calc(100vw - 32px));background:var(--panel-solid);border:1px solid var(--line2);padding:12px 12px 10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)",
+            "width:min(300px,calc(100vw - 32px));box-sizing:border-box;border:18px solid transparent;border-image:url(./ui/bubble.png) 44 fill / 18px stretch;padding:0 2px;display:flex;flex-direction:column;gap:8px;color:#0b1230;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));margin-bottom:-4px",
           )}
         >
-          <p style={s("margin:0;font:13px/1.4 var(--sans);color:var(--fg);text-wrap:pretty")}>{tip}</p>
+          <p style={s("margin:0;font:13px/1.4 var(--sans);color:#0b1230;text-wrap:pretty")}>{tip}</p>
           <div style={s("display:flex;gap:6px;justify-content:flex-end")}>
             <button
               type="button"
               className="tw-hov"
               onClick={onSoundToggle}
               aria-pressed={sound}
-              style={s("height:32px;padding:0 10px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:11px var(--mono)")}
+              style={s("height:32px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--mono)")}
             >
               {soundLabel}
             </button>
@@ -57,12 +57,15 @@ export function MonigoteBuddy({
               type="button"
               className="tw-hov"
               onClick={onClose}
-              style={s("height:32px;padding:0 10px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:11px var(--sans)")}
+              style={s("height:32px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--sans)")}
             >
               {closeLabel}
             </button>
           </div>
         </div>
+      )}
+      {open && tip && (
+        <img src="./ui/tailR.png" alt="" aria-hidden="true" width={28} style={s("margin:-10px 22px 0 0;image-rendering:pixelated;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))")} />
       )}
       <button
         type="button"
