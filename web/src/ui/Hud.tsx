@@ -533,30 +533,34 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
         {v.mOpenOrDesk && (
           <>
             <div role="tablist" style={s("display:flex;align-items:stretch;flex:none")}>
-              <button
-                role="tab"
-                aria-selected={v.isTabArea}
-                onClick={() => a.set({ tab: "area" })}
-                style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabAreaLine};background:transparent;cursor:pointer`)}
-              >
-                {t.card.tabArea}
-              </button>
-              <button
-                role="tab"
-                aria-selected={v.isTabRead}
-                onClick={() => a.set({ tab: "read" })}
-                style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabReadLine};background:transparent;cursor:pointer`)}
-              >
-                {t.card.tabReading}
-              </button>
-              <button
-                role="tab"
-                aria-selected={v.isTabSources}
-                onClick={() => a.set({ tab: "sources" })}
-                style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabSourcesLine};background:transparent;cursor:pointer`)}
-              >
-                {t.card.tabSources}
-              </button>
+              {v.cardOpen && (
+                <>
+                  <button
+                    role="tab"
+                    aria-selected={v.isTabArea}
+                    onClick={() => a.set({ tab: "area" })}
+                    style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabAreaLine};background:transparent;cursor:pointer`)}
+                  >
+                    {t.card.tabArea}
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={v.isTabRead}
+                    onClick={() => a.set({ tab: "read" })}
+                    style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabReadLine};background:transparent;cursor:pointer`)}
+                  >
+                    {t.card.tabReading}
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={v.isTabSources}
+                    onClick={() => a.set({ tab: "sources" })}
+                    style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabSourcesLine};background:transparent;cursor:pointer`)}
+                  >
+                    {t.card.tabSources}
+                  </button>
+                </>
+              )}
               <button
                 className="tw-hov"
                 onClick={() => (v.isM ? a.set({ sheet: !a.state.sheet }) : a.set({ ficha: !a.state.ficha }))}
@@ -676,9 +680,11 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
             `pointer-events:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:${lay.inBg};border:${lay.inBd};backdrop-filter:${lay.inBl};flex:none`,
           )}
         >
-          <div style={s("display:flex;justify-content:space-between;font:11px var(--mono);color:var(--fg2)")}>
-            <span>{t.legend.title}</span>
-            <span style={s("white-space:nowrap")}>
+          <div style={s("display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--fg2)")}>
+            <span className="tw-pixel" style={s("font-size:8px;line-height:1.5")}>
+              {t.legend.title}
+            </span>
+            <span style={s("font:11px var(--mono);white-space:nowrap")}>
               {leg.label} · {leg.unit}
             </span>
           </div>
