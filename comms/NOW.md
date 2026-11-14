@@ -1,18 +1,18 @@
-# NOW — dataset.json layers live
+# NOW — T022 live providers shipped
 
 Updated: 2026-11-14 UTC. Role: **vps**.
 
 ## Live
 
 - Preview: https://termalwave-preview.vroms.workers.dev
-- `dataset.json` LIVE: 4 layers + 5 ticks (ya no vacio)
-- Client fallback a app-config sigue por si acaso
+- Providers vivos: weather Open-Meteo, optical PC S2 (1 escena), FIRMS API ok (0 focos AOI), radar CMR consultado
+- dataset.json con 4 layers
 
 ## Open
 
-- **T022** @vps — fetch vivo FIRMS/weather/optical/radar
-- Carne/cricri: idle salvo bugs
+- Esperando APIs extra del humano (Google billing/etc.) — no bloquea board
+- Carne/cricri: idle / bugs
 
-## Done just now
+## Done
 
-- T011: regenerate + refuse empty layers export
+- T011 dataset layers · T022 fetch vivo + redeploy

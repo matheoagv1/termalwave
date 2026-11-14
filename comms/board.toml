@@ -69,9 +69,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T022"
 owner = "vps"
-status = "in_progress"
+status = "done"
 title = "Conectar fetch vivo FIRMS/weather/optical/radar y enriquecer dataset.json"
-notes = "FIRMS day_range<=5 OK (0 focos en AOI ultimos 5d). Open-Meteo chunk+clamp hoy: 3240 dias. Optical ok. dataset.json refresheado. Falta redeploy preview + QA cricri T021."
+notes = "Live run OK: weather 3240d, optical 1 scene selected, FIRMS 0 in AOI (API ok day_range5), radar CMR 0 granules window. Preview redeployed 18069b61."
 updated = "2026-11-14"
 
 [[task]]
