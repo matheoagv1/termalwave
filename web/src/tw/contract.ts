@@ -67,6 +67,8 @@ export interface Hotspot {
   title: string;
   value: string;
   delta?: string;
+  // valor numerico para armar la mini serie del punto mientras se mueve el tiempo
+  sample?: number;
 }
 
 export interface SeriesPoint { tickId: string; date: Iso; value: number | null }

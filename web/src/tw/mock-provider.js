@@ -190,7 +190,15 @@ export class MockProvider {
     const prevId = this.order[i - 1];
     return SPOTS[layer].map(([title, fx, fy, dev], k) => {
       const v = at(tickId, dev);
-      const h = { id: `${layer}-${k}`, layer, tickId, title, lonlat: [b.west + fx * (b.east - b.west), b.north - fy * (b.north - b.south)], value: F.value(v, L.unit, L.decimals) };
+      const h = {
+        id: `${layer}-${k}`,
+        layer,
+        tickId,
+        title,
+        lonlat: [b.west + fx * (b.east - b.west), b.north - fy * (b.north - b.south)],
+        value: F.value(v, L.unit, L.decimals),
+        sample: v,
+      };
       if (prevId) h.delta = F.delta(v - at(prevId, dev), L.unit, L.decimals);
       return h;
     });
