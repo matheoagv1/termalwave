@@ -378,7 +378,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       ? { top: 112, left: 8, right: 60, bottom: 52 + S.tlH + 20 }
       : {
           top: 64,
-          left: S.dockOpen ? 236 : 56,
+          left: S.dockOpen ? 236 : 48,
           right: S.ficha ? 300 : 56,
           bottom: S.tlH + 28,
         };
