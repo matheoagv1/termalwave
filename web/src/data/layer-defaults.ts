@@ -1,8 +1,16 @@
 import type { LayerDef } from "../tw/contract";
+import layersCopy from "../context/layers.json";
 
-// Interino: hasta que el backend entregue unidad, rango, rampa y nota por
-// capa en el dataset, se completan desde acá según el id. Los ids que no
-// estén acá reciben una rampa gris genérica.
+// Interino: unidad/rango/rampa locales; la nota de capa sale de
+// web/src/context/layers.json (cricri) cuando existe.
+type LayersCopy = {
+  capas?: Record<string, string>;
+  fuentes?: Record<string, string>;
+  aviso?: string;
+};
+
+const copy = layersCopy as LayersCopy;
+
 const DEFAULTS: Record<string, Omit<LayerDef, "id" | "label">> = {
   radar: {
     unit: "dB",
@@ -73,5 +81,15 @@ const LABELS: Record<string, string> = {
 };
 
 export function layerDef(id: string, label: string): LayerDef {
-  return { id, label: LABELS[id] ?? label, ...(DEFAULTS[id] ?? GENERIC) };
+  const base = { id, label: LABELS[id] ?? label, ...(DEFAULTS[id] ?? GENERIC) };
+  const fromContext = copy.capas?.[id];
+  return fromContext ? { ...base, note: fromContext } : base;
+}
+
+export function sourceNote(provider: string): string | undefined {
+  return copy.fuentes?.[provider];
+}
+
+export function layersAviso(): string | undefined {
+  return copy.aviso;
 }

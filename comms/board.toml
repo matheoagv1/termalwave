@@ -2,57 +2,25 @@
 # status: open | in_progress | blocked | done | cancelled
 
 [[task]]
-id = "T003"
-owner = "cricri"
-status = "done"
-title = "Deposit monigote PNG in brand/monigote/"
-notes = "monigote.png + prototipo in brand/monigote/"
-updated = "2026-11-14"
-
-[[task]]
-id = "T008"
-owner = "cricri"
-status = "open"
-title = "Context copy for data sources / layers (no jury in UI)"
-notes = "Copy habla del fenomeno en el territorio (globo). ES-AR-SGO."
-updated = "2026-11-14"
-
-[[task]]
-id = "T010"
-owner = "carne"
-status = "done"
-title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "Merged master 82b345f / 01163ca. MapLibre 5.24 globe."
-updated = "2026-11-14"
-
-[[task]]
 id = "T011"
 owner = "vps"
 status = "open"
 title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
-notes = "Alimenta setDataset/setHotspots del globo."
+notes = "Alimenta setDataset/setHotspots. UI ya adapta app-config mientras tanto."
 updated = "2026-11-14"
 
 [[task]]
-id = "T012"
-owner = "cricri"
+id = "T015"
+owner = "carne"
 status = "open"
-title = "Lectura por oficio en web/src/context/trades.json"
-notes = "Formato [{trade,text}]. Aun sin entrega en outbox."
+title = "Integrar monigote desde brand/monigote en entrada y carga"
+notes = "Assets en brand/monigote/ (PNG + prototipo). Consumir desde brand/, no copiar a mano."
 updated = "2026-11-14"
 
 [[task]]
-id = "T013"
-owner = "vps"
+id = "T016"
+owner = "carne"
 status = "done"
-title = "GitHub private repo + push master"
-notes = "https://github.com/matheoagv1/termalwave (private)"
-updated = "2026-11-14"
-
-[[task]]
-id = "T014"
-owner = "vps"
-status = "done"
-title = "Cloudflare Workers preview + auth gate (register/login)"
-notes = "https://termalwave-preview.vroms.workers.dev auth+D1 live"
+title = "HUD plegable (dock/timeline/ficha + tecla H); escena DOM solo fallback sin WebGL"
+notes = "Merged master 3f8cbb3 + rebuild. Globe-first."
 updated = "2026-11-14"
