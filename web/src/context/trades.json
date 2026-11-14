@@ -1,0 +1,10 @@
+[
+  {"trade":"Agricultura","text":"Compará fechas y capas para ubicar cambios que merezcan una recorrida. La respuesta del radar no determina por sí sola el rendimiento, las plagas ni la cantidad de agua disponible para el cultivo."},
+  {"trade":"Ganadería y pasturas","text":"Revisá cómo cambia la cobertura del terreno entre estaciones y contrastá la imagen con lluvias y observaciones en el potrero. La cantidad y la calidad del forraje requieren mediciones locales."},
+  {"trade":"Gestión del agua","text":"Compará la extensión del agua y las condiciones del territorio entre fechas. Las imágenes muestran lo observado en cada pasada; los niveles, caudales y tiempos de drenaje necesitan otras fuentes."},
+  {"trade":"Ambiente y conservación","text":"Buscá cambios persistentes de cobertura y zonas húmedas, y contrastalos con registros del área. Una imagen puede orientar una visita, pero no identifica por sí sola especies ni causas de pérdida de hábitat."},
+  {"trade":"Gestión de emergencias","text":"Revisá la fecha y la cobertura de las imágenes para ubicar sectores que conviene inspeccionar después de un evento. Las pasadas no muestran todo lo ocurrido entre observaciones ni reemplazan los avisos oficiales."},
+  {"trade":"Ordenamiento territorial","text":"Compará el territorio entre fechas y relacioná los cambios observados con mapas de uso del suelo y datos locales. La imagen no establece límites de propiedad ni determina la legalidad de una actividad."},
+  {"trade":"Infraestructura","text":"Examiná los cambios alrededor de caminos e instalaciones junto con registros de mantenimiento y observaciones de campo. Una anomalía en una capa no demuestra daño estructural."},
+  {"trade":"Ciencia y educación","text":"Revisá la fuente, la fecha, la escala y la cobertura antes de comparar capas. Usá las series para formular preguntas que puedan contrastarse con mediciones independientes."}
+]
