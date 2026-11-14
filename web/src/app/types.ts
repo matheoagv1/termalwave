@@ -27,6 +27,7 @@ export type AppState = {
   H: number;
   tlH: number;
   hotspots: Hotspot[];
+  spotTrail: Record<string, Array<{ tickId: string; v: number }>>;
   series: Record<string, SeriesPoint[]>;
   pick: string | null;
   pickPos: { x: number; y: number } | null;

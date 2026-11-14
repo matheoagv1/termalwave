@@ -229,7 +229,13 @@ export const T = {
     peek: "Valor en este momento",
   },
 
-  detail: { close: "Cerrar tarjeta", layer: "Capa", at: "Momento", delta: "Cambio" },
+  detail: {
+    close: "Cerrar tarjeta",
+    layer: "Capa",
+    at: "Momento",
+    delta: "Cambio",
+    scrub: "Mové la línea de tiempo para ver cómo cambia este punto.",
+  },
 
   timeline: {
     region: "Línea de tiempo",
@@ -282,6 +288,7 @@ export const T = {
       ["O", "Volver a la Tierra completa"],
       ["1 · 2", "Vista de campo o urbana"],
       ["H", "Ocultar o mostrar la interfaz"],
+      ["P", "Siguiente punto de cambio"],
       ["Esc", "Cerrar tarjeta, ficha o ayuda"],
       ["?", "Mostrar u ocultar esta ayuda"],
     ],

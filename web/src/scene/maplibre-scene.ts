@@ -150,6 +150,12 @@ export class MapLibreScene implements SceneApi {
       const msg = String((e.error as Error | undefined)?.message ?? "").toLowerCase();
       if (msg.includes("tile") || msg.includes("dem")) this.degrade();
     });
+    this.map.on("click", (ev) => {
+      if (this.s.camera !== "detail") return;
+      const t = ev.originalEvent?.target;
+      if (t instanceof HTMLElement && t.closest("[data-spot]")) return;
+      this.cbP.forEach((cb) => cb(null));
+    });
     this.raf = requestAnimationFrame(this.loop);
   }
 
