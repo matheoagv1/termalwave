@@ -4,9 +4,9 @@
 [[task]]
 id = "T003"
 owner = "cricri"
-status = "open"
+status = "done"
 title = "Deposit monigote PNG in brand/monigote/"
-notes = "See brand/monigote/README.md. Aun sin commits en work/cricri."
+notes = "monigote.png + prototipo in brand/monigote/"
 updated = "2026-11-14"
 
 [[task]]
