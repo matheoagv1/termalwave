@@ -78,6 +78,16 @@ export const T = {
   layers: { title: "Capas", gapHere: "Sin imagen en este punto", partial: "Imagen parcial" },
   legend: { title: "Leyenda" },
 
+  // agregado: la interfaz es opcional frente al globo
+  hud: {
+    hide: "Ocultar interfaz",
+    show: "Mostrar interfaz",
+    dockClose: "Plegar capas",
+    dockOpen: "Desplegar capas",
+    tlClose: "Plegar línea de tiempo",
+    tlOpen: "Desplegar línea de tiempo",
+  },
+
   // agregado: pestana Fuentes de la ficha
   sources: {
     lead: "De dónde salen los datos de esta área y cuáles se usaron.",
@@ -205,6 +215,7 @@ export const T = {
       ["Espacio", "Reproducir o pausar"],
       ["C", "Comparar"],
       ["O", "Volver a la Tierra completa"],
+      ["H", "Ocultar o mostrar la interfaz"],
       ["Esc", "Cerrar tarjeta, ficha o ayuda"],
       ["?", "Mostrar u ocultar esta ayuda"],
     ],

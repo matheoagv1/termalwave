@@ -46,6 +46,10 @@ export type AppState = {
   trade: number;
   explore: boolean;
   status: Status;
+  // la interfaz 2D es opcional: se pliega por partes o se oculta entera
+  dockOpen: boolean;
+  tlOpen: boolean;
+  immersive: boolean;
 };
 
 export type AppProps = {

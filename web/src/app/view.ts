@@ -40,6 +40,9 @@ export function buildView(m: Model) {
   const hasDs = !!ds;
   const err = S.err;
   const hud = (cam === "territory" || cam === "detail") && !err;
+  // la interfaz 2D es opcional: en modo inmersivo solo queda la escena y la cámara
+  const chrome = hud && !S.immersive;
+  const imm = S.immersive;
   const layers: LayerDef[] = ds ? ds.layers : [];
   const L = layers.find((l) => l.id === sc.layer) ?? null;
   const fa: Flat | null = (ds && m.flat[m.idx[sc.tickId] ?? -1]) || null;
@@ -68,11 +71,11 @@ export function buildView(m: Model) {
     camL: isM ? "auto" : "50%",
     camR: isM ? "8px" : "auto",
     camT: isM ? "104px" : "auto",
-    camB: isM ? "auto" : S.tlH + 24 + "px",
+    camB: isM ? "auto" : imm ? "12px" : S.tlH + 24 + "px",
     tlL: pad + "px",
     tlR: pad + "px",
     tlB: isM ? "52px" : "12px",
-    toastB: (isM ? 52 : 12) + S.tlH + 12 + "px",
+    toastB: imm ? "12px" : (isM ? 52 : 12) + S.tlH + 12 + "px",
     entL: isM ? "8px" : "12px",
     entR: isM ? "8px" : "auto",
     entT: isM ? "auto" : "50%",
@@ -95,7 +98,7 @@ export function buildView(m: Model) {
   };
 
   // busqueda
-  const searchField = !isM || S.searchOpen;
+  const searchField = (!isM || S.searchOpen) && !imm;
   const showResults = searchField && !!S.q.trim() && (S.results.length > 0 || S.searched);
   const results = S.results.map((r) => ({ label: r.label, go: () => m.goResult(r) }));
   const st = S.status;
@@ -461,8 +464,12 @@ export function buildView(m: Model) {
   return {
     theme, t: T, lay, isM, isD: !isM,
     hasDs, noDs: !hasDs && !err, areaName: ds ? ds.area.name : "", mock,
-    brandOn: !isM || !S.searchOpen, showName: !isM && hasDs,
-    searchField, searchBtn: isM && !S.searchOpen, searchClose: isM && S.searchOpen,
+    brandOn: (!isM || !S.searchOpen) && !imm, showName: !isM && hasDs,
+    searchField, searchBtn: isM && !S.searchOpen && !imm, searchClose: isM && S.searchOpen && !imm,
+    immersive: imm, dockOpen: S.dockOpen, tlOpen: S.tlOpen, hudToggleOn: hud,
+    hudToggleLabel: imm ? T.hud.show : T.hud.hide,
+    dockToggleLabel: S.dockOpen ? T.hud.dockClose : T.hud.dockOpen,
+    tlToggleLabel: S.tlOpen ? T.hud.tlClose : T.hud.tlOpen,
     q: S.q, results, showResults, noResults: S.searched && S.results.length === 0,
     noResultsText: T.search.none(S.q.trim()),
     statusColor: online ? "var(--ok)" : "var(--warn)",
@@ -473,7 +480,7 @@ export function buildView(m: Model) {
     showExplore: cam === "orbit" && S.explore && !err,
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
-    dockOn: hud && !isM, chipsOn: hud && isM, layerItems,
+    dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems,
     camOn: hud, northOn: !sc.northUp,
     northLabel: sc.northUp ? T.camera.northUp : T.camera.northFree,
     northDeg: sc.northUp ? 0 : -18,
@@ -483,8 +490,8 @@ export function buildView(m: Model) {
     compareOn, compareBanner: compareOn && fa && fb ? T.compare.banner(nameOf(fb), nameOf(fa)) : "",
     mixed: compareOn && !!fa && !!fb && fa.seg.kind !== fb.seg.kind,
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
-    cardOn: hud, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
-    legendOn: hud && (!isM || S.sheet) && !!L,
+    cardOn: chrome, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
+    legendOn: chrome && (!isM || S.sheet) && !!L,
     isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
     tabSourcesLine: S.tab === "sources" ? "var(--acc-fg)" : "transparent",
     sources, sourcesAt, noSources: sources.length === 0,
@@ -499,7 +506,7 @@ export function buildView(m: Model) {
     sample: mock && !!(ds && ds.context.length),
     noTrades: !!ds && ds.context.length === 0, leg,
     dc, toast: S.toast,
-    showKey: W >= 1240, tlOn: hud, tlLoading: !ds && !err, tlReady: !!ds, tl,
+    showKey: W >= 1240, tlOn: chrome, tlLoading: !ds && !err, tlReady: !!ds, tl,
     playing: S.playing,
     scopeAll: S.scope === "all", scopeSeg: S.scope === "seg",
     scopeAllBg: S.scope === "all" ? "var(--sel)" : "transparent",

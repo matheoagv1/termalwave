@@ -16,6 +16,17 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
     <div style={s("position:absolute;inset:0;pointer-events:none")}>
       <TopBar v={v} a={a} />
 
+      {v.immersive && v.hudToggleOn && (
+        <button
+          className="tw-hov"
+          onClick={a.toggleImmersive}
+          title={`${v.hudToggleLabel} (H)`}
+          style={s(`position:absolute;right:${lay.pad};top:${lay.pad};height:${lay.hit};padding:0 12px;pointer-events:auto;${PANEL};cursor:pointer;font:12px var(--sans)`)}
+        >
+          {v.hudToggleLabel}
+        </button>
+      )}
+
       {v.showEntry && (
         <section
           aria-label={t.entry.kicker}
@@ -96,8 +107,18 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           aria-label={t.layers.title}
           style={s(`position:absolute;left:12px;top:64px;width:220px;pointer-events:auto;${PANEL}`)}
         >
-          <div style={s("padding:8px 12px;font:11px var(--mono);color:var(--fg2)")}>{t.layers.title}</div>
-          {v.layerItems.map((l) => (
+          <button
+            className="tw-hov"
+            onClick={() => a.set({ dockOpen: !a.state.dockOpen })}
+            aria-expanded={v.dockOpen}
+            title={v.dockToggleLabel}
+            aria-label={v.dockToggleLabel}
+            style={s("display:flex;width:100%;align-items:center;padding:0 12px;height:32px;border:0;background:transparent;cursor:pointer;font:11px var(--mono);color:var(--fg2);text-align:left")}
+          >
+            <span style={s("flex:1")}>{t.layers.title}</span>
+            <span aria-hidden="true">{v.dockOpen ? "–" : "+"}</span>
+          </button>
+          {v.dockOpen && v.layerItems.map((l) => (
             <button
               key={l.id}
               className="tw-hov"
@@ -350,6 +371,19 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
             <span title={t.status.terrainOffDetail} style={s("font:11px var(--mono);color:var(--warn)")}>
               {t.status.terrainOff}
             </span>
+          )}
+          {v.hudToggleOn && (
+            <button
+              className="tw-hov"
+              onClick={a.toggleImmersive}
+              aria-label={v.hudToggleLabel}
+              title={`${v.hudToggleLabel} (H)`}
+              style={s("width:28px;height:28px;border:1px solid var(--line2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center")}
+            >
+              <span style={s("display:block;width:12px;height:12px;border:2px solid currentColor;position:relative")}>
+                <span style={s("position:absolute;left:1px;right:1px;bottom:1px;height:3px;background:currentColor")} />
+              </span>
+            </button>
           )}
           <button
             className="tw-hov"

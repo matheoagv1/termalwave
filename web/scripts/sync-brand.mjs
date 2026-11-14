@@ -1,6 +1,6 @@
 // Copia el kit de marca de brand/ (fuente unica, del VPS) a web/public/brand/.
 // No se duplica a mano: este script corre antes de dev y de build.
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,6 +27,9 @@ for (const rel of files) {
     missing += 1;
     continue;
   }
-  copyFileSync(from, join(out, rel.split("/").pop()));
+  const dest = join(out, rel.split("/").pop());
+  // Se borra antes de copiar: sobrescribir un archivo de otro usuario falla con EPERM.
+  rmSync(dest, { force: true });
+  copyFileSync(from, dest);
 }
 console.log(`brand: ${files.length - missing} archivos en web/public/brand`);

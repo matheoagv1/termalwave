@@ -125,6 +125,16 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               )}
               <button
                 className="tw-hov"
+                onClick={() => a.set({ tlOpen: !a.state.tlOpen })}
+                aria-expanded={v.tlOpen}
+                aria-label={v.tlToggleLabel}
+                title={v.tlToggleLabel}
+                style={s(`width:${lay.hit};height:${lay.hit};${BTN};font:600 14px var(--mono)`)}
+              >
+                {v.tlOpen ? "–" : "+"}
+              </button>
+              <button
+                className="tw-hov"
                 onClick={a.toggleCompare}
                 aria-pressed={v.compareOn}
                 style={s(`height:${lay.hit};padding:0 12px;border:1px solid ${v.cmpLine};background:${v.cmpBg};cursor:pointer;font:12px var(--sans)`)}
@@ -133,7 +143,9 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               </button>
             </div>
           </div>
-          {tl.single && <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.timeline.singlePoint}</div>}
+          {tl.single && v.tlOpen && <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.timeline.singlePoint}</div>}
+          {v.tlOpen && (
+          <>
           <div
             data-tw-track="1"
             role="slider"
@@ -219,6 +231,8 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
             <span>{tl.y1}</span>
             {v.isD && <span style={s("font:11px var(--sans);max-width:330px;line-height:1.25")}>{t.timeline.scaleNote}</span>}
           </div>
+          </>
+          )}
         </>
       )}
     </div>

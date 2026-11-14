@@ -47,6 +47,9 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     trade: 0,
     explore: false,
     status: { online: true, terrain: true, basemap: true },
+    dockOpen: true,
+    tlOpen: true,
+    immersive: false,
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -98,7 +101,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.measure();
     const S = this.state;
     if (this.scene) {
-      const key = [S.scene.camera, S.W, S.H, S.tlH].join();
+      const key = [S.scene.camera, S.W, S.H, S.tlH, S.immersive, S.dockOpen, S.ficha].join();
       if (key !== this.padKey) {
         this.padKey = key;
         this.scene.setPadding(this.padding());
@@ -369,9 +372,16 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const isM = S.W < 760;
     const cam = camOverride ?? S.scene.camera;
     if (cam === "orbit") return isM ? { top: 60, right: 12, bottom: 330, left: 12 } : { top: 60, right: 20, bottom: 20, left: 460 };
+    if (S.immersive) return { top: 12, left: 12, right: 12, bottom: 12 };
+    // el globo cede solo el espacio de los paneles que están desplegados
     return isM
       ? { top: 112, left: 8, right: 60, bottom: 52 + S.tlH + 20 }
-      : { top: 64, left: 250, right: 330, bottom: S.tlH + 28 };
+      : {
+          top: 64,
+          left: S.dockOpen ? 250 : 60,
+          right: S.ficha ? 330 : 60,
+          bottom: S.tlH + 28,
+        };
   }
 
   // linea de tiempo
@@ -586,6 +596,11 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       return;
     }
     if (!hud) return;
+    if (k === "h" || k === "H") {
+      e.preventDefault();
+      this.toggleImmersive();
+      return;
+    }
     const go = (fn: () => void): void => {
       e.preventDefault();
       fn();
@@ -602,6 +617,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     else if (k === "c" || k === "C") go(this.toggleCompare);
     else if (k === "o" || k === "O") go(this.toOrbit);
   };
+
+  toggleImmersive = (): void => this.setState({ immersive: !this.state.immersive });
 
   // render
 
