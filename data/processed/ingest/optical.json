@@ -18,7 +18,7 @@
       "href": "https://sentinel2l2a01.blob.core.windows.net/sentinel2-l2/20/J/LQ/2026/06/25/S2C_MSIL2A_20260625T141711_N0512_R010_T20JLQ_20260625T191616.SAFE/GRANULE/L2A_T20JLQ_A009418_20260625T142416/IMG_DATA/R10m/T20JLQ_20260625T141711_TCI_10m.tif",
       "source": "planetary_computer_s2",
       "product": "sentinel-2-l2a",
-      "retrieved_at": "2026-11-14T18:45:46.664373+00:00",
+      "retrieved_at": "2026-11-14T19:13:06.680552+00:00",
       "quality_rank": 10,
       "license": "ESA Sentinel / Microsoft PC"
     }

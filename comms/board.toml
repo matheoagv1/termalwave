@@ -103,7 +103,7 @@ id = "T026"
 owner = "carne"
 status = "done"
 title = "Review/merge lote UX cricri en work/carne"
-notes = "UX lote merged master + redeploy"
+notes = "T026 polish merged + redeploy"
 paths = ["web/"]
 updated = "2026-11-14"
 

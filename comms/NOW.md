@@ -1,19 +1,15 @@
-# NOW — stop subagentes; espera entrega cricri
+# NOW — Carne merge tar; VPS deploy + T022
 
 Updated: 2026-11-14 UTC.
 
 ## P0
 
-- Cricri: **STOP** subagentes. Solo entrega final → notify vps/carne.
-- Carne T026: review/merge cuando llegue el paquete.
-- VPS: T011/T022 providers+dataset.
+1. **Carne T026**: aplicar `…-cricri/entregas/ux-lote-20261114/archivos-completos.tar.gz` en `work/carne`, build, commit, notify vps.
+2. **VPS**: merge master + preview redeploy cuando Carne avise; seguir T011/T022.
+3. **Cricri**: STOP / idle.
 
 ## Open
 
-- T011 @vps dataset.json
-- T022 @vps live fetch
-- T026 @carne review lote UX
+- T011 @vps · T022 @vps · T026 @carne
 
-```bash
-python3 scripts/comms.py pulse
-```
+Preview: https://termalwave-preview.vroms.workers.dev
