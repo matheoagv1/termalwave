@@ -37,6 +37,9 @@ type Slot = { src: string; layer: string };
 const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const clamp = (v: number, a: number, b: number): number => Math.min(b, Math.max(a, v));
 const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
+const URBAN_ZOOM = 1.85;
+const URBAN_DETAIL = 1.35;
+const URBAN_PITCH = 6;
 
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
@@ -53,7 +56,7 @@ function absolute(url: string): string {
 
 export class MapLibreScene implements SceneApi {
   private o: MapSceneOptions;
-  private s: SceneState = { camera: "orbit", layer: "", tickId: "", tilt: 35, northUp: true };
+  private s: SceneState = { camera: "orbit", layer: "", tickId: "", tilt: 35, northUp: true, viewScale: "campo" };
   private cbC = new Set<(s: SceneState) => void>();
   private cbP = new Set<(id: string | null) => void>();
   private ds: Dataset | null = null;
@@ -254,10 +257,16 @@ export class MapLibreScene implements SceneApi {
     map.addSource("tw-cmp", { type: "image", url: BLANK, coordinates: blank });
     map.addLayer({ id: "tw-cmp", type: "raster", source: "tw-cmp", paint: { "raster-opacity": 0, "raster-fade-duration": 0 } });
     map.addLayer({ id: "tw-gap", type: "fill", source: "tw-area", paint: { "fill-color": this.css("--scene-hatch", "#ffb43a"), "fill-opacity": 0 } });
-    map.addLayer({ id: "tw-area", type: "line", source: "tw-area", paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2 } });
+    map.addLayer({
+      id: "tw-area",
+      type: "line",
+      source: "tw-area",
+      paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2, "line-opacity": 0 },
+    });
     map.addLayer({ id: "tw-curtain", type: "line", source: "tw-curtain", paint: { "line-color": this.css("--acc", "#f0a014"), "line-width": 2 } });
     this.applyFrame();
     this.applyCompare();
+    this.updateAreaChrome();
   }
 
   refreshStyle(): void {
@@ -309,9 +318,20 @@ export class MapLibreScene implements SceneApi {
   }
 
   private updateRing(): void {
-    if (!this.ring) return;
+    this.updateAreaChrome();
+  }
+
+  // en orbita el globo manda: sin caja ni anillo que ensucien el aterrizaje
+  private updateAreaChrome(): void {
     const c = this.s.camera;
-    this.ring.getElement().style.display = c === "orbit" || c === "approach" ? "block" : "none";
+    const map = this.map;
+    if (map.getLayer("tw-area")) {
+      const on = c === "territory" || c === "detail";
+      map.setPaintProperty("tw-area", "line-opacity", on ? 1 : 0);
+    }
+    if (this.ring) {
+      this.ring.getElement().style.display = c === "approach" ? "block" : "none";
+    }
   }
 
   private whenReady(fn: () => void): void {
@@ -323,6 +343,7 @@ export class MapLibreScene implements SceneApi {
     this.markers.forEach((m) => m.remove());
     this.markers = list.map((h) => {
       const b = document.createElement("button");
+      b.className = "tw-spot";
       b.setAttribute("data-spot", h.id);
       b.setAttribute("aria-label", h.title);
       b.dataset.ll = h.lonlat.join(",");
@@ -532,10 +553,14 @@ export class MapLibreScene implements SceneApi {
     return this.o.reducedMotion ? 0 : ms;
   }
 
+  private urban(): boolean {
+    return this.s.viewScale === "urbano";
+  }
+
   private territoryCam(): { center: [number, number]; zoom: number; pitch: number; bearing: number } | null {
     if (!this.ds) return null;
     const b = this.ds.area.bounds;
-    const pitch = this.s.tilt;
+    const pitch = clamp(this.s.tilt + (this.urban() ? URBAN_PITCH : 0), 0, 70);
     const bearing = this.s.northUp ? 0 : -18;
     const box: [[number, number], [number, number]] = [[b.west, b.south], [b.east, b.north]];
     // Si los paneles ocupan casi todo el lienzo (pantalla chica), se achican los márgenes.
@@ -564,7 +589,8 @@ export class MapLibreScene implements SceneApi {
     }
     if (!cam || !cam.center) return null;
     const c = maplibregl.LngLat.convert(cam.center as [number, number]);
-    return { center: [c.lng, c.lat], zoom: cam.zoom ?? 11, pitch, bearing };
+    const zoom = Math.min(17, (cam.zoom ?? 11) + (this.urban() ? URBAN_ZOOM : 0));
+    return { center: [c.lng, c.lat], zoom, pitch, bearing };
   }
 
   private go(camera: CameraMode, opt: { fly: boolean; ms: number }): void {
@@ -589,8 +615,18 @@ export class MapLibreScene implements SceneApi {
       return;
     }
     if (camera === "detail" && this.s.focus) {
-      const z = this.territoryZoom + Math.log2(this.s.focus.zoom || 1.7);
-      map.easeTo({ center: this.s.focus.lonlat as [number, number], zoom: z, pitch: this.s.tilt, bearing: this.s.northUp ? 0 : -18, padding: this.pad, duration: dur, essential: true });
+      const boost = this.urban() ? URBAN_DETAIL : 1;
+      const z = Math.min(17, this.territoryZoom + Math.log2((this.s.focus.zoom || 1.7) * boost));
+      const pitch = clamp(this.s.tilt + (this.urban() ? URBAN_PITCH : 0), 0, 70);
+      map.easeTo({
+        center: this.s.focus.lonlat as [number, number],
+        zoom: z,
+        pitch,
+        bearing: this.s.northUp ? 0 : -18,
+        padding: this.pad,
+        duration: dur,
+        essential: true,
+      });
       return;
     }
     const cam = this.territoryCam();
@@ -638,10 +674,12 @@ export class MapLibreScene implements SceneApi {
     const s = this.s;
     const tiltChanged = n.tilt !== undefined && n.tilt !== s.tilt;
     const northChanged = n.northUp !== undefined && n.northUp !== s.northUp;
+    const scaleChanged = n.viewScale !== undefined && n.viewScale !== s.viewScale;
     if (n.layer !== undefined) s.layer = n.layer;
     if (n.tickId !== undefined) s.tickId = n.tickId;
     if (n.tilt !== undefined) s.tilt = n.tilt;
     if (n.northUp !== undefined) s.northUp = n.northUp;
+    if (n.viewScale !== undefined) s.viewScale = n.viewScale;
     if ("compare" in n) {
       if (n.compare) s.compare = { ...n.compare };
       else delete s.compare;
@@ -664,7 +702,7 @@ export class MapLibreScene implements SceneApi {
         this.s.camera = n.camera;
         this.whenReady(() => this.go(n.camera as CameraMode, { fly: false, ms: 700 }));
       } else void this.flyTo(n.camera);
-    } else if ((tiltChanged || northChanged) && (s.camera === "territory" || s.camera === "detail")) {
+    } else if ((tiltChanged || northChanged || scaleChanged) && (s.camera === "territory" || s.camera === "detail")) {
       this.whenReady(() => this.go(s.camera, { fly: false, ms: 700 }));
     } else if ("focus" in n && s.camera === "orbit") {
       this.whenReady(() => this.go("orbit", { fly: false, ms: 900 }));
