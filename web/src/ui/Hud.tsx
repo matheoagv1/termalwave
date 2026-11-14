@@ -34,6 +34,14 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             `position:absolute;left:${lay.entL};right:${lay.entR};top:${lay.entT};bottom:${lay.entB};width:${lay.entW};transform:${lay.entTf};pointer-events:auto;${PANEL};padding:20px;display:flex;flex-direction:column;gap:12px`,
           )}
         >
+          <img
+            className="tw-float"
+            src="./brand/monigote.png"
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            style={s("position:absolute;right:16px;top:-104px;height:128px;width:auto;image-rendering:pixelated;pointer-events:none")}
+          />
           <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.entry.kicker}</div>
           {v.hasDs && <h1 style={s("margin:0;font:500 32px/1.1 var(--sans)")}>{v.areaName}</h1>}
           {v.noDs && <div className="tw-pulse" style={s("height:35px;width:70%;background:var(--line)")} />}

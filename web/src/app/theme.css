@@ -112,6 +112,16 @@ body {
   color: var(--acc-fg);
 }
 
+.tw-float {
+  animation: tw-float 2.4s ease-in-out infinite;
+}
+
+@keyframes tw-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 .tw-ring {
   width: 22px;
   height: 22px;
