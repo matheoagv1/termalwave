@@ -428,6 +428,32 @@ export function buildView(m: Model) {
           `${T.entry.layers(layers.length)} · ${T.entry.points(totalPts)}`,
         ]
       : [];
+  // fuentes de datos (provenance del backend)
+  const lookup = (table: object, key: string): string => (table as Record<string, string>)[key] ?? key;
+  const provName = (id: string): string =>
+    id.split("+").map((p) => lookup(T.sources.provider, p)).join(" + ");
+  const sources = (ds?.sources ?? []).map((g) => ({
+    key: g.kind,
+    label: lookup(T.sources.kind, g.kind),
+    statusText: lookup(T.sources.status, g.status),
+    statusColor: g.status === "ok" ? "var(--ok)" : g.status === "cache" ? "var(--acc-fg)" : "var(--warn)",
+    strategy: lookup(T.sources.strategy, g.strategy),
+    selected: g.selected.map(provName),
+    tried: g.tried.map((x) => ({
+      key: x.provider,
+      name: provName(x.provider),
+      ok: x.ok,
+      note: x.ok ? T.sources.records(x.count ?? 0) : T.sources.failed,
+    })),
+    count: T.sources.records(g.count),
+    fromCache: g.fromCache,
+  }));
+  const sourcesAt =
+    ds?.sourcesAt && !Number.isNaN(+new Date(ds.sourcesAt))
+      ? T.sources.updated(
+          new Date(ds.sourcesAt).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" }),
+        )
+      : "";
   const tilt = st.terrain ? sc.tilt : 0;
   const online = st.online;
   const mock = !!(ds && ds.isMock);
@@ -459,7 +485,9 @@ export function buildView(m: Model) {
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
     cardOn: hud, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
     legendOn: hud && (!isM || S.sheet) && !!L,
-    isTabArea: S.tab === "area", isTabRead: S.tab === "read",
+    isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
+    tabSourcesLine: S.tab === "sources" ? "var(--acc-fg)" : "transparent",
+    sources, sourcesAt, noSources: sources.length === 0,
     tabAreaLine: S.tab === "area" ? "var(--acc-fg)" : "transparent",
     tabReadLine: S.tab === "read" ? "var(--acc-fg)" : "transparent",
     cardToggleText: cardOpen ? T.card.close : T.card.open,

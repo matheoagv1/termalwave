@@ -476,6 +476,14 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                 {t.card.tabReading}
               </button>
               <button
+                role="tab"
+                aria-selected={v.isTabSources}
+                onClick={() => a.set({ tab: "sources" })}
+                style={s(`height:${lay.hit};padding:0 14px;border:0;border-bottom:2px solid ${v.tabSourcesLine};background:transparent;cursor:pointer`)}
+              >
+                {t.card.tabSources}
+              </button>
+              <button
                 className="tw-hov"
                 onClick={() => (v.isM ? a.set({ sheet: !a.state.sheet }) : a.set({ ficha: !a.state.ficha }))}
                 aria-expanded={v.cardOpen}
@@ -526,6 +534,41 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                         </React.Fragment>
                       ))}
                     </dl>
+                  </>
+                )}
+                {v.isTabSources && (
+                  <>
+                    <div style={s("color:var(--fg2)")}>{t.sources.lead}</div>
+                    {v.sourcesAt && <div style={s("font:11px var(--mono);color:var(--fg3)")}>{v.sourcesAt}</div>}
+                    {v.noSources && <div style={s("color:var(--fg2)")}>{t.sources.empty}</div>}
+                    {v.sources.map((g) => (
+                      <div key={g.key} style={s("display:flex;flex-direction:column;gap:4px;padding-top:8px;border-top:1px solid var(--line)")}>
+                        <div style={s("display:flex;align-items:center;gap:8px")}>
+                          <span style={s("flex:1;font:500 13px var(--sans)")}>{g.label}</span>
+                          <span style={s(`display:flex;gap:5px;align-items:center;font:11px var(--mono);color:${g.statusColor}`)}>
+                            <span style={s(`width:7px;height:7px;background:${g.statusColor}`)} />
+                            {g.statusText}
+                          </span>
+                        </div>
+                        <div style={s("font:12px var(--sans);color:var(--fg2);text-wrap:pretty")}>{g.strategy}</div>
+                        <div style={s("font:11px var(--mono);color:var(--fg2)")}>
+                          {t.sources.selected}: {g.selected.length ? g.selected.join(", ") : t.sources.none}
+                        </div>
+                        <div style={s("font:11px var(--mono);color:var(--fg3)")}>
+                          {g.count}
+                          {g.fromCache ? ` · ${t.sources.fromCache}` : ""}
+                        </div>
+                        <div style={s("display:flex;flex-direction:column;gap:2px;font:11px var(--mono)")}>
+                          <span style={s("color:var(--fg3)")}>{t.sources.tried}</span>
+                          {g.tried.map((x) => (
+                            <span key={x.key} style={s(`display:flex;gap:6px;color:${x.ok ? "var(--fg2)" : "var(--warn)"}`)}>
+                              <span style={s("flex:1;min-width:0")}>{x.name}</span>
+                              <span>{x.note}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </>
                 )}
                 {v.isTabRead && (

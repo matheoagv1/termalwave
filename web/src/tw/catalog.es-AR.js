@@ -78,9 +78,40 @@ export const T = {
   layers: { title: "Capas", gapHere: "Sin imagen en este punto", partial: "Imagen parcial" },
   legend: { title: "Leyenda" },
 
+  // agregado: pestana Fuentes de la ficha
+  sources: {
+    lead: "De dónde salen los datos de esta área y cuáles se usaron.",
+    updated: (d) => `Actualizado el ${d}`,
+    empty: "Este conjunto de datos no trae información de fuentes.",
+    selected: "Fuentes usadas",
+    tried: "Consultadas",
+    none: "ninguna cumplió el criterio de selección",
+    records: (n) => (n === 1 ? "1 registro" : `${n} registros`),
+    fromCache: "Desde copia guardada",
+    failed: "Sin respuesta",
+    kind: { fires: "Focos de calor", weather: "Clima", optical: "Imagen óptica", radar: "Radar" },
+    status: { ok: "Disponible", cache: "Copia guardada", unavailable: "No disponible" },
+    strategy: {
+      union_dedupe: "Se juntan todas las fuentes y se quitan los repetidos",
+      first_available: "Se usa la primera fuente que responde",
+      least_cloudy_near_nisar: "Se elige la imagen con menos nubes cerca de la pasada de NISAR",
+      prefer_validated: "Se prefieren los datos ya validados",
+    },
+    provider: {
+      firms_viirs_sp: "FIRMS VIIRS (procesado)",
+      firms_viirs_nrt: "FIRMS VIIRS (casi en tiempo real)",
+      firms_modis: "FIRMS MODIS",
+      open_meteo_archive: "Open-Meteo (archivo)",
+      meteomatics: "Meteomatics",
+      planetary_computer_s2: "Sentinel-2 (Planetary Computer)",
+      earthdata_nisar_gcov: "NISAR GCOV (Earthdata)",
+    },
+  },
+
   card: {
     tabArea: "Área",
     tabReading: "Lectura",
+    tabSources: "Fuentes",
     sheet: "Ficha del área",
     open: "Abrir ficha",
     close: "Plegar ficha",

@@ -42,7 +42,7 @@ export type AppState = {
   help: boolean;
   ficha: boolean;
   sheet: boolean;
-  tab: "area" | "read";
+  tab: "area" | "read" | "sources";
   trade: number;
   explore: boolean;
   status: Status;

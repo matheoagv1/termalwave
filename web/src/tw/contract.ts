@@ -79,7 +79,22 @@ export interface SearchResult {
   lonlat: [number, number];
 }
 
+// agregado: de donde salen los datos (provenance del backend)
+export interface SourceTry { provider: string; ok: boolean; count?: number }
+export interface SourceGroup {
+  kind: string;          // "fires" | "weather" | "optical" | "radar" | ...
+  strategy: string;
+  status: string;        // "ok" | "cache" | "unavailable"
+  selected: string[];
+  tried: SourceTry[];
+  fromCache: boolean;
+  count: number;
+}
+
 export interface Dataset {
+  // agregado: opcional, lo llena el backend
+  sources?: SourceGroup[];
+  sourcesAt?: Iso;
   area: Area;
   layers: LayerDef[];
   segments: TimeSegment[];

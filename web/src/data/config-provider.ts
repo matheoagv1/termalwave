@@ -21,6 +21,18 @@ type LegacyConfig = {
     frames: Record<string, Record<string, { png: string; bounds: Bounds }>>;
     synthetic?: boolean;
   };
+  provenance?: { generated_at?: string };
+  data_sources?: Record<
+    string,
+    {
+      strategy: string;
+      status: string;
+      selected_sources?: string[];
+      tried?: Array<{ provider: string; ok: boolean; count?: number }>;
+      from_cache?: boolean;
+      count?: number;
+    }
+  >;
 };
 
 // Lectura por oficio: la escribe cricri en web/src/context/trades.json
@@ -125,6 +137,16 @@ export class ConfigProvider implements DataProvider {
       ],
       events: [],
       context: [],
+      sourcesAt: cfg.provenance?.generated_at,
+      sources: Object.entries(cfg.data_sources ?? {}).map(([kind, g]) => ({
+        kind,
+        strategy: g.strategy,
+        status: g.status,
+        selected: g.selected_sources ?? [],
+        tried: (g.tried ?? []).map((t) => ({ provider: t.provider, ok: t.ok, count: t.count })),
+        fromCache: !!g.from_cache,
+        count: g.count ?? 0,
+      })),
       // Mientras el backend procese datos sintéticos se avisa en pantalla.
       isMock: timeline.synthetic !== false,
     };

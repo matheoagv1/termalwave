@@ -218,7 +218,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       explore: hp.explorar === "1",
       help: hp.ayuda === "1",
       sheet: hp.ficha === "1",
-      tab: hp.tab === "lectura" ? "read" : "area",
+      tab: hp.tab === "lectura" ? "read" : hp.tab === "fuentes" ? "sources" : "area",
       scene: INITIAL_SCENE,
     });
     this.padKey = null;
