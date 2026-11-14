@@ -11,7 +11,6 @@ type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
 const PANEL = "background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px)";
 const PRIMARY = "border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600";
 const SECONDARY = "border:1px solid var(--line2);background:transparent;cursor:pointer";
-const MONI = "./brand/monigote.png";
 
 export function Hud({ v, a, tlRef }: P): React.ReactElement {
   const { t, lay } = v;
@@ -39,78 +38,23 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:16px 18px;display:flex;align-items:center;gap:14px`,
           )}
         >
-          <img
-            className="tw-bob"
-            src={MONI}
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            style={s("flex:none;height:96px;width:auto;image-rendering:pixelated")}
-          />
-          <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px")}>
+          <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px;flex:1")}>
             <div style={s("font:14px/1.35 var(--sans);color:var(--fg)")}>{t.status.loading}</div>
             <div className="tw-pulse" style={s("height:6px;width:72%;background:var(--line2)")} />
           </div>
         </section>
       )}
 
-      {v.showEntry && !v.noDs && (
-        <section
-          aria-label={t.entry.kicker}
-          style={s(
-            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:18px;display:flex;flex-direction:column;gap:10px;overflow:visible`,
-          )}
+      {(v.showEntry || v.showExplore) && !v.noDs && (
+        <button
+          type="button"
+          className="tw-hov tw-pixbtn"
+          onClick={a.enter}
+          style={s(`position:absolute;left:50%;transform:translateX(-50%);bottom:${lay.entB};max-width:calc(100% - 24px);pointer-events:auto;height:${lay.hit};padding:0 18px;${PRIMARY}`)}
         >
-          <img
-            className="tw-float"
-            src={MONI}
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            style={s("position:absolute;right:12px;top:-92px;height:112px;width:auto;image-rendering:pixelated;pointer-events:none")}
-          />
-          <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--fg2)")}>
-            {t.entry.kicker}
-          </div>
-          <h1 style={s("margin:0;font:600 26px/1.2 var(--sans);letter-spacing:-0.02em;color:var(--fg)")}>{v.areaName}</h1>
-          <p style={s("margin:0;color:var(--fg2);max-width:40ch;text-wrap:pretty;font:14px/1.45 var(--sans)")}>{t.entry.lead}</p>
-          <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:2px")}>
-            <button onClick={a.enter} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
-              {t.entry.enter}
-            </button>
-            <button
-              className="tw-hov"
-              onClick={() => a.set({ explore: true })}
-              style={s(`height:${lay.hit};padding:0 16px;${SECONDARY}`)}
-            >
-              {t.entry.explore}
-            </button>
-          </div>
-        </section>
+          {t.entry.backToArea}
+        </button>
       )}
-
-      {v.showExplore && (
-        <section
-          style={s(
-            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:14px;display:flex;align-items:center;gap:12px`,
-          )}
-        >
-          <img
-            src={MONI}
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            style={s("flex:none;height:56px;width:auto;image-rendering:pixelated")}
-          />
-          <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px;flex:1")}>
-            <button onClick={a.enter} disabled={v.noDs} style={s(`height:${lay.hit};padding:0 16px;align-self:flex-start;${PRIMARY}`)}>
-              {t.entry.backToArea}
-            </button>
-            <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.entry.dragHint}</div>
-          </div>
-        </section>
-      )}
-
       {v.introOpen && (
         <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} />
       )}
@@ -191,6 +135,17 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                 style={s(`align-self:flex-start;height:${lay.hit};padding:0 10px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
               >
                 {t.layers.reading}
+              </button>
+              <button
+                type="button"
+                className="tw-hov"
+                onClick={a.toOrbit}
+                title={`${t.camera.reset} (O)`}
+                aria-label={t.camera.reset}
+                style={s(`align-self:flex-start;height:${lay.hit};padding:0 10px;${SECONDARY};font:12px var(--sans);color:var(--fg);display:flex;align-items:center;gap:6px`)}
+              >
+                <span aria-hidden="true" style={s("width:10px;height:10px;border:2px solid currentColor;border-radius:50%")} />
+                Inicio
               </button>
             </div>
           )}
@@ -400,20 +355,6 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t, lay } = v;
   return (
     <div style={s(`position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};display:flex;gap:8px;align-items:flex-start`)}>
-      {v.brandOn && (
-        <div
-          style={s(`pointer-events:auto;height:40px;width:40px;display:flex;align-items:center;justify-content:center;padding:0;${PANEL};flex:none`)}
-          title={t.brand}
-        >
-          <img
-            src={v.brandMark}
-            alt=""
-            width={28}
-            height={28}
-            style={s("image-rendering:pixelated;flex:none;display:block")}
-          />
-        </div>
-      )}
       {v.searchField && (
         <div style={s("pointer-events:auto;flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative")}>
           <input

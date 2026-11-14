@@ -357,6 +357,7 @@ export function buildView(m: Model) {
           empty,
           gap: collapsed ? "0" : "1px",
           mark: seg.kind === "composite" ? tone : "transparent",
+          cal: seg.granularity === "year" ? "cal1" : seg.granularity === "quarter" || seg.granularity === "month" ? "cal2" : "cal3",
           title: `${seg.label} · ${gt} · ${T.timeline.points(n)}`,
           flex: zoomed ? `0 0 ${n * (isM ? 30 : 34)}px` : collapsed ? "0 0 20px" : `${Math.max(n, 2)} 1 0`,
           minW: (zoomed ? n * (isM ? 30 : 34) : collapsed ? 20 : Math.max(n * per, 24)) + "px",

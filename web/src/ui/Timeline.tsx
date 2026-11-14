@@ -140,9 +140,9 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 aria-controls="tw-tl-track"
                 aria-label={v.tlToggleLabel}
                 title={v.tlToggleLabel}
-                style={s(`width:${lay.hit};height:${lay.hit};${BTN};font:600 14px var(--mono)`)}
+                style={s(`width:${lay.hit};height:${lay.hit};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0`)}
               >
-                {v.tlOpen ? "–" : "+"}
+                <img src={v.tlOpen ? "./ui/minus.png" : "./ui/plus.png"} alt="" aria-hidden="true" width={28} height={28} style={s("image-rendering:pixelated")} />
               </button>
               <button
                 className={v.compareOn ? "tw-hov tw-tl-cmp-on" : "tw-hov tw-tl-cmp-idle"}
@@ -184,19 +184,15 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:8px;display:flex;gap:2px")}>
-                  {tl.real.map((r) => (
-                    <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone};opacity:0.85`)} />
-                  ))}
-                  <div
-                    className="tw-tl-needle"
-                    style={s(`position:absolute;top:-2px;bottom:-2px;left:${tl.aLeft};width:3px;margin-left:-1.5px;background:var(--acc);box-shadow:0 0 0 1px var(--acc-ink)`)}
-                  />
+                <div style={s("position:relative;flex:1;height:22px;background:url(./ui/rail.png) center/100% 12px no-repeat")}>
+                  <div style={s("position:absolute;left:10px;right:10px;bottom:0;height:3px;display:flex;gap:2px")}>
+                    {tl.real.map((r) => (
+                      <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
+                    ))}
+                  </div>
+                  <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:0;left:${tl.aLeft};width:16px;height:16px;margin-left:-8px;image-rendering:pixelated`)} />
                   {v.compareOn && (
-                    <div
-                      className="tw-tl-needle"
-                      style={s(`position:absolute;top:-2px;bottom:-2px;left:${tl.bLeft};width:3px;margin-left:-1.5px;background:var(--accB);box-shadow:0 0 0 1px var(--accB-ink)`)}
-                    />
+                    <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:0;left:${tl.bLeft};width:16px;height:16px;margin-left:-8px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>
@@ -238,6 +234,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                       )}
                     >
                       <span style={s(`flex:none;width:8px;height:8px;border:1.5px solid ${seg.tone};background:${seg.mark}`)} />
+                      <img src={`./ui/${seg.cal}.png`} alt="" aria-hidden="true" width={16} height={16} style={s("flex:none;image-rendering:pixelated")} />
                       {seg.showLabel && <span style={s("font:500 12px var(--sans);overflow:hidden;text-overflow:ellipsis")}>{seg.label}</span>}
                       {seg.showMeta && <span style={s("font:10px var(--mono);color:var(--fg3);overflow:hidden;text-overflow:ellipsis")}>{seg.meta}</span>}
                     </button>
@@ -294,13 +291,15 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:6px;display:flex;gap:2px")}>
-                  {tl.real.map((r) => (
-                    <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
-                  ))}
-                  <div style={s(`position:absolute;top:-3px;bottom:-3px;left:${tl.aLeft};width:2px;margin-left:-1px;background:var(--acc)`)} />
+                <div style={s("position:relative;flex:1;height:26px;background:url(./ui/rail.png) center/100% 14px no-repeat")}>
+                  <div style={s("position:absolute;left:10px;right:10px;bottom:0;height:3px;display:flex;gap:2px")}>
+                    {tl.real.map((r) => (
+                      <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
+                    ))}
+                  </div>
+                  <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:1px;left:${tl.aLeft};width:18px;height:18px;margin-left:-9px;image-rendering:pixelated`)} />
                   {v.compareOn && (
-                    <div style={s(`position:absolute;top:-3px;bottom:-3px;left:${tl.bLeft};width:2px;margin-left:-1px;background:var(--accB)`)} />
+                    <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:1px;left:${tl.bLeft};width:18px;height:18px;margin-left:-9px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>
