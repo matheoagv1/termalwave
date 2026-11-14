@@ -5,7 +5,7 @@ Nucleo del repo en el servidor. Integra a `master`.
 ## Toca
 
 - `termalwave/`, `vendor/` (via `scripts/vendor.sh`), `scripts/`, `tests/`
-- `config/`, `data/`
+- `config/`, `data/`, `brand/` (kit de marca global)
 - Scaffold de `web/` cuando haga falta dejar MapLibre + timeline operativos
 - `docs/ARCHITECTURE.md`
 - Drops locales en `references/` (solo codigo de referencia; no docs de agentes)

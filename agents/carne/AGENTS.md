@@ -10,6 +10,7 @@ UI, UX y flujo. El prompt largo puede estar en ingles (`prompts/CARNE-AGENT.md`)
 ## Toca
 
 - `web/` (MapLibre, timeline Timelapse, panel lateral, estilos, animaciones)
+- Consumir marca desde `brand/` (iconos, wordmark, paleta, monigote cuando cricri lo deposite)
 - `comms/carne/outbox/`
 - Lectura obligatoria: `comms/carne/inbox/`, `comms/from-vps/`, `comms/cricri/outbox/`
 
