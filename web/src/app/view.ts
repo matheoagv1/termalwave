@@ -126,6 +126,8 @@ export function buildView(m: Model) {
   const iA = fa ? (m.idx[sc.tickId] ?? -1) : -1;
   const iB = fb && sc.compare ? (m.idx[sc.compare.tickId] ?? -1) : -1;
   const sp = L ? S.series[L.id] : undefined;
+  // El backend todavía no publicó valores para esta capa: se explica en vez de repetir "Sin dato".
+  const noSeries = !!sp && sp.length > 0 && sp.every((p) => p.value == null);
   const spA = sp ? sp[iA] : undefined;
   const dec = L?.decimals ?? 0;
   const valueText =
@@ -493,6 +495,7 @@ export function buildView(m: Model) {
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
     cardOn: chrome, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
     legendOn: chrome && !!L && (isM ? S.sheet : cardOpen),
+    noSeries,
     isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
     tabSourcesLine: S.tab === "sources" ? "var(--acc-fg)" : "transparent",
     sources, sourcesAt, noSources: sources.length === 0,
