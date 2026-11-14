@@ -29,7 +29,7 @@
       "confidence": "86",
       "source": "firms_modis",
       "product": "MODIS_SP",
-      "retrieved_at": "2026-11-14T16:59:02.755486+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.209375+00:00",
       "quality_rank": 30,
       "license": "NASA FIRMS"
     },
@@ -41,7 +41,7 @@
       "confidence": "high",
       "source": "firms_viirs_sp",
       "product": "VIIRS_SNPP_SP",
-      "retrieved_at": "2026-11-14T16:59:02.755328+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.209190+00:00",
       "quality_rank": 10,
       "license": "NASA FIRMS"
     },
@@ -53,7 +53,7 @@
       "confidence": "high",
       "source": "firms_viirs_sp",
       "product": "VIIRS_SNPP_SP",
-      "retrieved_at": "2026-11-14T16:59:02.755328+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.209190+00:00",
       "quality_rank": 10,
       "license": "NASA FIRMS"
     },
@@ -65,7 +65,7 @@
       "confidence": "low",
       "source": "firms_viirs_nrt",
       "product": "VIIRS_SNPP_NRT",
-      "retrieved_at": "2026-11-14T16:59:02.755400+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.209307+00:00",
       "quality_rank": 20,
       "license": "NASA FIRMS"
     }

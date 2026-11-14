@@ -159,7 +159,9 @@ def run_ingest(
     aoi = _aoi_from_cfg(cfg)
     period = _period_from_cfg(cfg)
 
-    kinds = ("fires", "weather", "optical", "radar")
+    # vessels/aviation/traffic are registered in apis.toml; stubs return []
+    # until live adapters land. Phenomenon kinds stay first for provenance UI.
+    kinds = ("fires", "weather", "optical", "radar", "vessels", "aviation", "traffic")
     layers: dict[str, Any] = {}
     for kind in kinds:
         layers[kind] = _run_kind(

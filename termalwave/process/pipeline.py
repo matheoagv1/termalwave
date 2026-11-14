@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 
 from termalwave.process.config import load_config, write_web_app_config
+from termalwave.process.dataset_export import write_dataset_bundle
 from termalwave.process.georef import (
     bounds_from_attrs,
     bounds_from_geotransform,
@@ -237,6 +238,12 @@ def run_pipeline(
     timeline_index = build_timeline_frames(cfg, bounds, repo_root)
     ingest = run_ingest(cfg, repo_root=repo_root, offline=offline)
     write_web_app_config(
+        cfg,
+        repo_root,
+        timeline=timeline_index,
+        provenance=ingest["provenance"],
+    )
+    write_dataset_bundle(
         cfg,
         repo_root,
         timeline=timeline_index,

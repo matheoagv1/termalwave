@@ -10,11 +10,19 @@ stats_out = "data/processed/stats.json"
 
 [credentials]
 # Names of keys expected in secrets.local.toml [credentials] or matching env vars.
+# Full catalog: docs/APIS.md
 earthdata_token_env = "EARTHDATA_TOKEN"
 firms_map_key_env = "FIRMS_MAP_KEY"
 meteomatics_user_env = "METEOMATICS_USER"
 meteomatics_password_env = "METEOMATICS_PASSWORD"
 planetary_computer_token_env = "PLANETARY_COMPUTER_TOKEN"
+aisstream_api_key_env = "AISSTREAM_API_KEY"
+opensky_client_id_env = "OPENSKY_CLIENT_ID"
+opensky_client_secret_env = "OPENSKY_CLIENT_SECRET"
+tomtom_api_key_env = "TOMTOM_API_KEY"
+google_maps_api_key_env = "GOOGLE_MAPS_API_KEY"
+google_maps_server_api_key_env = "GOOGLE_MAPS_SERVER_API_KEY"
+cesium_ion_token_env = "CESIUM_ION_TOKEN"
 
 [fires]
 order = ["firms_viirs_sp", "firms_viirs_nrt", "firms_modis"]
@@ -102,3 +110,53 @@ module = "termalwave.providers.radar.earthdata_nisar_gcov"
 credential = "EARTHDATA_TOKEN"
 product = "NISAR_L2_GCOV"
 license = "NASA Earthdata"
+
+# --- kinds pending full fetch (stubs return [] when credential present) ---
+
+[vessels]
+order = ["aisstream"]
+strategy = "union_dedupe"
+
+[vessels.endpoints]
+aisstream = "https://stream.aisstream.io/v0/stream"
+
+[aviation]
+order = ["opensky"]
+strategy = "first_available"
+
+[aviation.endpoints]
+opensky = "https://opensky-network.org/api"
+
+[traffic]
+order = ["tomtom_traffic"]
+strategy = "first_available"
+
+[traffic.endpoints]
+tomtom_traffic = "https://api.tomtom.com"
+
+[providers.aisstream]
+kind = "vessels"
+module = "termalwave.providers.vessels.aisstream"
+credential = "AISSTREAM_API_KEY"
+product = "aisstream"
+license = "AISStream"
+
+[providers.opensky]
+kind = "aviation"
+module = "termalwave.providers.aviation.opensky"
+credential = "OPENSKY_CLIENT_ID"
+product = "opensky"
+license = "OpenSky Network"
+
+[providers.tomtom_traffic]
+kind = "traffic"
+module = "termalwave.providers.traffic.tomtom_traffic"
+credential = "TOMTOM_API_KEY"
+product = "tomtom-traffic"
+license = "TomTom"
+
+# Scene helpers (not phenomenon ingest kinds; credentials reserved for UI/terrain)
+[scene]
+google_maps_credential = "GOOGLE_MAPS_API_KEY"
+google_maps_server_credential = "GOOGLE_MAPS_SERVER_API_KEY"
+cesium_ion_credential = "CESIUM_ION_TOKEN"

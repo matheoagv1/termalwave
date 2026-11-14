@@ -47,13 +47,15 @@ Raw NISAR `.h5` downloads are **not** committed (`data/raw/`, `*.h5` gitignored 
 
 ## Unified data providers
 
-One interface per kind (`FireHotspots`, `Weather`, `OpticalScene`, `RadarScene` in `termalwave/providers/base.py`). Shared records in `termalwave/model.py`.
+One interface per kind (`FireHotspots`, `Weather`, `OpticalScene`, `RadarScene` in `termalwave/providers/base.py`; vessels/aviation/traffic stubs registered). Shared records in `termalwave/model.py`.
 
 - Adapters live under `termalwave/providers/<kind>/<api>.py` and only map raw API/fixture payloads → dataclasses.
 - Order and strategy come **only** from [`config/apis.toml`](../config/apis.toml) via `termalwave/providers/registry.py`.
 - Merge policies are pure functions in `termalwave/merge.py`.
 - Secrets: [`config/secrets.local.toml`](../config/secrets.local.toml.example) (gitignored) or env vars. Missing credentials → provider skipped (log), never crash.
+- Catalog for agents: [`docs/APIS.md`](APIS.md) (no secrets).
 - `--offline` uses `tests/fixtures/providers/`. All providers down → `data/cache/`; else layer `unavailable` in `stats.json` / provenance.
+- Web contract: pipeline also writes `web/public|dist/dataset.json` plus `series/` and `hotspots/` sidecars (`termalwave/process/dataset_export.py`).
 
 ### Adding a new API (zero changes elsewhere)
 

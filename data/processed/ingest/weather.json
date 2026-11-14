@@ -23,7 +23,7 @@
       "precip_mm": 0.0,
       "source": "open_meteo_archive",
       "product": "open-meteo-archive",
-      "retrieved_at": "2026-11-14T16:59:02.756476+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.210485+00:00",
       "quality_rank": 10,
       "license": "Open-Meteo / CC-BY",
       "filled": false
@@ -35,7 +35,7 @@
       "precip_mm": 1.0,
       "source": "open_meteo_archive+meteomatics",
       "product": "open-meteo-archive",
-      "retrieved_at": "2026-11-14T16:59:02.756558+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.210567+00:00",
       "quality_rank": 10,
       "license": "Open-Meteo / CC-BY",
       "filled": true
@@ -47,7 +47,7 @@
       "precip_mm": 2.5,
       "source": "open_meteo_archive+meteomatics",
       "product": "open-meteo-archive",
-      "retrieved_at": "2026-11-14T16:59:02.756558+00:00",
+      "retrieved_at": "2026-11-14T18:26:22.210567+00:00",
       "quality_rank": 10,
       "license": "Open-Meteo / CC-BY",
       "filled": true
