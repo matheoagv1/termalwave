@@ -1,0 +1,18 @@
+{
+  "capas": {
+    "radar": "La capa representa la respuesta del radar a la superficie. Un cambio puede relacionarse con humedad, vegetación, rugosidad o geometría de observación; no identifica una causa por sí solo.",
+    "suelo": "La respuesta del radar puede aportar información sobre condiciones superficiales del suelo. La humedad es una estimación que necesita un producto y una validación adecuados; no describe directamente el agua de las raíces.",
+    "contaminacion": "Revisá la fuente y el método de esta capa antes de interpretarla. El radar NISAR no mide directamente la concentración de contaminantes ni confirma contaminación del agua o del suelo.",
+    "incendios": "Los focos de calor satelitales pueden indicar actividad térmica. No todos corresponden a incendios y su ausencia no demuestra que no haya fuego; contrastá fecha, cobertura y reportes locales."
+  },
+  "fuentes": {
+    "earthdata_nisar_gcov": "NASA Earthdata distribuye productos radar NISAR. Revisá la fecha, la colección y el estado de validación de cada observación.",
+    "planetary_computer_s2": "Sentinel-2 aporta imágenes ópticas para comparar la cobertura; las nubes y sus sombras pueden impedir la observación.",
+    "open_meteo_archive": "Open-Meteo aporta datos meteorológicos de archivo para contextualizar las observaciones. La escala y el método dependen de la variable consultada.",
+    "meteomatics": "Meteomatics puede aportar datos meteorológicos cuando está disponible y configurado; revisá la variable y su cobertura.",
+    "firms_viirs_sp": "FIRMS distribuye detecciones térmicas VIIRS procesadas. Son focos observados, no un perímetro completo del fuego.",
+    "firms_viirs_nrt": "FIRMS distribuye detecciones VIIRS de disponibilidad rápida; pueden revisarse en procesamientos posteriores.",
+    "firms_modis": "FIRMS distribuye detecciones térmicas MODIS. Su capacidad de detectar focos depende de la escala y de las condiciones de observación."
+  },
+  "aviso": "Las capas de ejemplo se deben identificar como tales y no presentar como mediciones observadas."
+}
