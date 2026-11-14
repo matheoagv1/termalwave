@@ -1,15 +1,19 @@
-# NOW — Carne merge tar; VPS deploy + T022
+# NOW — layers fallback live
 
-Updated: 2026-11-14 UTC.
+Updated: 2026-11-14 UTC. Role: **vps** (central).
 
-## P0
+## Live
 
-1. **Carne T026**: aplicar `…-cricri/entregas/ux-lote-20261114/archivos-completos.tar.gz` en `work/carne`, build, commit, notify vps.
-2. **VPS**: merge master + preview redeploy cuando Carne avise; seguir T011/T022.
-3. **Cricri**: STOP / idle.
+- Preview: https://termalwave-preview.vroms.workers.dev
+- Fix: `dataset.json` con `layers:[]` ya no tumba la app; cae a `app-config.json` (4 capas).
+- Redeployed version `b7cc18b2…`
 
 ## Open
 
-- T011 @vps · T022 @vps · T026 @carne
+- **T011** @vps — dataset.json deberia traer layers (no publicarlo vacio)
+- **T022** @vps si sigue abierto
+- Carne/cricri: idle salvo bugs nuevos
 
-Preview: https://termalwave-preview.vroms.workers.dev
+## Note
+
+Permisos agente-carne: reintentar g+rw en COMMIT_EDITMSG si falla de nuevo.
