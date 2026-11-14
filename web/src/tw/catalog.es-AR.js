@@ -218,10 +218,10 @@ export const T = {
     group: "Explorar el cambio en el mapa",
     campo: "Campo",
     urbano: "Urbano",
-    campoHint: "Mirá el área completa con contexto.",
+    campoHint: "Mira el área completa con contexto.",
     urbanoHint: "Acercate al relieve y a las manchas de cambio.",
     compare: "Comparar fechas",
-    compareOn: "Cortina activa · arrastrá el control",
+    compareOn: "Cortina activa · arrastra el control",
     hotspots: (n) =>
       n === 0 ? "Sin puntos marcados" : n === 1 ? "1 punto de cambio" : `${n} puntos de cambio`,
     nextHotspot: "Siguiente punto",
@@ -234,7 +234,7 @@ export const T = {
     layer: "Capa",
     at: "Momento",
     delta: "Cambio",
-    scrub: "Mové la línea de tiempo para ver cómo cambia este punto.",
+    scrub: "Usa la línea de tiempo para ver cómo cambia este punto.",
   },
 
   timeline: {
