@@ -57,8 +57,28 @@ type AppConfig = {
     panel_title: string;
     context_slot_title: string;
     context_slot_body: string;
+    sources_panel_title: string;
+    sources_panel_empty: string;
+    sources_status_ok: string;
+    sources_status_cache: string;
+    sources_status_unavailable: string;
     year_scrub_label: string;
     bg_color: string;
+  };
+  provenance?: {
+    version: number;
+    generated_at: string;
+    layers: Record<
+      string,
+      {
+        strategy: string;
+        status: string;
+        tried: Array<{ provider: string; ok: boolean; count?: number; error?: string }>;
+        selected_sources: string[];
+        from_cache: boolean;
+        count: number;
+      }
+    >;
   };
 };
 
@@ -70,10 +90,42 @@ const layersEl = document.querySelector<HTMLElement>("#layers");
 const panelTitleEl = document.querySelector<HTMLElement>("#panel-title");
 const contextTitleEl = document.querySelector<HTMLElement>("#context-title");
 const contextBodyEl = document.querySelector<HTMLElement>("#context-body");
+const sourcesTitleEl = document.querySelector<HTMLElement>("#sources-title");
+const sourcesMountEl = document.querySelector<HTMLElement>("#sources-mount");
 const titleEl = document.querySelector("title");
 
 function setStatus(text: string): void {
   if (statusEl) statusEl.textContent = text;
+}
+
+function statusLabel(web: AppConfig["web"], status: string): string {
+  if (status === "ok") return web.sources_status_ok;
+  if (status === "cache") return web.sources_status_cache;
+  if (status === "unavailable") return web.sources_status_unavailable;
+  return status;
+}
+
+function renderSources(cfg: AppConfig): void {
+  if (!sourcesMountEl) return;
+  sourcesMountEl.replaceChildren();
+  const layers = cfg.provenance?.layers;
+  if (!layers || Object.keys(layers).length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "sources-empty";
+    empty.textContent = cfg.web.sources_panel_empty;
+    sourcesMountEl.appendChild(empty);
+    return;
+  }
+  const list = document.createElement("ul");
+  list.className = "sources-list";
+  for (const [kind, info] of Object.entries(layers)) {
+    const item = document.createElement("li");
+    const sources =
+      info.selected_sources.length > 0 ? info.selected_sources.join(", ") : "—";
+    item.textContent = `${kind}: ${statusLabel(cfg.web, info.status)} · ${sources} · n=${info.count}`;
+    list.appendChild(item);
+  }
+  sourcesMountEl.appendChild(list);
 }
 
 function applyChrome(cfg: AppConfig): void {
@@ -83,8 +135,10 @@ function applyChrome(cfg: AppConfig): void {
   if (panelTitleEl) panelTitleEl.textContent = cfg.web.panel_title;
   if (contextTitleEl) contextTitleEl.textContent = cfg.web.context_slot_title;
   if (contextBodyEl) contextBodyEl.textContent = cfg.web.context_slot_body;
+  if (sourcesTitleEl) sourcesTitleEl.textContent = cfg.web.sources_panel_title;
   if (timelineEl) timelineEl.setAttribute("aria-label", cfg.web.timeline_aria);
   if (layersEl) layersEl.setAttribute("aria-label", cfg.web.layers_aria);
+  renderSources(cfg);
   setStatus(cfg.web.status_loading);
 }
 

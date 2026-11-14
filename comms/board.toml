@@ -42,7 +42,7 @@ updated = "2026-11-14"
 [[task]]
 id = "T006"
 owner = "vps"
-status = "open"
+status = "done"
 title = "Unified data providers (apis.toml, merge, provenance)"
 notes = "Unblocked after coordination system landed; start after merge"
 updated = "2026-11-14"
@@ -50,15 +50,15 @@ updated = "2026-11-14"
 [[task]]
 id = "T007"
 owner = "carne"
-status = "blocked"
+status = "open"
 title = "Data sources panel reading provenance from app-config"
-blocked_by = ["T006"]
+notes = "Unblocked: provenance in app-config"
 updated = "2026-11-14"
 
 [[task]]
 id = "T008"
 owner = "cricri"
-status = "blocked"
+status = "open"
 title = "Context copy for data sources / layers (no jury in UI)"
-blocked_by = ["T006", "T007"]
+notes = "Can draft context in parallel with carne panel polish"
 updated = "2026-11-14"

@@ -1,0 +1,104 @@
+# Public API registry. Order and strategy only — no secrets here.
+# Credentials live in config/secrets.local.toml (gitignored) or env vars named below.
+
+[paths]
+apis_config = "config/apis.toml"
+secrets_local = "config/secrets.local.toml"
+cache_dir = "data/cache"
+fixtures_dir = "tests/fixtures/providers"
+stats_out = "data/processed/stats.json"
+
+[credentials]
+# Names of keys expected in secrets.local.toml [credentials] or matching env vars.
+earthdata_token_env = "EARTHDATA_TOKEN"
+firms_map_key_env = "FIRMS_MAP_KEY"
+meteomatics_user_env = "METEOMATICS_USER"
+meteomatics_password_env = "METEOMATICS_PASSWORD"
+planetary_computer_token_env = "PLANETARY_COMPUTER_TOKEN"
+
+[fires]
+order = ["firms_viirs_sp", "firms_viirs_nrt", "firms_modis"]
+strategy = "union_dedupe"
+dedupe_distance_km = 1.0
+dedupe_time_hours = 12.0
+# Lower quality_rank wins when deduping (SP preferred over NRT).
+quality_rank = { firms_viirs_sp = 10, firms_viirs_nrt = 20, firms_modis = 30 }
+
+[fires.endpoints]
+firms_viirs_sp = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_SNPP_SP/{west},{south},{east},{north}/{day_range}"
+firms_viirs_nrt = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_SNPP_NRT/{west},{south},{east},{north}/{day_range}"
+firms_modis = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/MODIS_SP/{west},{south},{east},{north}/{day_range}"
+
+[weather]
+order = ["open_meteo_archive", "meteomatics"]
+strategy = "first_available"
+
+[weather.endpoints]
+open_meteo_archive = "https://archive-api.open-meteo.com/v1/archive"
+meteomatics = "https://api.meteomatics.com"
+
+[optical]
+order = ["planetary_computer_s2"]
+strategy = "least_cloudy_near_nisar"
+max_cloud_pct = 40.0
+max_day_delta = 16
+
+[optical.endpoints]
+planetary_computer_s2 = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
+
+[radar]
+order = ["earthdata_nisar_gcov"]
+strategy = "prefer_validated"
+collection = "NISAR_L2_GCOV"
+
+[radar.endpoints]
+earthdata_nisar_gcov = "https://cmr.earthdata.nasa.gov/search/granules.json"
+
+[providers.firms_viirs_sp]
+kind = "fires"
+module = "termalwave.providers.fires.firms_viirs_sp"
+credential = "FIRMS_MAP_KEY"
+product = "VIIRS_SNPP_SP"
+license = "NASA FIRMS"
+
+[providers.firms_viirs_nrt]
+kind = "fires"
+module = "termalwave.providers.fires.firms_viirs_nrt"
+credential = "FIRMS_MAP_KEY"
+product = "VIIRS_SNPP_NRT"
+license = "NASA FIRMS"
+
+[providers.firms_modis]
+kind = "fires"
+module = "termalwave.providers.fires.firms_modis"
+credential = "FIRMS_MAP_KEY"
+product = "MODIS_SP"
+license = "NASA FIRMS"
+
+[providers.open_meteo_archive]
+kind = "weather"
+module = "termalwave.providers.weather.open_meteo_archive"
+credential = ""
+product = "open-meteo-archive"
+license = "Open-Meteo / CC-BY"
+
+[providers.meteomatics]
+kind = "weather"
+module = "termalwave.providers.weather.meteomatics"
+credential = "METEOMATICS_USER"
+product = "meteomatics"
+license = "Meteomatics proprietary"
+
+[providers.planetary_computer_s2]
+kind = "optical"
+module = "termalwave.providers.optical.planetary_computer_s2"
+credential = "PLANETARY_COMPUTER_TOKEN"
+product = "sentinel-2-l2a"
+license = "ESA Sentinel / Microsoft PC"
+
+[providers.earthdata_nisar_gcov]
+kind = "radar"
+module = "termalwave.providers.radar.earthdata_nisar_gcov"
+credential = "EARTHDATA_TOKEN"
+product = "NISAR_L2_GCOV"
+license = "NASA Earthdata"

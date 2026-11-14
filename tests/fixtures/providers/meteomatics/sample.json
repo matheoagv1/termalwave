@@ -1,0 +1,16 @@
+{
+  "days": [
+    {
+      "day": "2024-06-15",
+      "temp_max_c": 30.0,
+      "temp_min_c": 16.0,
+      "precip_mm": 1.0
+    },
+    {
+      "day": "2024-06-16",
+      "temp_max_c": 27.0,
+      "temp_min_c": 14.0,
+      "precip_mm": 0.2
+    }
+  ]
+}

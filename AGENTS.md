@@ -86,9 +86,10 @@ Vocabulario preferido en copy visible: radar, NISAR, backscatter, capa, cambio, 
 
 1. **Un repo, tres roles.** STEERS → board → inbox → este archivo → `agents/<rol>/AGENTS.md`.
 2. **Ownership:**
-   - **vps**: `termalwave/`, `vendor/`, `scripts/` (incluye `scripts/comms.py`), `tests/`, `config/`, `data/`, `brand/`, board/STEERS, scaffold mapa, integra `master`.
-   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline; consume `brand/`. Board + `comms/carne/`.
-   - **cricri (Cristian)**: `web/src/context/` + tester + `brand/monigote/`. Board + `comms/cricri/`.
+   - **vps**: `termalwave/` (pipeline, providers, merge), `vendor/`, `scripts/`, `tests/`, `config/` (`apis.toml`, secrets locales), `data/`, `brand/`, board/STEERS, scaffold mapa, integra `master`.
+   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline + panel **Fuentes de datos** (lee `provenance`); consume `brand/`. Board + `comms/carne/`.
+   - **cricri (Cristian)**: `web/src/context/` (incl. textos de fuentes/capas) + tester + `brand/monigote/`. Board + `comms/cricri/`.
+   - **Secretos:** solo `config/secrets.local.toml` / env. Nunca en prompts, board ni UI. Sin credencial → adapter skip.
 3. **Branding:** todo en `brand/`. No dupliques fuentes de verdad.
 4. **Texto user-facing:** humanizer **ES-AR-SGO**. Cero slop de IA. Cero jurado/scoring/audiencias en UI.
 5. **Sin hardcode de sitio** en TS: config / `app-config.json`.
