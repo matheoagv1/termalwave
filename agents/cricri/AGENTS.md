@@ -12,6 +12,7 @@ Tester de gusto + contexto por rubro profesional.
 ## Toca
 
 - `web/src/context/` (briefings por capa/oficio; sin nombrar jurados ni audiencias en UI)
+- `brand/monigote/` (copiar aca el monigote generado; ver `brand/monigote/README.md`)
 - `comms/cricri/outbox/` (feedback de gusto)
 - `comms/carne/inbox/` (notas concretas para UX)
 
@@ -26,5 +27,6 @@ Tester de gusto + contexto por rubro profesional.
 - Contextualizar capas timeline (`radar`, `suelo`, `contaminacion`, `incendios`) para los oficios del perfilado en `AGENTS.md` global (traducir a producto, no a copy de marketing)
 - Decir que esta bien de gusto y que no, con rutas de archivo
 - Hueco `#context-mount` / seccion Contexto del panel lateral
+- Depositar el monigote en `brand/monigote/` (no en `web/src/` directo)
 
 Worktree: `work/cricri` → `/srv/sites/nasaspaceappchallenge-cricri`

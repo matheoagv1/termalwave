@@ -78,15 +78,16 @@ Vocabulario preferido en copy visible: radar, NISAR, backscatter, capa, cambio, 
 
 1. **Un repo, tres roles.** Lee global → `agents/<rol>/AGENTS.md` → `comms/<rol>/inbox/` + `comms/from-vps/`.
 2. **Ownership:**
-   - **vps**: `termalwave/`, `vendor/`, `scripts/`, `tests/`, `config/`, `data/`, contrato timeline, scaffold mapa cuando haga falta, `comms/from-vps/`.
-   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline chrome. Lee feedback de cricri y vps.
-   - **cricri (Cristian)**: `web/src/context/` + tester de gusto. Escribe `comms/cricri/outbox/` y `comms/carne/inbox/`.
-3. **Texto user-facing:** humanizer **ES-AR-SGO**. Cero slop de IA. Cero menciones a jurado/scoring/audiencias en strings visibles.
-4. **Sin hardcode de sitio** en TS: todo sale de config / `app-config.json`.
-5. **Portable:** Python pin en `config/runtime.json`; vendor linux/musl/win amd64 cp311; `web/dist` commiteado; sin GDAL; sin CDN obligatorio para el core.
-6. **`references/`:** solo drops de codigo de referencia. No documentacion de agentes ahi. No copies codigo de esos proyectos ni los linkees como producto. Patrones actuales en disco (pueden no ir en git por tamano): `references/SgoLinea/`, `references/gods-eye-view/`.
-7. **Comms:** formato en `comms/README.md`. No uses el chat entre roles como fuente de verdad: deja md en la bandeja.
-8. **Master:** el VPS integra. carne/cricri no committees a `master` sin acuerdo. Empujan su rama `work/<rol>` y avisan.
+   - **vps**: `termalwave/`, `vendor/`, `scripts/`, `tests/`, `config/`, `data/`, `brand/` (kit de marca), contrato timeline, scaffold mapa cuando haga falta, `comms/from-vps/`.
+   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline chrome; consume assets desde `brand/`. Lee feedback de cricri y vps.
+   - **cricri (Cristian)**: `web/src/context/` + tester de gusto + deposita el **monigote** en `brand/monigote/`. Escribe `comms/cricri/outbox/` y `comms/carne/inbox/`.
+3. **Branding:** todo en `brand/` (iconos, wordmark, paleta, fonts, social, monigote). No dupliques fuentes de verdad en otros trees.
+4. **Texto user-facing:** humanizer **ES-AR-SGO**. Cero slop de IA. Cero menciones a jurado/scoring/audiencias en strings visibles.
+5. **Sin hardcode de sitio** en TS: todo sale de config / `app-config.json`.
+6. **Portable:** Python pin en `config/runtime.json`; vendor linux/musl/win amd64 cp311; `web/dist` commiteado; sin GDAL; sin CDN obligatorio para el core.
+7. **`references/`:** solo drops de codigo de referencia. No documentacion de agentes ahi. No copies codigo de esos proyectos ni los linkees como producto. Patrones actuales en disco (pueden no ir en git por tamano): `references/SgoLinea/`, `references/gods-eye-view/`.
+8. **Comms:** formato en `comms/README.md`. No uses el chat entre roles como fuente de verdad: deja md en la bandeja.
+9. **Master:** el VPS integra. carne/cricri no committees a `master` sin acuerdo. Empujan su rama `work/<rol>` y avisan.
 
 ## Orden de lectura por turno
 
