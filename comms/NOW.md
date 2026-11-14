@@ -1,6 +1,6 @@
-# NOW — globe-first (Gods Eye View north star)
+# NOW — carne-t010-globo
 
-Updated: 2026-11-14. Producto = datos en el **globo 3D**. UI 2D = controles opcionales.
+Updated: 2026-11-14 (UTC date). Hackathon: vibecode lean.
 
 ## Read this turn (and almost nothing else)
 
@@ -12,29 +12,22 @@ Updated: 2026-11-14. Producto = datos en el **globo 3D**. UI 2D = controles opci
 ## Do not open unless blocked
 
 - `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`
-- `references/` (Gods Eye View = referencia de codigo, no doc de turno), `vendor/`, brand binaries
-- Full `AGENTS.md` jury tables
-
-## North star (todos)
-
-- Escena principal: **globo MapLibre**, capas amoldadas al terreno (no flat map como default).
-- HUD 2D: elegir capa, rango temporal, fuentes, parametros. Colapsable / no tapa el globo.
-- Analisis en el globo: hotspots, comparar fechas, leer estado del lugar y factores (radar, suelo, fuego, clima). Predicciones solo con dato/serie real; copy sin inventar certeza.
-- Norte visual: `references/` Gods Eye View (codigo). No copiar branding ajeno.
+- `references/`, `vendor/`, old prompts history, brand binaries
+- Full `AGENTS.md` jury tables (product rules already known)
 
 ## Open tasks
 
-- **T010** @carne [in_progress] **P0** MapLibreScene globo + territorio + cortina (`SceneApi`)
-- **T011** @vps [open] dataset.json segments/series/hotspots (alimenta capas drapadas)
-- **T003** @cricri [open] monigote PNG
-- **T008** @cricri [open] copy capas/fuentes (habla del fenomeno en el territorio)
-- **T012** @cricri [open] trades.json lecturas por oficio (analisis en escena)
+- **T003** @cricri [open] Deposit monigote PNG in brand/monigote/
+- **T008** @cricri [open] Context copy for data sources / layers (no jury in UI)
+- **T011** @vps [open] dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts
+- **T012** @cricri [open] Lectura por oficio en web/src/context/trades.json
+- **T013** @carne [open] HUD 2D colapsable que no tape el globo; retirar escena DOM del arranque
 
 ## Focus by role
 
-- **carne (P0)**: retomar T010 ya. MockScene sale; MapLibre 5.x globe + image source drapado por `FrameRef.bounds`. Paneles = chrome, no escena.
-- **vps**: T011 contract → PNG/JSON listos para `setDataset`; no bloquear carne.
-- **cricri**: monigote + textos que ayuden a inferir estado/factores **mirando el globo**, sin jurado en UI.
+- **vps**: pipeline/providers/config/data; keep board/NOW fresh; merge master
+- **carne**: React `web/` UX, brand wire, Fuentes panel from `provenance`
+- **cricri**: `brand/monigote/`, `web/src/context/`, gusto notes via notify
 
 ## Commands
 
@@ -43,4 +36,5 @@ python3 scripts/comms.py status
 python3 scripts/comms.py notify --from <rol> --to <rol|todos> --topic … --body '…'
 python3 scripts/comms.py task set T00N --status done
 python3 scripts/comms.py archive --name <inbox-file.md>
+python3 scripts/comms.py milestone --label <next-cut>
 ```

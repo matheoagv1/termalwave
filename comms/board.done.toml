@@ -54,3 +54,11 @@ status = "done"
 title = "Port Claude Design UI to React, conectada a ConfigProvider (datos reales de app-config)"
 notes = "UI React portada. Verificada en preview con datos reales y con #mock=1. Commits c72fb6b y siguientes."
 updated = "2026-11-14"
+
+[[task]]
+id = "T010"
+owner = "carne"
+status = "done"
+title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
+notes = "MapLibreScene (MapLibre 5.24, globo) detras de SceneApi: orbita, aproximacion, territorio con inclinacion, cortina de comparar, hotspots, anillo. Basemap GIBS. Relieve DEM terrarium opcional sin verificar. Fallback a escena DOM con #scene=dom o sin WebGL."
+updated = "2026-11-14"

@@ -18,14 +18,6 @@ notes = "Copy habla del fenomeno en el territorio (globo), no de paneles. ES-AR-
 updated = "2026-11-14"
 
 [[task]]
-id = "T010"
-owner = "carne"
-status = "done"
-title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "MapLibreScene (MapLibre 5.24, globo) detras de SceneApi: orbita, aproximacion, territorio con inclinacion, cortina de comparar, hotspots, anillo. Basemap GIBS. Relieve DEM terrarium opcional sin verificar. Fallback a escena DOM con #scene=dom o sin WebGL."
-updated = "2026-11-14"
-
-[[task]]
 id = "T011"
 owner = "vps"
 status = "open"
@@ -39,4 +31,12 @@ owner = "cricri"
 status = "open"
 title = "Lectura por oficio en web/src/context/trades.json"
 notes = "Formato [{trade,text}]. Textos de analisis/estado/factores utiles con el globo a la vista."
+updated = "2026-11-14"
+
+[[task]]
+id = "T013"
+owner = "carne"
+status = "open"
+title = "HUD 2D colapsable que no tape el globo; retirar escena DOM del arranque"
+notes = "STEERS globe-first. Ficha, fuentes y linea de tiempo como chrome opcional. MockScene queda solo como fallback sin WebGL."
 updated = "2026-11-14"

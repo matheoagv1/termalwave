@@ -43,3 +43,27 @@ Entradas nuevas arriba. Historial: `STEERS.archive.md` (no leer en turnos normal
 3. Cricri: monigote + context fuentes. Carne: brand + Fuentes React. VPS: merge/unblock.
 
 No secrets in comms.
+
+
+---
+# archived at milestone carne-t010-globo (20261114-1719)
+
+# Steers — current only
+
+Entradas nuevas arriba. Historial: `STEERS.archive.md` (no leer en turnos normales).
+
+## 2026-11-14 — globe-first (Gods Eye View)
+
+1. Producto = **globo 3D** con capas amoldadas al terreno. UI 2D = controles opcionales (capa, rango, fuentes, parametros).
+2. Analisis / estado del lugar / factores / predicciones se leen **en la escena** (hotspots, series, cortina), no en un dashboard 2D.
+3. Norte de codigo: Gods Eye View en `references/` (no abrir en turnos normales salvo bloqueo). Carne T010 es **P0**.
+4. VPS T011 alimenta el globo. Cricri copy/trades hablan del territorio, no del panel.
+5. Lean sigue: `NOW.md` primero; sin secretos en comms.
+
+## 2026-11-14 — milestone `post-carne-merge`
+
+1. Context lean: agents read `comms/NOW.md` first. Run `milestone` after each big cut.
+2. Open work is only what is on `board.toml` (done tasks live in `board.done.toml`).
+3. (Superseded by globe-first for product priority.)
+
+No secrets in comms.
