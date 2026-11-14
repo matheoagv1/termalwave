@@ -76,8 +76,18 @@ def providers_for_kind(
     return built
 
 
+def _gibs_date(lag_days: int) -> str:
+    from datetime import datetime, timedelta, timezone
+
+    return (datetime.now(timezone.utc) - timedelta(days=max(0, int(lag_days)))).date().isoformat()
+
+
 def basemap_defs(apis: dict[str, Any]) -> list[dict[str, Any]]:
-    """Frontend basemap entries from [basemaps] — no secrets, config only."""
+    """Frontend basemap entries from [basemaps] — no secrets, config only.
+
+    GIBS templates keep `{date}` for the UI, and also ship `resolved_url` /
+    `resolved_date` using per-entry `date_lag_days` (VIIRS lags ~14d).
+    """
     section = apis.get("basemaps") or {}
     entries = section.get("entries") or {}
     out: list[dict[str, Any]] = []
@@ -85,5 +95,13 @@ def basemap_defs(apis: dict[str, Any]) -> list[dict[str, Any]]:
         entry = entries.get(key)
         if not entry:
             continue
-        out.append(dict(entry))
+        row = dict(entry)
+        tmpl = str(row.get("url_template") or "")
+        if "{date}" in tmpl:
+            lag = int(row.get("date_lag_days") or section.get("date_lag_days") or 4)
+            day = _gibs_date(lag)
+            row["resolved_date"] = day
+            row["resolved_url"] = tmpl.replace("{date}", day)
+            row["date_lag_days"] = lag
+        out.append(row)
     return out

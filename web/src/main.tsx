@@ -25,32 +25,50 @@ type BmEntry = {
   id?: string;
   kind?: string;
   url_template?: string;
+  resolved_url?: string;
+  resolved_date?: string;
+  date_lag_days?: number;
   attribution?: string;
   max_zoom?: number;
   label?: string;
   tile_size?: number;
 };
-type BmCfg = { default?: string; entries?: Record<string, BmEntry>; labels?: Record<string, string> };
+type BmCfg = {
+  default?: string;
+  entries?: BmEntry[] | Record<string, BmEntry>;
+  labels?: Record<string, string>;
+};
 
 const BM_LABELS: Record<string, string> = {
   gibs_modis_truecolor: "NASA GIBS MODIS",
   gibs_viirs_truecolor: "NASA GIBS VIIRS",
+  carto_voyager: "Calles (CARTO Voyager)",
+  carto_dark_matter: "Calles oscuras (CARTO)",
   eox_s2cloudless_2025: "Sentinel-2 sin nubes (EOX)",
 };
 
-// GIBS publica el dia en curso a medias: se pide una fecha ya procesada.
-function gibsDate(): string {
-  return new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10);
+// GIBS truecolor lags (VIIRS often ~14d). Prefer resolved_url from app-config.
+function gibsDate(lagDays = 4): string {
+  return new Date(Date.now() - lagDays * 86400000).toISOString().slice(0, 10);
 }
 
-// Solo se ofrecen los rasters; el vector (OpenFreeMap) y el relieve de Cesium no son de esta escena.
+function entryUrl(e: BmEntry): string {
+  if (e.resolved_url) return e.resolved_url;
+  const tmpl = String(e.url_template ?? "");
+  const lag = e.date_lag_days ?? 4;
+  return tmpl.replace("{date}", gibsDate(lag));
+}
+
+// Rasters only here; OpenFreeMap vector needs a full style swap (see board T036).
 function basemapOptions(cfg: BmCfg | undefined): BasemapOption[] {
-  const list = Object.values(cfg?.entries ?? {})
-    .filter((e) => e.kind === "raster" && e.url_template)
+  const raw = cfg?.entries;
+  const values = Array.isArray(raw) ? raw : Object.values(raw ?? {});
+  const list = values
+    .filter((e) => e.kind === "raster" && (e.resolved_url || e.url_template))
     .map((e) => ({
       id: String(e.id),
       label: e.label ?? BM_LABELS[String(e.id)] ?? String(e.id),
-      url: String(e.url_template).replace("{date}", gibsDate()),
+      url: entryUrl(e),
       tileSize: e.tile_size ?? 256,
       maxzoom: e.max_zoom ?? 8,
       attribution: e.attribution ?? "",
