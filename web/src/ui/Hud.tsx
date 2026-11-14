@@ -598,9 +598,16 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       <div style={s("font:11px var(--mono);color:var(--fg2)")}>
                         {v.layerName} · {v.momentName}
                       </div>
-                      <div style={s("font:600 20px/1.3 var(--mono)")}>{v.valueText}</div>
-                      <div style={s("font:12px var(--sans);color:var(--fg2)")}>{v.deltaText}</div>
+                      {v.noSeries ? (
+                        <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{t.card.noSeries}</div>
+                      ) : (
+                        <>
+                          <div style={s("font:600 20px/1.3 var(--mono)")}>{v.valueText}</div>
+                          <div style={s("font:12px var(--sans);color:var(--fg2)")}>{v.deltaText}</div>
+                        </>
+                      )}
                     </div>
+                    {!v.noSeries && (
                     <div>
                       <div style={s("font:11px var(--mono);color:var(--fg2);margin-bottom:4px")}>{t.card.series}</div>
                       <svg width={ser.w} height={56} style={s("display:block;overflow:visible")}>
@@ -615,6 +622,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                         <span>{ser.y1}</span>
                       </div>
                     </div>
+                    )}
                     <dl style={s("margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font:12px var(--sans)")}>
                       {v.imgRows.map((r) => (
                         <React.Fragment key={r.k}>

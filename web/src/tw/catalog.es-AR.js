@@ -25,7 +25,7 @@ export const T = {
 
   top: { search: "Buscar lugar o coordenadas", searchOpen: "Abrir búsqueda", searchClose: "Cerrar búsqueda", help: "Ayuda" },
   search: {
-    none: (q) => `Sin resultados para "${q}". Probá con el nombre del área o con latitud y longitud.`,
+    none: (q) => `Sin resultados para "${q}". Prueba con el nombre del área o con latitud y longitud.`,
     going: (label) => `Yendo a ${label}`,
   },
 
@@ -40,11 +40,11 @@ export const T = {
 
   entry: {
     kicker: "Área de estudio",
-    lead: "Mirá cómo ha cambiado la superficie de este territorio a lo largo del tiempo, con radar satelital NISAR (NASA e ISRO).",
+    lead: "Mira cómo ha cambiado la superficie de este territorio a lo largo del tiempo, con radar satelital NISAR (NASA e ISRO).",
     enter: "Entrar al área",
     explore: "Explorar el mundo",
     backToArea: "Ir al área de estudio",
-    dragHint: "Arrastrá para girar la Tierra.",
+    dragHint: "Arrastra para girar la Tierra.",
     coords: (lat, lon) => `${lat} · ${lon}`,
     range: (a, b) => `${a} a ${b}`,
     layers: (n) => (n === 1 ? "1 capa" : `${n} capas`),
@@ -53,7 +53,7 @@ export const T = {
 
   error: {
     title: "No se ha podido leer la configuración del área",
-    detail: "Revisá los límites, la lista de capas y los tramos de tiempo del archivo de configuración.",
+    detail: "Revisa los límites, la lista de capas y los tramos de tiempo del archivo de configuración.",
     code: "Código",
     retry: "Volver a intentar",
     explore: "Explorar el mundo",
@@ -127,6 +127,7 @@ export const T = {
     close: "Plegar ficha",
     value: "Valor medio en el área",
     noValue: "Sin dato",
+    noSeries: "Todavía no hay valores publicados para esta capa. La imagen se ve en el mapa y los números aparecerán cuando estén disponibles.",
     delta: (d, label) => `${d} respecto de ${label}`,
     noChange: (label) => `Sin cambio respecto de ${label}`,
     deltaNone: "Sin punto anterior para comparar",
@@ -141,7 +142,7 @@ export const T = {
     qualityPartial: "Parcial",
     meters: (n) => `${n} m`,
     bounds: "Límites",
-    readingLead: "Elegí un oficio para leer qué mirar en esta área.",
+    readingLead: "Elige un oficio para leer qué mirar en esta área.",
     readingSample: "Texto de ejemplo",
     readingEmpty: "Todavía no se han cargado textos para esta área.",
   },
@@ -161,7 +162,7 @@ export const T = {
   map: {
     label: (layer, tick) => `${layer} · ${tick}`,
     gap: (layer) => `Sin imagen de ${layer} en este punto`,
-    gapHint: "Elegí otro punto o mirá otra capa.",
+    gapHint: "Elige otro punto o mira otra capa.",
     approach: "Aproximación al área",
     orbit: "Tierra completa",
     loading: "Cargando imágenes del área",
@@ -202,7 +203,7 @@ export const T = {
   compare: {
     banner: (b, a) => `Izquierda B: ${b} · Derecha A: ${a}`,
     mixed: "Estás comparando un compuesto con una pasada. El compuesto promedia varias pasadas y la pasada es una sola adquisición, así que los valores no son equivalentes.",
-    curtain: "Cortina de comparación. Usá las flechas para moverla.",
+    curtain: "Cortina de comparación. Usa las flechas para moverla.",
   },
 
   help: {

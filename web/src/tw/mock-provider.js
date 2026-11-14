@@ -165,8 +165,8 @@ export class MockProvider {
         { id: 'ev-lluvia', date: '2026-02-15', label: 'Lluvias intensas' },
       ],
       context: [
-        { trade: 'Producción agropecuaria', text: 'Entre 2018 y 2026 la humedad del suelo ha bajado de 41 a 29 por ciento en el área. Mirá los meses de siembra en la línea de tiempo y compará con la campaña anterior antes de decidir la fecha.' },
-        { trade: 'Gestión del agua', text: 'En las pasadas recientes la retrodispersión ha subido en los bajos del sector este, algo que suele indicar suelo saturado. Revisá esos puntos con la capa Suelo y con el evento de lluvias intensas.' },
+        { trade: 'Producción agropecuaria', text: 'Entre 2018 y 2026 la humedad del suelo ha bajado de 41 a 29 por ciento en el área. Mira los meses de siembra en la línea de tiempo y compara con la campaña anterior antes de decidir la fecha.' },
+        { trade: 'Gestión del agua', text: 'En las pasadas recientes la retrodispersión ha subido en los bajos del sector este, algo que suele indicar suelo saturado. Revisa esos puntos con la capa Suelo y con el evento de lluvias intensas.' },
       ],
     };
     return this.ds;
