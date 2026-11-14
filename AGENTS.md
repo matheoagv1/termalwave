@@ -10,16 +10,22 @@ Un solo repo. Ruta VPS: `/srv/sites/nasaspaceappchallenge`.
 
 No hay un segundo repo. Mergean a `master` cuando el trabajo del rol esta listo; el VPS integra.
 
-### Coordinacion (obligatorio cada turno)
+### Coordinacion (obligatorio cada turno) — lean
 
-1. [`comms/STEERS.md`](comms/STEERS.md) — prioridades de los steers/humanos
-2. [`comms/board.toml`](comms/board.toml) — tareas `open` / `blocked` / `done`
-3. `comms/<tu-rol>/inbox/`
-4. Este archivo → `agents/<tu-rol>/AGENTS.md`
+**Leer poco.** El costo caro es re-leer historia.
 
-CLI: `python3 scripts/comms.py status|notify|task|archive` (detalle en [`comms/README.md`](comms/README.md)).
+1. [`comms/NOW.md`](comms/NOW.md) — unico pack caliente
+2. `comms/board.toml` — solo tareas abiertas
+3. Nuevos en `comms/<tu-rol>/inbox/` → leer → `archive`
+4. `agents/<tu-rol>/AGENTS.md` solo si dudas ownership
 
-Hooks Cursor (`.cursor/hooks.json`) inyectan un briefing corto al arrancar / al enviar prompt.
+**No leer** en turnos normales: `comms/**/archive/`, `board.done.toml`, `STEERS.archive.md`, `references/`, `vendor/`.
+
+CLI: `python3 scripts/comms.py status|notify|task|archive|milestone` ([`comms/README.md`](comms/README.md)).
+
+Tras cada corte grande: `python3 scripts/comms.py milestone --label <nombre>`.
+
+Hooks Cursor inyectan briefing lean (NOW + tus tasks).
 
 `references/` **no** es documentacion de agentes. Solo drops de codigo de referencia.
 

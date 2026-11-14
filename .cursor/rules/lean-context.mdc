@@ -1,0 +1,22 @@
+---
+description: Keep hackathon agent context lean — prefer NOW.md, avoid archives and heavy trees
+globs:
+alwaysApply: true
+---
+
+# Lean context (hackathon)
+
+Reading is expensive. Default each turn:
+
+1. `comms/NOW.md`
+2. Open tasks from `comms/board.toml` (or `python3 scripts/comms.py status`)
+3. Only **new** inbox files, then archive them
+4. Touch the few source files needed for the task
+
+Do **not** open unless blocked:
+
+- `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`, `comms/milestones/`
+- `references/`, `vendor/`, `web/dist/assets/`, brand binaries
+- Full jury tables in root `AGENTS.md` (already internalized)
+
+After a milestone: VPS runs `python3 scripts/comms.py milestone --label …` so history leaves the hot path.

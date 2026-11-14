@@ -1,0 +1,38 @@
+# Keep agent context cheap during the hackathon. Prefer NOW.md + source you touch.
+
+# Heavy / never needed in vibecode turns
+references/
+vendor/
+ssh-keys/
+config/secrets.local.toml
+
+# Comms history (open inbox + NOW.md are enough)
+comms/**/archive/
+comms/board.done.toml
+comms/STEERS.archive.md
+comms/milestones/
+
+# Brand binaries / studies (docs stay readable)
+brand/concept/
+brand/preview/
+brand/social/
+brand/pwa/
+brand/icon/
+brand/wordmark/
+brand/fonts/*.ttf
+
+# Build / lock / fixtures noise
+web/node_modules/
+web/dist/assets/
+web/package-lock.json
+**/__pycache__/
+data/processed/timeline/
+data/processed/ingest/
+data/cache/
+tests/fixtures/providers/
+*.png
+*.jpg
+*.jpeg
+*.ico
+*.woff2
+*.h5
