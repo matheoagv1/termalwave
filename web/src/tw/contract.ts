@@ -112,6 +112,7 @@ export interface DataProvider {
 }
 
 export type CameraMode = "orbit" | "approach" | "territory" | "detail";
+export type ViewScale = "campo" | "urbano";
 
 export interface SceneState {
   camera: CameraMode;
@@ -120,6 +121,7 @@ export interface SceneState {
   compare?: { tickId: string; split: number };
   tilt: number;
   northUp: boolean;
+  viewScale: ViewScale;
   focus?: { lonlat: [number, number]; zoom: number };
 }
 

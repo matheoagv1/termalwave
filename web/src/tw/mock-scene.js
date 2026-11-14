@@ -34,7 +34,7 @@ function dots() {
 export class MockScene {
   constructor(o = {}) {
     this.o = Object.assign({ online: true, terrain: true, basemap: true, reducedMotion: false, labels: { curtain: 'Cortina' } }, o);
-    this.s = { camera: 'orbit', layer: '', tickId: '', tilt: 35, northUp: true };
+    this.s = { camera: 'orbit', layer: '', tickId: '', tilt: 35, northUp: true, viewScale: 'campo' };
     this.cbC = new Set(); this.cbP = new Set();
     this.ds = null; this.ticks = {}; this.aspect = 0.884; this.areaLL = [-64.25, -27.8];
     this.pad = { top: 60, right: 20, bottom: 20, left: 460 }; this.padC = { ...this.pad };
@@ -239,7 +239,7 @@ export class MockScene {
 
   set(n, opt = {}) {
     const s = this.s;
-    ['layer', 'tickId', 'tilt', 'northUp'].forEach((k) => { if (n[k] !== undefined) s[k] = n[k]; });
+    ['layer', 'tickId', 'tilt', 'northUp', 'viewScale'].forEach((k) => { if (n[k] !== undefined) s[k] = n[k]; });
     if ('compare' in n) { if (n.compare) s.compare = { ...n.compare }; else delete s.compare; }
     if ('focus' in n) { if (n.focus) s.focus = { ...n.focus }; else delete s.focus; }
     if (n.camera && n.camera !== s.camera) {
@@ -312,7 +312,15 @@ export class MockScene {
     const sa = rm ? e : ph(e, 0.55, 1), sc = rm ? 1 : lerp(0.55, 1, 1 - Math.pow(1 - sa, 3));
     const tiltEff = this.o.terrain ? this.s.tilt : 0, tl = rm ? tiltEff : tiltEff * sa, br = this.s.northUp ? 0 : -18;
     let z = 1, tx = 0, ty = 0;
-    if (this.s.camera === 'detail' && this.s.focus) { z = this.s.focus.zoom || 1.7; const f = this._frac(this.s.focus.lonlat); tx = (f.x - 0.5) * g.w; ty = (f.y - 0.5) * g.h; }
+    if (this.s.camera === 'detail' && this.s.focus) {
+      const boost = this.s.viewScale === 'urbano' ? 1.35 : 1;
+      z = (this.s.focus.zoom || 1.7) * boost;
+      const f = this._frac(this.s.focus.lonlat);
+      tx = (f.x - 0.5) * g.w;
+      ty = (f.y - 0.5) * g.h;
+    } else if (this.s.camera === 'territory' && this.s.viewScale === 'urbano') {
+      z = 1.28;
+    }
     pl.transition = this.fly ? 'none' : `transform ${rm ? 0 : 700}ms cubic-bezier(.2,.7,.2,1)`;
     pl.transform = `rotateX(${tl}deg) rotateZ(${br}deg) scale(${sc * z}) translate(${-tx}px,${-ty}px)`;
     this.stage.style.opacity = sa;
