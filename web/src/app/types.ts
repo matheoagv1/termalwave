@@ -50,6 +50,12 @@ export type AppState = {
   dockOpen: boolean;
   tlOpen: boolean;
   immersive: boolean;
+  introOpen: boolean;
+  introDone: boolean;
+  userName: string;
+  userTrade: string;
+  soundOn: boolean;
+  moniOpen: boolean;
 };
 
 export type AppProps = {

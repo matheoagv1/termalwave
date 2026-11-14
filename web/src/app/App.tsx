@@ -9,14 +9,18 @@ import type {
   SceneState,
   SearchResult,
   TimeSegment,
+  ViewScale,
 } from "../tw/contract";
 import { hashParams } from "./hash";
 import { Hud } from "../ui/Hud";
+import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
+import { Sfx } from "../ui/sfx";
 import type { Model } from "./view";
 import { buildView } from "./view";
 import type { AppProps, AppState, Flat, Status } from "./types";
 
-const INITIAL_SCENE: SceneState = { camera: "orbit", layer: "", tickId: "", tilt: 35, northUp: true };
+const INITIAL_SCENE: SceneState = { camera: "orbit", layer: "", tickId: "", tilt: 35, northUp: true, viewScale: "campo" };
+const intro0 = readIntroPrefs();
 
 export class App extends React.Component<AppProps, AppState> implements Model {
   state: AppState = {
@@ -47,9 +51,15 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     trade: 0,
     explore: false,
     status: { online: true, terrain: true, basemap: true },
-    dockOpen: true,
-    tlOpen: true,
+    dockOpen: false,
+    tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     immersive: false,
+    introOpen: !intro0.done,
+    introDone: intro0.done,
+    userName: intro0.name,
+    userTrade: intro0.trade,
+    soundOn: intro0.sound,
+    moniOpen: false,
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -248,11 +258,13 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const layer = ds.layers.some((l) => l.id === hp.l) ? (hp.l as string) : (ds.layers[0]?.id ?? "");
     const tickId = hp.t && this.idx[hp.t] != null ? hp.t : (lastTick?.id ?? "");
     const tiltN = parseFloat(hp.tilt ?? "");
+    const vista: ViewScale = hp.vista === "urbano" ? "urbano" : "campo";
     const set: Parameters<SceneApi["set"]>[0] = {
       layer,
       tickId,
       tilt: Number.isNaN(tiltN) ? 35 : tiltN,
       northUp: hp.n !== "0",
+      viewScale: vista,
     };
     if (hp.cmp) {
       const [cid, sp] = hp.cmp.split(",");
@@ -272,7 +284,42 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.setState({ series });
     await this.loadHotspots(this.scene.getState());
     if (my === this.bootId && hp.pick) this.onPick(hp.pick);
+    if (my === this.bootId && this.state.introDone) this.applyUserTrade();
   }
+
+  applyUserTrade(): void {
+    const ds = this.state.ds;
+    if (!ds || !this.state.userTrade) return;
+    const i = ds.context.findIndex((c) => c.trade === this.state.userTrade);
+    if (i >= 0 && i !== this.state.trade) this.setState({ trade: i });
+  }
+
+  finishIntro = (name: string, trade: string): void => {
+    writeIntroPrefs({ done: true, name, trade, sound: this.state.soundOn });
+    this.setState({
+      introOpen: false,
+      introDone: true,
+      userName: name,
+      userTrade: trade,
+      moniOpen: true,
+    });
+    this.applyUserTrade();
+  };
+
+  toggleMoni = (): void => {
+    const next = !this.state.moniOpen;
+    if (next && this.state.soundOn) Sfx.tip();
+    this.setState({ moniOpen: next });
+  };
+
+  closeMoni = (): void => this.setState({ moniOpen: false });
+
+  toggleSound = (): void => {
+    const soundOn = !this.state.soundOn;
+    writeIntroPrefs({ sound: soundOn });
+    this.setState({ soundOn });
+    if (soundOn) Sfx.blip();
+  };
 
   derive(ds: Dataset): void {
     this.flat = [];
@@ -300,6 +347,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     p.push("tilt=" + Math.round(st.tilt), "n=" + (st.northUp ? 1 : 0));
     if (this.state.pick) p.push("pick=" + this.state.pick);
     if (this.state.zoomSeg) p.push("zoom=" + this.state.zoomSeg);
+    if (st.viewScale && st.viewScale !== "campo") p.push("vista=" + st.viewScale);
     try {
       history.replaceState(null, "", "#" + p.join("&"));
     } catch {
@@ -371,7 +419,12 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const S = this.state;
     const isM = S.W < 760;
     const cam = camOverride ?? S.scene.camera;
-    if (cam === "orbit") return isM ? { top: 60, right: 12, bottom: 330, left: 12 } : { top: 60, right: 20, bottom: 20, left: 460 };
+    if (cam === "orbit") {
+      const cardB = isM ? 200 : 160;
+      return isM
+        ? { top: 52, right: 12, bottom: cardB, left: 12 }
+        : { top: 52, right: 16, bottom: cardB, left: 16 };
+    }
     if (S.immersive) return { top: 12, left: 12, right: 12, bottom: 12 };
     // el globo cede solo el espacio de los paneles que están desplegados
     return isM
@@ -616,14 +669,32 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     else if (k === " " && tag !== "BUTTON") go(this.togglePlay);
     else if (k === "c" || k === "C") go(this.toggleCompare);
     else if (k === "o" || k === "O") go(this.toOrbit);
+    else if (k === "1") go(() => this.setViewScale("campo"));
+    else if (k === "2") go(() => this.setViewScale("urbano"));
   };
 
   toggleImmersive = (): void => this.setState({ immersive: !this.state.immersive });
+
+  setViewScale = (scale: ViewScale): void => {
+    if (!this.scene || this.state.scene.viewScale === scale) return;
+    const cam = this.state.scene.camera;
+    this.scene.set({ viewScale: scale });
+    if (cam === "territory" || cam === "detail") this.trackPos();
+  };
+
+  cycleHotspot = (): void => {
+    const list = this.state.hotspots;
+    if (!list.length) return;
+    const i = this.state.pick ? list.findIndex((h) => h.id === this.state.pick) : -1;
+    const next = list[(i + 1) % list.length];
+    if (next) this.onPick(next.id);
+  };
 
   // render
 
   render(): React.ReactNode {
     const v = buildView(this);
+    const blur = v.sceneSoft && !this.rm();
     return (
       <div
         data-tw-theme={this.theme}
@@ -637,7 +708,11 @@ export class App extends React.Component<AppProps, AppState> implements Model {
           font: "13px/1.4 var(--sans)",
         }}
       >
-        <div ref={this.sceneRef} style={{ position: "absolute", inset: 0 }} />
+        <div
+          ref={this.sceneRef}
+          className={blur ? "tw-scene-soft" : undefined}
+          style={{ position: "absolute", inset: 0 }}
+        />
         <Hud v={v} a={this} tlRef={this.tlRef} />
       </div>
     );

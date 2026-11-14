@@ -2,6 +2,8 @@ import React from "react";
 import type { App } from "../app/App";
 import { s } from "../app/css";
 import type { View } from "../app/view";
+import { IntroOverlay } from "./IntroOverlay";
+import { MonigoteBuddy } from "./MonigoteBuddy";
 import { Timeline } from "./Timeline";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
@@ -46,10 +48,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             style={s("flex:none;height:96px;width:auto;image-rendering:pixelated")}
           />
           <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px")}>
-            <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--acc-fg)")}>
-              {t.brand}
-            </div>
-            <div style={s("font:13px/1.35 var(--sans);color:var(--fg)")}>{t.status.loading}</div>
+            <div style={s("font:14px/1.35 var(--sans);color:var(--fg)")}>{t.status.loading}</div>
             <div className="tw-pulse" style={s("height:6px;width:72%;background:var(--line2)")} />
           </div>
         </section>
@@ -73,13 +72,8 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--fg2)")}>
             {t.entry.kicker}
           </div>
-          <h1 style={s("margin:0;font:600 28px/1.15 var(--sans);letter-spacing:-0.02em")}>{v.areaName}</h1>
-          <p style={s("margin:0;color:var(--fg2);max-width:42ch;text-wrap:pretty")}>{t.entry.lead}</p>
-          <div style={s("display:flex;flex-direction:column;gap:2px;font:11px var(--mono);color:var(--fg2)")}>
-            {v.entryLines.map((ln: string) => (
-              <div key={ln}>{ln}</div>
-            ))}
-          </div>
+          <h1 style={s("margin:0;font:600 26px/1.2 var(--sans);letter-spacing:-0.02em;color:var(--fg)")}>{v.areaName}</h1>
+          <p style={s("margin:0;color:var(--fg2);max-width:40ch;text-wrap:pretty;font:14px/1.45 var(--sans)")}>{t.entry.lead}</p>
           <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:2px")}>
             <button onClick={a.enter} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
               {t.entry.enter}
@@ -117,6 +111,26 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         </section>
       )}
 
+      {v.introOpen && (
+        <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} />
+      )}
+
+      {v.moniOn && (
+        <MonigoteBuddy
+          tip={v.moniTip}
+          name={v.userName}
+          open={v.moniOpen}
+          sound={v.soundOn}
+          reduced={a.rm()}
+          onToggle={a.toggleMoni}
+          onClose={a.closeMoni}
+          onSoundToggle={a.toggleSound}
+          soundLabel={v.soundOn ? v.t.moni.soundOn : v.t.moni.soundOff}
+          closeLabel={v.t.moni.close}
+          buddyLabel={v.t.moni.buddy}
+        />
+      )}
+
       {v.showErr && (
         <section
           role="alert"
@@ -149,7 +163,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           role="radiogroup"
           aria-label={t.layers.title}
           style={s(
-            `position:absolute;left:12px;top:64px;width:${v.dockOpen ? "208px" : "auto"};min-width:${v.dockOpen ? "0" : "132px"};pointer-events:auto;${PANEL}`,
+            `position:absolute;left:12px;top:64px;width:${v.dockOpen ? "232px" : "auto"};min-width:${v.dockOpen ? "0" : "120px"};pointer-events:auto;${PANEL}`,
           )}
         >
           <button
@@ -158,26 +172,51 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             aria-expanded={v.dockOpen}
             title={v.dockToggleLabel}
             aria-label={v.dockToggleLabel}
-            style={s("display:flex;width:100%;align-items:center;padding:0 12px;height:32px;border:0;background:transparent;cursor:pointer;font:11px var(--mono);color:var(--fg2);text-align:left")}
+            style={s("display:flex;width:100%;align-items:center;padding:0 12px;height:36px;border:0;background:transparent;cursor:pointer;font:12px var(--sans);color:var(--fg);text-align:left")}
           >
-            <span className="tw-pixel" style={s("flex:1;font-size:8px;line-height:1.5")}>
+            <span className="tw-pixel" style={s("flex:1;font-size:8px;line-height:1.5;color:var(--acc-fg)")}>
               {t.layers.title}
             </span>
             <span aria-hidden="true">{v.dockOpen ? "–" : "+"}</span>
           </button>
+          {v.dockOpen && (
+            <div style={s("border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:8px")}>
+              <p style={s("margin:0;font:12px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>{t.layers.lead}</p>
+              <button
+                type="button"
+                className="tw-hov"
+                data-help-hook="layers-reading"
+                onClick={() => a.set({ ficha: true, tab: "read" })}
+                style={s(`align-self:flex-start;height:${lay.hit};padding:0 10px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
+              >
+                {t.layers.reading}
+              </button>
+            </div>
+          )}
           {v.dockOpen && v.layerItems.map((l) => (
             <button
               key={l.id}
               className="tw-hov"
               role="radio"
               aria-checked={l.on}
+              aria-describedby={l.on && v.layerHint ? "tw-layer-hint" : undefined}
+              data-layer-id={l.id}
+              data-help-hook={`layer-${l.id}`}
+              title={l.note || l.label}
               onClick={l.go}
               style={s(
-                `display:flex;gap:10px;align-items:center;width:100%;height:${lay.hit};padding:0 12px;border:0;border-top:1px solid var(--line);background:${l.bg};text-align:left;cursor:pointer`,
+                `display:flex;gap:10px;align-items:center;width:100%;min-height:${lay.hit};padding:8px 12px;border:0;border-top:1px solid var(--line);background:${l.bg};text-align:left;cursor:pointer`,
               )}
             >
               <span style={s(`flex:none;width:14px;height:14px;background:${l.grad};border:1px solid var(--line2)`)} />
-              <span style={s("flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{l.label}</span>
+              <span style={s("flex:1;min-width:0;display:flex;flex-direction:column;gap:2px")}>
+                <span style={s("font:13px/1.25 var(--sans);color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>
+                  {l.label}
+                </span>
+                {l.on && l.note ? (
+                  <span style={s("font:11px/1.35 var(--sans);color:var(--fg2);white-space:normal;text-wrap:pretty")}>{l.note}</span>
+                ) : null}
+              </span>
               {l.gap && (
                 <span
                   title={t.layers.gapHere}
@@ -186,9 +225,14 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 />
               )}
-              <span style={s("flex:none;font:11px var(--mono);color:var(--fg3)")}>{l.unit}</span>
+              <span style={s("flex:none;font:11px var(--mono);color:var(--fg2)")}>{l.unit}</span>
             </button>
           ))}
+          {v.dockOpen && v.layerHint ? (
+            <p id="tw-layer-hint" style={s("margin:0;border-top:1px solid var(--line);padding:10px 12px;font:11px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>
+              {v.layerHint}
+            </p>
+          ) : null}
           {v.noDs && (
             <div style={s("border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:12px")}>
               {[0, 1, 2].map((i) => (
@@ -223,6 +267,8 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
       )}
 
       {v.camOn && <CameraControls v={v} a={a} />}
+
+      {v.exploreOn && <ExploreTools v={v} a={a} />}
 
       <div
         style={s(
@@ -345,23 +391,17 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
   return (
     <div style={s(`position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};display:flex;gap:8px;align-items:flex-start`)}>
       {v.brandOn && (
-        <div style={s(`pointer-events:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;${PANEL};flex:none;white-space:nowrap`)}>
+        <div
+          style={s(`pointer-events:auto;height:40px;width:40px;display:flex;align-items:center;justify-content:center;padding:0;${PANEL};flex:none`)}
+          title={t.brand}
+        >
           <img
-            src={v.theme === "dark" ? "./brand/termal-wave-dark.png" : "./brand/termal-wave-light.png"}
-            alt={t.brand}
-            height={20}
+            src={v.brandMark}
+            alt=""
+            width={28}
+            height={28}
             style={s("image-rendering:pixelated;flex:none;display:block")}
           />
-          {v.showName && (
-            <span className="tw-pixel" style={s("font-size:8px;line-height:1.4;color:var(--fg2)")}>
-              {v.areaName}
-            </span>
-          )}
-          {v.mock && (
-            <span title={t.mock.detail} style={s("font:11px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
-              {t.mock.tag}
-            </span>
-          )}
         </div>
       )}
       {v.searchField && (
@@ -414,9 +454,14 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
       )}
       {v.brandOn && (
         <div style={s(`pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 10px;${PANEL};flex:none`)}>
-          <span title={v.statusDetail} style={s("display:flex;gap:6px;align-items:center;font:11px var(--mono)")}>
+          {v.mock && (
+            <span title={t.mock.detail} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
+              {t.mock.tag}
+            </span>
+          )}
+          <span title={v.statusDetail} style={s("display:flex;gap:6px;align-items:center;font:11px var(--mono);color:var(--fg2)")}>
             <span style={s(`width:8px;height:8px;background:${v.statusColor}`)} />
-            {v.showStatusText && <span>{v.statusText}</span>}
+            {v.showStatusText && <span style={s("color:var(--fg)")}>{v.statusText}</span>}
           </span>
           {v.noTerrain && (
             <span title={t.status.terrainOffDetail} style={s("font:11px var(--mono);color:var(--warn)")}>
@@ -445,6 +490,82 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
           >
             ?
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExploreTools({ v, a }: { v: View; a: App }): React.ReactElement {
+  const { t, lay, ser } = v;
+  const seg = (on: boolean): string =>
+  `height:${lay.hit};padding:0 10px;border:1px solid var(--line2);background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:11px var(--mono);color:${on ? "var(--acc-fg)" : "var(--fg2)"}`;
+  return (
+    <div
+      role="toolbar"
+      aria-label={t.explore.group}
+      style={s(
+        `position:absolute;left:${lay.exploreL};bottom:${lay.exploreB};max-width:calc(100% - ${lay.pad} - ${lay.pad});pointer-events:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;${PANEL}`,
+      )}
+    >
+      <div role="group" aria-label={t.explore.group} style={s("display:flex;gap:2px")}>
+        <button
+          className="tw-hov"
+          type="button"
+          aria-pressed={v.viewCampo}
+          title={t.explore.campoHint}
+          onClick={() => a.setViewScale("campo")}
+          style={s(seg(v.viewCampo))}
+        >
+          {t.explore.campo}
+        </button>
+        <button
+          className="tw-hov"
+          type="button"
+          aria-pressed={v.viewUrbano}
+          title={t.explore.urbanoHint}
+          onClick={() => a.setViewScale("urbano")}
+          style={s(seg(v.viewUrbano))}
+        >
+          {t.explore.urbano}
+        </button>
+      </div>
+      <button
+        className="tw-hov"
+        type="button"
+        aria-pressed={v.compareOn}
+        title={v.compareOn ? t.explore.compareOn : t.explore.compare}
+        onClick={a.toggleCompare}
+        style={s(`height:${lay.hit};padding:0 10px;border:1px solid ${v.compareOn ? "var(--acc-fg)" : "var(--line2)"};background:${v.compareOn ? "var(--sel)" : "transparent"};cursor:pointer;font:11px var(--mono)`)}
+      >
+        {v.compareOn ? t.timeline.compareOff : t.timeline.compare}
+      </button>
+      <button
+        className="tw-hov"
+        type="button"
+        disabled={!v.exploreHasHotspots}
+        title={t.explore.hotspots(v.hotspotCount)}
+        aria-label={t.explore.nextHotspot}
+        onClick={a.cycleHotspot}
+        style={s(`height:${lay.hit};padding:0 10px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:11px var(--mono);color:var(--fg2)`)}
+      >
+        {t.explore.hotspots(v.hotspotCount)}
+      </button>
+      {v.exploreHasSer && (
+        <div
+          title={t.explore.series}
+          style={s("display:flex;align-items:center;gap:8px;padding:0 4px;border-left:1px solid var(--line)")}
+        >
+          <svg width={Math.min(ser.w, 112)} height={40} viewBox={`0 0 ${ser.w} 56`} style={s("display:block")}>
+            <path d={ser.lineD} style={s("fill:none;stroke:var(--fg2);stroke-width:1.5")} />
+            <circle cx={ser.ax} cy={ser.ay} r={ser.ar} style={s("fill:var(--acc)")} />
+          </svg>
+          {v.explorePeekOn && (
+            <div style={s("display:flex;flex-direction:column;gap:0;font:10px var(--mono);color:var(--fg2);max-width:12ch")}>
+              <span style={s("color:var(--fg)")}>{v.exploreValue}</span>
+              {v.exploreDelta && <span>{v.exploreDelta}</span>}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -537,7 +658,9 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
             style={s("height:44px;width:100%;display:flex;align-items:center;gap:10px;padding:0 12px;border:0;background:transparent;cursor:pointer;text-align:left")}
           >
             <span style={s("flex:1")}>{t.card.sheet}</span>
-            <span style={s("font:600 13px var(--mono)")}>{v.valueText}</span>
+            <span style={s("font:600 13px var(--mono)")}>
+              {v.valueText || (v.areaValueHint ? "—" : "")}
+            </span>
             <span style={s(`width:48px;height:8px;background:${leg.grad}`)} />
           </button>
         )}
@@ -600,10 +723,15 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       </div>
                       {v.noSeries ? (
                         <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{t.card.noSeries}</div>
+                      ) : v.areaValueHint ? (
+                        <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{v.areaValueHint}</div>
                       ) : (
                         <>
+                          <div style={s("font:11px var(--mono);color:var(--fg3);margin-top:4px")}>{v.areaValueLabel}</div>
                           <div style={s("font:600 20px/1.3 var(--mono)")}>{v.valueText}</div>
-                          <div style={s("font:12px var(--sans);color:var(--fg2)")}>{v.deltaText}</div>
+                          {v.areaShowDelta && v.deltaText && (
+                            <div style={s("font:12px var(--sans);color:var(--fg2)")}>{v.deltaText}</div>
+                          )}
                         </>
                       )}
                     </div>
@@ -658,10 +786,15 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                         <div style={s("display:flex;flex-direction:column;gap:2px;font:11px var(--mono)")}>
                           <span style={s("color:var(--fg3)")}>{t.sources.tried}</span>
                           {g.tried.map((x) => (
-                            <span key={x.key} style={s(`display:flex;gap:6px;color:${x.ok ? "var(--fg2)" : "var(--warn)"}`)}>
-                              <span style={s("flex:1;min-width:0")}>{x.name}</span>
-                              <span>{x.note}</span>
-                            </span>
+                            <div key={x.key} style={s("display:flex;flex-direction:column;gap:2px")}>
+                              <span style={s(`display:flex;gap:6px;color:${x.ok ? "var(--fg2)" : "var(--warn)"}`)}>
+                                <span style={s("flex:1;min-width:0")}>{x.name}</span>
+                                <span>{x.note}</span>
+                              </span>
+                              {x.hint ? (
+                                <span style={s("font:11px var(--sans);color:var(--fg3);text-wrap:pretty")}>{x.hint}</span>
+                              ) : null}
+                            </div>
                           ))}
                         </div>
                       </div>
