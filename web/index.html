@@ -3,48 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title></title>
+    <meta name="theme-color" content="#070B12" />
+    <link rel="icon" href="./brand/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./brand/icon-32.png" />
+    <link rel="apple-touch-icon" href="./brand/apple-touch-icon.png" />
+    <title>TermalWave</title>
   </head>
   <body>
-    <div id="app">
-      <header class="chrome">
-        <div class="chrome-brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <h1 id="brand-name"></h1>
-          <p class="tagline" id="tagline"></p>
-        </div>
-        <div
-          class="timeline"
-          id="timeline"
-          role="group"
-          aria-label=""
-        ></div>
-        <div class="status" id="status" role="status" data-mode="loading"></div>
-      </header>
-      <div class="stage">
-        <aside class="side" aria-label="Controles">
-          <h2 class="side-title" id="panel-title"></h2>
-          <div class="layers" id="layers" role="radiogroup" aria-label=""></div>
-          <section class="tools">
-            <p class="aoi" id="aoi"></p>
-            <label class="opacity" for="opacity">
-              <span id="opacity-label"></span>
-              <input id="opacity" type="range" min="0.2" max="1" step="0.05" />
-            </label>
-            <button type="button" class="reset-view" id="reset-view"></button>
-          </section>
-          <section class="context-slot">
-            <h3 id="context-title"></h3>
-            <p id="context-body"></p>
-            <div id="context-mount" data-context-root></div>
-          </section>
-        </aside>
-        <div class="map-wrap">
-          <main id="map" aria-label="Mapa"></main>
-          <p class="map-caption" id="map-caption" aria-live="polite"></p>
-        </div>
-      </div>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

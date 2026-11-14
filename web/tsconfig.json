@@ -19,7 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "jsx": "react-jsx"
   },
   "include": [
     "src"
