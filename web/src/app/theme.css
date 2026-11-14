@@ -1,12 +1,6 @@
 /* Tokens de la interfaz. El tema oscuro sale de brand/palette.md; el claro es del diseño. */
 
-@font-face {
-  font-family: "Press Start 2P";
-  src: url("../brand/PressStart2P-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* Press Start 2P se declara en index.html (ruta estable ./brand/…). */
 
 html,
 body {
