@@ -2,14 +2,27 @@
 
 Un solo canal. No uses el chat entre PCs como fuente de verdad.
 
-## Lectura al arrancar un turno
+## Lectura al arrancar un turno (lean)
 
-1. [`STEERS.md`](STEERS.md) — prioridades humanas (steers)
-2. [`board.toml`](board.toml) — tareas pendientes / bloqueadas / hechas
-3. Tu `inbox/`
-4. `AGENTS.md` raiz + `agents/<rol>/AGENTS.md`
+1. [`NOW.md`](NOW.md) — pack caliente (casi siempre alcanza)
+2. [`board.toml`](board.toml) — solo tareas abiertas
+3. Tu `inbox/` (archivar apenas leas)
+4. `agents/<rol>/AGENTS.md` solo si hace falta
 
-El hook de Cursor (`.cursor/hooks/agent-briefing.py`) inyecta un resumen de eso al inicio / al mandar prompt.
+**No leas** `archive/`, `board.done.toml`, `STEERS.archive.md`, `milestones/` en turnos normales.
+
+El hook inyecta un briefing corto (NOW + tus tasks).
+
+### Milestone (bajar contexto)
+
+Despues de un corte grande (providers, UI React, etc.):
+
+```bash
+python3 scripts/comms.py milestone --label day1-providers
+# opcional: --keep archivo.md  para no archivar un inbox puntual
+```
+
+Eso archiva inbox/outbox viejos, mueve tasks `done` a `board.done.toml`, compacta steers y reescribe `NOW.md`.
 
 ## Roles y carpetas
 

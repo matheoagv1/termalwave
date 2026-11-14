@@ -1,0 +1,32 @@
+# Shared task board. Agents + steers update via: python3 scripts/comms.py task …
+# status: open | in_progress | blocked | done | cancelled
+
+[[task]]
+id = "T001"
+owner = "vps"
+status = "done"
+title = "MapLibre + timeline scaffold on master"
+updated = "2026-11-14"
+
+[[task]]
+id = "T002"
+owner = "vps"
+status = "done"
+title = "Global AGENTS.md + brand/ kit"
+updated = "2026-11-14"
+
+[[task]]
+id = "T005"
+owner = "vps"
+status = "done"
+title = "Agent coordination board + hooks (this system)"
+notes = "comms board/STEERS/CLI/hooks"
+updated = "2026-11-14"
+
+[[task]]
+id = "T006"
+owner = "vps"
+status = "done"
+title = "Unified data providers (apis.toml, merge, provenance)"
+notes = "Unblocked after coordination system landed; start after merge"
+updated = "2026-11-14"

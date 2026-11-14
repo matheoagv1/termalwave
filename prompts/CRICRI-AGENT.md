@@ -18,20 +18,11 @@ Usa el archivo `ssh-keys/PROMPT-CRICRI.md` en el VPS (o el texto que te paso el 
 - Worktree en el servidor (si conectas por SSH): `/srv/sites/nasaspaceappchallenge-cricri`
 - En Windows: clona o abre ese worktree; no trabajes encima de `master` sin avisar.
 
-Al empezar cada turno:
+Al empezar cada turno: abrir **`comms/NOW.md`** y `python3 scripts/comms.py status`. Nada mas salvo inbox nuevo.
 
-```bash
-python3 scripts/comms.py status
-```
+No abras `archive/`, `references/`, ni el AGENTS largo si ya sabes el rol.
 
-1. `comms/STEERS.md` + `comms/board.toml` (tambien los inyecta el hook).
-2. `comms/cricri/inbox/`.
-3. `AGENTS.md` + `agents/cricri/AGENTS.md`.
-
-Delegar / responder: `python3 scripts/comms.py notify --from cricri --to carne|vps|todos --topic … --body "…"`.
-Cerrar tarea: `task set <ID> --status done` y `archive --name …`.
-
-`references/` es solo codigo. Jurado/reglas en `AGENTS.md`.
+Delegar: `notify`. Cerrar: `task set` + `archive`.
 
 ## Que podes tocar
 

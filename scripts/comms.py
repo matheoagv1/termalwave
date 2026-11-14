@@ -4,12 +4,14 @@
 Usage:
   python3 scripts/comms.py whoami
   python3 scripts/comms.py status [--role ROLE]
-  python3 scripts/comms.py briefing [--role ROLE]   # text for hooks
+  python3 scripts/comms.py briefing [--role ROLE]   # lean text for hooks
   python3 scripts/comms.py task list [--owner ROLE] [--status open]
   python3 scripts/comms.py task add --owner ROLE --title "..." [--blocked-by ID,ID]
   python3 scripts/comms.py task set ID --status open|in_progress|blocked|done|cancelled
   python3 scripts/comms.py notify --from ROLE --to ROLE|todos --topic slug --body "..."
   python3 scripts/comms.py archive --role ROLE --name FILENAME
+  python3 scripts/comms.py milestone --label day1 [--keep NAME ...]
+      # archive old inbox/outbox, park done tasks, rewrite comms/NOW.md
 """
 
 from __future__ import annotations
@@ -46,6 +48,18 @@ def board_path() -> Path:
 
 def steers_path() -> Path:
     return repo_root() / "comms" / "STEERS.md"
+
+
+def now_path() -> Path:
+    return repo_root() / "comms" / "NOW.md"
+
+
+def board_done_path() -> Path:
+    return repo_root() / "comms" / "board.done.toml"
+
+
+def steers_archive_path() -> Path:
+    return repo_root() / "comms" / "STEERS.archive.md"
 
 
 def role_dirs(role: str) -> dict[str, Path]:
@@ -155,11 +169,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def briefing_text(role: str) -> str:
-    steers = ""
-    if steers_path().is_file():
-        raw = steers_path().read_text(encoding="utf-8").strip().splitlines()
-        # Keep a short recent slice for hooks.
-        steers = "\n".join(raw[:40])
+    """Tiny hook payload. Agents should open NOW.md themselves, not get a novel."""
     tasks = [
         t
         for t in load_board()
@@ -167,34 +177,19 @@ def briefing_text(role: str) -> str:
     ]
     inbox = list_md(role_dirs(role)["inbox"])
     lines = [
-        f"[TermalWave coord] role={role}",
-        "Read order: comms/STEERS.md → comms/board.toml → your inbox → AGENTS.md",
-        "CLI: python3 scripts/comms.py status | notify | task set …",
-        "",
-        "## Steers (excerpt)",
-        steers or "(no STEERS.md)",
-        "",
-        f"## Your open tasks ({len(tasks)})",
+        f"[TermalWave] role={role}",
+        "Open comms/NOW.md (only). Skip archives/references/vendor.",
+        "CLI: python3 scripts/comms.py status | notify | task set | milestone",
     ]
-    if not tasks:
-        lines.append("(none)")
-    for task in tasks:
-        blocked = task.get("blocked_by") or []
-        suffix = f" [blocked_by={','.join(blocked)}]" if blocked else ""
-        lines.append(f"- {task['id']} [{task['status']}] {task['title']}{suffix}")
-    lines.append("")
-    lines.append(f"## Unread inbox ({len(inbox)}) — {role}/inbox/")
-    if not inbox:
-        lines.append("(empty)")
-    for path in inbox[:8]:
-        lines.append(f"- {path.name}")
-    if len(inbox) > 8:
-        lines.append(f"- ... +{len(inbox) - 8} more")
-    lines.append("")
-    lines.append(
-        "Before ending a turn: update board (task set), write outbox/notify if you delegated, "
-        "archive handled inbox notes."
-    )
+    if tasks:
+        lines.append("Tasks: " + "; ".join(f"{t['id']}[{t['status']}] {t['title']}" for t in tasks))
+    else:
+        lines.append("Tasks: (none)")
+    if inbox:
+        lines.append("Inbox: " + ", ".join(p.name for p in inbox[:3]))
+    else:
+        lines.append("Inbox: (empty)")
+    lines.append("End turn: task set + archive. Edit code; do not re-read history.")
     return "\n".join(lines)
 
 
@@ -322,6 +317,169 @@ def cmd_archive(args: argparse.Namespace) -> int:
     return 0
 
 
+def _archive_file(src: Path, archive_dir: Path) -> Path | None:
+    if not src.is_file() or src.name == ".gitkeep":
+        return None
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    dest = archive_dir / src.name
+    if dest.exists():
+        dest = archive_dir / f"{src.stem}-dup-{stamp()}{src.suffix}"
+    dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    src.unlink()
+    return dest
+
+
+def write_now_md(label: str) -> Path:
+    tasks = [
+        t
+        for t in load_board()
+        if t.get("status") in ("open", "in_progress", "blocked")
+    ]
+    lines = [
+        f"# NOW — {label}",
+        "",
+        f"Updated: {today()} (UTC date). Hackathon: vibecode lean.",
+        "",
+        "## Read this turn (and almost nothing else)",
+        "",
+        "1. This file (`comms/NOW.md`)",
+        "2. `comms/board.toml` (open tasks only)",
+        "3. New files in your `comms/<rol>/inbox/` (then archive them)",
+        "4. `agents/<rol>/AGENTS.md` only if ownership is unclear",
+        "",
+        "## Do not open unless blocked",
+        "",
+        "- `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`",
+        "- `references/`, `vendor/`, old prompts history, brand binaries",
+        "- Full `AGENTS.md` jury tables (product rules already known)",
+        "",
+        "## Open tasks",
+        "",
+    ]
+    if not tasks:
+        lines.append("(none)")
+    for task in tasks:
+        blocked = task.get("blocked_by") or []
+        extra = f" blocked_by={blocked}" if blocked else ""
+        lines.append(
+            f"- **{task['id']}** @{task['owner']} [{task['status']}] {task['title']}{extra}"
+        )
+    lines.extend(
+        [
+            "",
+            "## Focus by role",
+            "",
+            "- **vps**: pipeline/providers/config/data; keep board/NOW fresh; merge master",
+            "- **carne**: React `web/` UX, brand wire, Fuentes panel from `provenance`",
+            "- **cricri**: `brand/monigote/`, `web/src/context/`, gusto notes via notify",
+            "",
+            "## Commands",
+            "",
+            "```bash",
+            "python3 scripts/comms.py status",
+            "python3 scripts/comms.py notify --from <rol> --to <rol|todos> --topic … --body '…'",
+            "python3 scripts/comms.py task set T00N --status done",
+            "python3 scripts/comms.py archive --name <inbox-file.md>",
+            "python3 scripts/comms.py milestone --label <next-cut>",
+            "```",
+            "",
+        ]
+    )
+    path = now_path()
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def cmd_milestone(args: argparse.Namespace) -> int:
+    """Compact context after a milestone: archive noise, park done tasks, rewrite NOW."""
+    label = args.label.strip() or today()
+    keep = set(args.keep or [])
+    root = repo_root()
+    milestones = root / "comms" / "milestones"
+    milestones.mkdir(parents=True, exist_ok=True)
+    snap = milestones / f"{stamp()}-{label}.md"
+
+    # Snapshot open board + steers before compacting.
+    snap_lines = [
+        f"# Milestone snapshot {label}",
+        "",
+        "## board.toml",
+        "```toml",
+        board_path().read_text(encoding="utf-8") if board_path().is_file() else "",
+        "```",
+        "",
+        "## STEERS.md",
+        "```markdown",
+        steers_path().read_text(encoding="utf-8") if steers_path().is_file() else "",
+        "```",
+        "",
+    ]
+    snap.write_text("\n".join(snap_lines), encoding="utf-8")
+
+    archived = 0
+    for role in ROLES:
+        dirs = role_dirs(role)
+        for bucket in ("inbox", "outbox"):
+            for path in list_md(dirs[bucket]):
+                if path.name in keep:
+                    continue
+                if _archive_file(path, dirs["archive"]):
+                    archived += 1
+
+    # Park done/cancelled tasks out of the hot board.
+    tasks = load_board()
+    active = [t for t in tasks if t.get("status") not in ("done", "cancelled")]
+    done = [t for t in tasks if t.get("status") in ("done", "cancelled")]
+    if done:
+        existing_done: list[dict] = []
+        if board_done_path().is_file():
+            existing_done = list(
+                tomllib.loads(board_done_path().read_text(encoding="utf-8")).get("task", [])
+            )
+        seen = {t.get("id") for t in existing_done}
+        for task in done:
+            if task.get("id") not in seen:
+                existing_done.append(task)
+        write_board(existing_done)
+        board_done_path().write_text(board_path().read_text(encoding="utf-8"), encoding="utf-8")
+        write_board(active)
+
+    # Compact STEERS: append previous to archive, keep short current.
+    if steers_path().is_file():
+        prev = steers_path().read_text(encoding="utf-8")
+        with steers_archive_path().open("a", encoding="utf-8") as fh:
+            fh.write(f"\n\n---\n# archived at milestone {label} ({stamp()})\n\n")
+            fh.write(prev)
+        steers_path().write_text(
+            "\n".join(
+                [
+                    "# Steers — current only",
+                    "",
+                    "Entradas nuevas arriba. Historial: `STEERS.archive.md` (no leer en turnos normales).",
+                    "",
+                    f"## {today()} — milestone `{label}`",
+                    "",
+                    "1. Context lean: agents read `comms/NOW.md` first. Run `milestone` after each big cut.",
+                    "2. Open work is only what is on `board.toml` (done tasks live in `board.done.toml`).",
+                    "3. Cricri: monigote + context fuentes. Carne: brand + Fuentes React. VPS: merge/unblock.",
+                    "",
+                    "No secrets in comms.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+    now = write_now_md(label)
+    print(f"milestone={label}")
+    print(f"archived_messages={archived}")
+    print(f"active_tasks={len(active)}")
+    print(f"parked_done={len(done)}")
+    print(now.relative_to(root))
+    print(snap.relative_to(root))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="comms")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -362,6 +520,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_arch.add_argument("--role", choices=ROLES)
     p_arch.add_argument("--name", required=True)
 
+    p_mile = sub.add_parser("milestone")
+    p_mile.add_argument("--label", required=True, help="short cut name, e.g. day1-providers")
+    p_mile.add_argument(
+        "--keep",
+        action="append",
+        default=[],
+        help="inbox/outbox filename to keep unarchived (repeatable)",
+    )
+
     return parser
 
 
@@ -385,6 +552,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_notify(args)
     if args.cmd == "archive":
         return cmd_archive(args)
+    if args.cmd == "milestone":
+        return cmd_milestone(args)
     parser.error(f"unknown command {args.cmd}")
     return 2
 

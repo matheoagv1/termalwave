@@ -18,21 +18,9 @@ Use `ssh-keys/PROMPT-CARNE.md` on the VPS (or the text the human pastes).
 - Server worktree: `/srv/sites/nasaspaceappchallenge-carne`
 - Do not commit straight to `master` without coordinating with the VPS agent.
 
-At the start of every turn:
+Each turn: open **`comms/NOW.md`** and run `python3 scripts/comms.py status`. Skip archives, references, and long AGENTS unless blocked.
 
-```bash
-python3 scripts/comms.py status
-```
-
-1. `comms/STEERS.md` + `comms/board.toml` (hook also injects a briefing).
-2. `comms/carne/inbox/` and new notes in `comms/cricri/outbox/`.
-3. Root `AGENTS.md` + `agents/carne/AGENTS.md`.
-
-Delegate/reply: `python3 scripts/comms.py notify --from carne --to cricri|vps|todos --topic … --body "…"`.
-Close work: `task set <ID> --status done` and `archive --name …`.
-Apply tester feedback before inventing features unless the steer says otherwise.
-
-`references/` is code-drop only. Agent docs live in `AGENTS.md` / `agents/`.
+Delegate: `notify`. Close: `task set` + `archive`. Prefer editing `web/` over re-reading history.
 
 ## You may edit
 
