@@ -47,3 +47,4 @@ ssh-keys/
 # Large local code-reference drops (look on VPS disk; not agent docs)
 references/gods-eye-view/
 references/SgoLinea/
+preview/node_modules/
