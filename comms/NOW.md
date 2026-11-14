@@ -26,7 +26,8 @@ Globo 3D primero. UI 2D = controles. Capas drapadas.
 - **T014** @vps [in_progress] Workers preview + login/registro (`preview/`)
 - **T013** @vps [blocked] GitHub private (falta `gh auth`)
 - **T011** @vps dataset.json
-- **T003/T008/T012** @cricri (sin commits aun en worktree)
+- **T008/T012** @cricri copy + trades
+- **T003** done (monigote en master)
 
 ## Cricri status
 

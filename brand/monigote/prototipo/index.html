@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TermalWave | Guía</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#071018;color:#e7f2f6}*{box-sizing:border-box}body{margin:0}header{padding:18px 7%;border-bottom:1px solid #3ec7a455;display:flex;align-items:center;gap:12px}header b{color:#3ec7a4;font-size:20px}main{max-width:1000px;margin:auto;padding:32px 22px}.label{color:#3ec7a4;font-size:12px;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(25px,4vw,40px);margin:8px 0}.intro{color:#8eacb8}.stage{display:flex;align-items:center;justify-content:center;gap:12px;min-height:420px;background:#0a161e;border:1px solid #3ec7a444;margin-top:24px;padding:20px}.wizard{width:min(40vw,300px);height:auto;aspect-ratio:256/280;image-rendering:pixelated;flex:none}.conversation{width:min(100%,400px)}.bubble{display:none;color:#071018;border:20px solid transparent;border-image-source:url('assets/marco.png');border-image-slice:100 fill;border-image-width:20px;border-image-repeat:stretch;padding:12px;background:#fff2cc;min-height:130px;image-rendering:pixelated}.bubble.open{display:block;animation:appear .2s steps(3,end)}.bubble p{line-height:1.5;margin:0;min-height:3em;white-space:pre-wrap}.bubble .cursor{animation:blink 1s steps(2,start) infinite;color:#1f6f8b}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}button{border:1px solid #3ec7a477;color:#e7f2f6;background:#102631;padding:10px 14px;font:inherit;cursor:pointer}button:hover,button:focus-visible{border-color:#3ec7a4;outline-color:#3ec7a4}.response{display:none;margin-top:14px}.response.visible{display:flex;gap:6px}.response input{min-width:0;flex:1;padding:9px;background:#071018;border:1px solid #3ec7a477;color:white;font:inherit}.note{color:#8eacb8;font-size:13px}@keyframes blink{to{visibility:hidden}}@keyframes appear{from{clip-path:inset(0 100% 100% 0)}to{clip-path:inset(0)}}@media(max-width:600px){.stage{flex-direction:column}.wizard{width:180px}.conversation{width:100%}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<header><b>◆</b><strong>TermalWave</strong><span class="note">Guía interactivo · prototipo local</span></header>
+<main><div class="label">Exploración territorial</div><h1>Conocé a tu guía</h1><p class="intro">Una primera prueba del personaje y su diálogo.</p>
+<section class="stage" aria-label="Prueba del asistente">
+<canvas class="wizard" id="wizard" width="256" height="280" role="img" aria-label="Mago guía"></canvas>
+<div class="conversation"><div class="bubble" id="bubble" aria-live="polite"><p><span id="state-icon" aria-hidden="true"></span><span id="message"></span><span class="cursor" aria-hidden="true"> ▪</span></p><form class="response" id="form"><label for="name" class="sr-only">Tu nombre</label><input id="name" autocomplete="name" placeholder="Tu nombre" required><button type="submit">Enviar</button></form></div><div class="actions"><button id="hello">Saludar</button><button id="gesture">Mover brazos</button><button id="torso-motion">Mover torso</button><button id="ask">Preguntar nombre</button><button id="info">Información</button><button id="success">Éxito</button><button id="alert">Alerta</button><button id="close">Cerrar</button></div></div>
+</section><p class="note">Prueba de ensamblaje: los anclajes y la transparencia de las piezas aún requieren corrección.</p></main>
+<script>
+const canvas=document.querySelector('#wizard'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+const names=['botas','torso','cabeza','ojos','boca','sombrero'];const sprites={};let blink=false,talking=false,beardOffset=0,gesturePhase=0,gestureTimer=0,gestureMode='arms';const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+Promise.all(names.map(name=>new Promise((resolve,reject)=>{let image=new Image();image.onload=()=>{sprites[name]=image;resolve()};image.onerror=reject;image.src='assets/'+name+'.png'}))).then(()=>{draw();setInterval(()=>{blink=true;draw();setTimeout(()=>{blink=false;draw()},160)},4500);if(!reduceMotion)setInterval(()=>{beardOffset=beardOffset===0?1:0;draw()},900)}).catch(()=>{document.querySelector('.note').textContent='No se pudieron cargar las imágenes del personaje.'});
+const torsoPoses=[{x:0,y:0},{x:-5,y:-2},{x:0,y:-5},{x:5,y:-2},{x:0,y:3}];
+const armPoses=[0,7,15,7,0];
+function draw(){
+  ctx.clearRect(0,0,256,280);
+  const pose=torsoPoses[gesturePhase];
+  for(const name of names){
+    if(!sprites[name]||(name==='ojos'&&blink)||(name==='boca'&&!talking))continue;
+    if(name==='torso'&&gesturePhase){
+      const lift=gestureMode==='arms'?armPoses[gesturePhase]:0;
+      for(const [x,w,dx,dy] of [[0,94,pose.x,-lift+pose.y],[94,68,pose.x,pose.y],[162,94,pose.x,-lift+pose.y]]){
+        ctx.save();ctx.beginPath();ctx.rect(x,0,w,280);ctx.clip();ctx.drawImage(sprites[name],dx,dy,256,280);ctx.restore();
+      }
+      continue;
+    }
+    const movesWithTorso=['cabeza','ojos','boca','sombrero'].includes(name);
+    ctx.save();
+    if(movesWithTorso)ctx.translate(pose.x,pose.y);
+    if(name==='cabeza'&&beardOffset){
+      ctx.save();ctx.beginPath();ctx.rect(0,0,256,114);ctx.clip();ctx.drawImage(sprites[name],0,0,256,280);ctx.restore();
+      ctx.save();ctx.beginPath();ctx.rect(0,114,256,166);ctx.clip();ctx.drawImage(sprites[name],beardOffset,0,256,280);ctx.restore();
+    }else ctx.drawImage(sprites[name],0,0,256,280);
+    ctx.restore();
+  }
+  if(blink){ctx.fillStyle='#47251d';ctx.fillRect(115+pose.x,78+pose.y,10,2);ctx.fillRect(130+pose.x,78+pose.y,10,2)}
+}
+const bubble=document.querySelector('#bubble'),message=document.querySelector('#message'),form=document.querySelector('#form');let timer=0;
+function say(text,ask=false,kind='info'){clearInterval(timer);bubble.classList.add('open');form.classList.remove('visible');document.querySelector('#state-icon').textContent=({info:'ℹ ',question:'? ',success:'✓ ',alert:'! '})[kind]||'';message.textContent='';let n=0;talking=true;draw();timer=setInterval(()=>{message.textContent=Array.from(text).slice(0,++n).join('');talking=n%8<5;draw();if(n>=Array.from(text).length){clearInterval(timer);talking=false;draw();if(ask)form.classList.add('visible')}},35)}
+function gesture(mode='arms'){clearInterval(gestureTimer);gestureMode=mode;gesturePhase=0;let tick=0;draw();gestureTimer=setInterval(()=>{tick++;gesturePhase=tick%5;if(tick>=10){clearInterval(gestureTimer);gesturePhase=0}draw()},400)}document.querySelector('#gesture').onclick=()=>gesture('arms');document.querySelector('#torso-motion').onclick=()=>gesture('torso');document.querySelector('#hello').onclick=()=>{gesture();say('¡Hola! Soy tu guía. Te acompaño a explorar los cambios del territorio.')};document.querySelector('#ask').onclick=()=>say('¿Cómo te llamás?',true,'question');document.querySelector('#info').onclick=()=>say('El radar permite observar cambios en la superficie, incluso cuando hay nubes.',false,'info');document.querySelector('#success').onclick=()=>say('¡Listo! Ya podés seguir explorando.',false,'success');document.querySelector('#alert').onclick=()=>say('Revisá la fecha y la calidad de los datos antes de sacar conclusiones.',false,'alert');document.querySelector('#close').onclick=()=>{clearInterval(timer);talking=false;draw();bubble.classList.remove('open')};form.onsubmit=event=>{event.preventDefault();const name=document.querySelector('#name').value.trim();if(name)say('¡Mucho gusto, '+name+'! Empecemos a explorar.',false,'success');};
+</script>
+<style>.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}</style>
+</body></html>
