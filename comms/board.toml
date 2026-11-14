@@ -50,9 +50,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T007"
 owner = "carne"
-status = "open"
+status = "in_progress"
 title = "Data sources panel reading provenance from app-config"
-notes = "Unblocked: provenance in app-config"
+notes = "Pestana Fuentes en la ficha, leyendo provenance y data_sources de app-config."
 updated = "2026-11-14"
 
 [[task]]
@@ -66,9 +66,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T009"
 owner = "carne"
-status = "open"
+status = "done"
 title = "Port Claude Design UI to React, conectada a ConfigProvider (datos reales de app-config)"
-notes = "web/src/app, web/src/ui, web/src/data. Probado en preview real y #mock=1."
+notes = "UI React portada. Verificada en preview con datos reales y con #mock=1. Commits c72fb6b y siguientes."
 updated = "2026-11-14"
 
 [[task]]
