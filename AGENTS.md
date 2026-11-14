@@ -1,9 +1,6 @@
 # TermalWave — AGENTS.md (global)
 
-Un solo repo. Todos los agentes leen **este archivo primero**, despues `agents/<rol>/AGENTS.md`, despues su bandeja en `comms/`.
-
-Ruta del repo en el VPS: `/srv/sites/nasaspaceappchallenge`  
-Ramas / worktrees del mismo git:
+Un solo repo. Ruta VPS: `/srv/sites/nasaspaceappchallenge`.
 
 | Rol | Humano | Rama | Worktree |
 |---|---|---|---|
@@ -13,7 +10,18 @@ Ramas / worktrees del mismo git:
 
 No hay un segundo repo. Mergean a `master` cuando el trabajo del rol esta listo; el VPS integra.
 
-`references/` **no** es documentacion de agentes. Ahi solo se dropean proyectos de codigo para mirar patrones (ver seccion abajo).
+### Coordinacion (obligatorio cada turno)
+
+1. [`comms/STEERS.md`](comms/STEERS.md) — prioridades de los steers/humanos
+2. [`comms/board.toml`](comms/board.toml) — tareas `open` / `blocked` / `done`
+3. `comms/<tu-rol>/inbox/`
+4. Este archivo → `agents/<tu-rol>/AGENTS.md`
+
+CLI: `python3 scripts/comms.py status|notify|task|archive` (detalle en [`comms/README.md`](comms/README.md)).
+
+Hooks Cursor (`.cursor/hooks.json`) inyectan un briefing corto al arrancar / al enviar prompt.
+
+`references/` **no** es documentacion de agentes. Solo drops de codigo de referencia.
 
 ---
 
@@ -76,26 +84,26 @@ Vocabulario preferido en copy visible: radar, NISAR, backscatter, capa, cambio, 
 
 ## Reglas y directivas (todos)
 
-1. **Un repo, tres roles.** Lee global → `agents/<rol>/AGENTS.md` → `comms/<rol>/inbox/` + `comms/from-vps/`.
+1. **Un repo, tres roles.** STEERS → board → inbox → este archivo → `agents/<rol>/AGENTS.md`.
 2. **Ownership:**
-   - **vps**: `termalwave/`, `vendor/`, `scripts/`, `tests/`, `config/`, `data/`, `brand/` (kit de marca), contrato timeline, scaffold mapa cuando haga falta, `comms/from-vps/`.
-   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline chrome; consume assets desde `brand/`. Lee feedback de cricri y vps.
-   - **cricri (Cristian)**: `web/src/context/` + tester de gusto + deposita el **monigote** en `brand/monigote/`. Escribe `comms/cricri/outbox/` y `comms/carne/inbox/`.
-3. **Branding:** todo en `brand/` (iconos, wordmark, paleta, fonts, social, monigote). No dupliques fuentes de verdad en otros trees.
-4. **Texto user-facing:** humanizer **ES-AR-SGO**. Cero slop de IA. Cero menciones a jurado/scoring/audiencias en strings visibles.
-5. **Sin hardcode de sitio** en TS: todo sale de config / `app-config.json`.
-6. **Portable:** Python pin en `config/runtime.json`; vendor linux/musl/win amd64 cp311; `web/dist` commiteado; sin GDAL; sin CDN obligatorio para el core.
-7. **`references/`:** solo drops de codigo de referencia. No documentacion de agentes ahi. No copies codigo de esos proyectos ni los linkees como producto. Patrones actuales en disco (pueden no ir en git por tamano): `references/SgoLinea/`, `references/gods-eye-view/`.
-8. **Comms:** formato en `comms/README.md`. No uses el chat entre roles como fuente de verdad: deja md en la bandeja.
-9. **Master:** el VPS integra. carne/cricri no committees a `master` sin acuerdo. Empujan su rama `work/<rol>` y avisan.
+   - **vps**: `termalwave/`, `vendor/`, `scripts/` (incluye `scripts/comms.py`), `tests/`, `config/`, `data/`, `brand/`, board/STEERS, scaffold mapa, integra `master`.
+   - **carne (Emir)**: `web/` UX/flujo/MapLibre/timeline; consume `brand/`. Board + `comms/carne/`.
+   - **cricri (Cristian)**: `web/src/context/` + tester + `brand/monigote/`. Board + `comms/cricri/`.
+3. **Branding:** todo en `brand/`. No dupliques fuentes de verdad.
+4. **Texto user-facing:** humanizer **ES-AR-SGO**. Cero slop de IA. Cero jurado/scoring/audiencias en UI.
+5. **Sin hardcode de sitio** en TS: config / `app-config.json`.
+6. **Portable:** Python pin en `config/runtime.json`; vendor linux/musl/win amd64 cp311; `web/dist` commiteado; sin GDAL; sin CDN obligatorio.
+7. **`references/`:** solo codigo de referencia (puede estar gitignored por tamano).
+8. **Comms / board:** unica fuente de delegacion. `notify` + `task set`. Chat de PC no cuenta.
+9. **Master:** VPS integra. carne/cricri no committees a `master` sin acuerdo.
 
-## Orden de lectura por turno
+## Cierre de turno (todos)
 
-1. `/AGENTS.md` (este archivo)
-2. `agents/<tu-rol>/AGENTS.md`
-3. `comms/<tu-rol>/inbox/` y `comms/from-vps/`
-4. Si sos carne: tambien `comms/cricri/outbox/`
-5. Si sos cricri: feedback pendiente hacia carne antes de pedir rediseños
+1. `python3 scripts/comms.py task set <ID> --status …`
+2. Si delegaste: `notify --from <rol> --to <rol|todos> …`
+3. Archiva inbox resuelto: `archive --name …`
+4. Si sos carne: mira tambien `comms/cricri/outbox/`
+5. Si sos cricri: feedback a carne via `notify` o su inbox
 
 ## Que no es este archivo
 

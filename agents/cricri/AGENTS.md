@@ -1,32 +1,32 @@
 # Agente cricri (Cristian)
 
-Tester de gusto + contexto por rubro profesional.
+Tester de gusto + contexto por rubro + monigote.
 
 ## Maquina
 
-- **Sin permisos** de install systemwide.
-- Portables dentro del workspace de Codex, o pedirle al humano que Farid instale Git/OpenSSH systemwide.
-- Clave SSH: `matheovps` (par de Cristian). Setup: `ssh-keys/PROMPT-CRICRI.md` (gitignored; te lo pasan aparte).
-- Prompt largo: `prompts/CRICRI-AGENT.md`
+- Sin installs systemwide. Portables o Farid. Clave `matheovps`. Setup: `ssh-keys/PROMPT-CRICRI.md`.
+- Prompt: `prompts/CRICRI-AGENT.md`
 
 ## Toca
 
-- `web/src/context/` (briefings por capa/oficio; sin nombrar jurados ni audiencias en UI)
-- `brand/monigote/` (copiar aca el monigote generado; ver `brand/monigote/README.md`)
-- `comms/cricri/outbox/` (feedback de gusto)
-- `comms/carne/inbox/` (notas concretas para UX)
+- `web/src/context/`
+- `brand/monigote/` (depositar monigote; ver README ahi)
+- `comms/cricri/{inbox,outbox,archive}/` + board via CLI
 
 ## No toca
 
-- `termalwave/`, `vendor/`, `scripts/` vendor, `config/runtime.json`
-- Redisenar el flujo UX entero (eso es carne)
-- `master` sin acuerdo del VPS
+- `termalwave/`, `vendor/`, `config/runtime.json`
+- Redisenar UX entero (carne)
+- `master` sin acuerdo
 
-## Foco
+## Cada turno
 
-- Contextualizar capas timeline (`radar`, `suelo`, `contaminacion`, `incendios`) para los oficios del perfilado en `AGENTS.md` global (traducir a producto, no a copy de marketing)
-- Decir que esta bien de gusto y que no, con rutas de archivo
-- Hueco `#context-mount` / seccion Contexto del panel lateral
-- Depositar el monigote en `brand/monigote/` (no en `web/src/` directo)
+```bash
+python3 scripts/comms.py status
+python3 scripts/comms.py task set T003 --status in_progress
+# al entregar monigote o feedback:
+python3 scripts/comms.py notify --from cricri --to carne --topic monigote-listo --body "Deje brand/monigote/monigote.png"
+python3 scripts/comms.py archive --name <inbox-file.md>
+```
 
 Worktree: `work/cricri` → `/srv/sites/nasaspaceappchallenge-cricri`

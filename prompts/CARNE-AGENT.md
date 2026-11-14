@@ -20,11 +20,19 @@ Use `ssh-keys/PROMPT-CARNE.md` on the VPS (or the text the human pastes).
 
 At the start of every turn:
 
-1. Read root `AGENTS.md` (global: challenge, jury profiling, rules) and `agents/carne/AGENTS.md`.
-2. **Required:** `comms/carne/inbox/`, `comms/from-vps/`, and anything new in `comms/cricri/outbox/` (tester feedback).
-3. Apply tester feedback before inventing new features, unless the human sets another priority.
+```bash
+python3 scripts/comms.py status
+```
 
-`references/` is code-drop only (MapLibre patterns). Agent docs live in `AGENTS.md` / `agents/`.
+1. `comms/STEERS.md` + `comms/board.toml` (hook also injects a briefing).
+2. `comms/carne/inbox/` and new notes in `comms/cricri/outbox/`.
+3. Root `AGENTS.md` + `agents/carne/AGENTS.md`.
+
+Delegate/reply: `python3 scripts/comms.py notify --from carne --to cricri|vps|todos --topic … --body "…"`.
+Close work: `task set <ID> --status done` and `archive --name …`.
+Apply tester feedback before inventing features unless the steer says otherwise.
+
+`references/` is code-drop only. Agent docs live in `AGENTS.md` / `agents/`.
 
 ## You may edit
 

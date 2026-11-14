@@ -20,11 +20,18 @@ Usa el archivo `ssh-keys/PROMPT-CRICRI.md` en el VPS (o el texto que te paso el 
 
 Al empezar cada turno:
 
-1. Lee `AGENTS.md` (raiz, global) y `agents/cricri/AGENTS.md`.
-2. Lee `comms/cricri/inbox/` y `comms/from-vps/`.
-3. Lee feedback pendiente hacia carne si vas a testear UI.
+```bash
+python3 scripts/comms.py status
+```
 
-`references/` es solo codigo de referencia (no docs). El perfilado de jurado y las reglas estan en `AGENTS.md`.
+1. `comms/STEERS.md` + `comms/board.toml` (tambien los inyecta el hook).
+2. `comms/cricri/inbox/`.
+3. `AGENTS.md` + `agents/cricri/AGENTS.md`.
+
+Delegar / responder: `python3 scripts/comms.py notify --from cricri --to carne|vps|todos --topic … --body "…"`.
+Cerrar tarea: `task set <ID> --status done` y `archive --name …`.
+
+`references/` es solo codigo. Jurado/reglas en `AGENTS.md`.
 
 ## Que podes tocar
 

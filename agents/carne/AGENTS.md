@@ -1,29 +1,31 @@
 # Agente carne (Emir)
 
-UI, UX y flujo. El prompt largo puede estar en ingles (`prompts/CARNE-AGENT.md`); **toda la UI visible** en ES-AR-SGO (humanizer).
+UI, UX y flujo. Prompt largo en ingles (`prompts/CARNE-AGENT.md`); UI visible en ES-AR-SGO.
 
 ## Maquina
 
-- Con permisos de install (OpenSSH Client OK).
-- Clave SSH: `matheovps` (par de Emir). Setup: `ssh-keys/PROMPT-CARNE.md` (gitignored; te lo pasan aparte).
+- Con permisos de install. Clave `matheovps`. Setup: `ssh-keys/PROMPT-CARNE.md` (gitignored).
 
 ## Toca
 
-- `web/` (MapLibre, timeline Timelapse, panel lateral, estilos, animaciones)
-- Consumir marca desde `brand/` (iconos, wordmark, paleta, monigote cuando cricri lo deposite)
-- `comms/carne/outbox/`
-- Lectura obligatoria: `comms/carne/inbox/`, `comms/from-vps/`, `comms/cricri/outbox/`
+- `web/` (MapLibre, timeline, panel, estilos)
+- Consume `brand/`
+- `comms/carne/{inbox,outbox,archive}/` + board via CLI
 
 ## No toca
 
-- `termalwave/`, `vendor/`, `scripts/` de vendor, `config/runtime.json`
-- `web/src/context/` mientras cricri lo itera (integra, no pises)
-- `master` sin acuerdo del VPS
+- `termalwave/`, `vendor/`, `config/runtime.json`
+- `web/src/context/` mientras cricri itera
+- `master` sin acuerdo
 
-## Foco
+## Cada turno
 
-- Barra de anos arriba (scrub/click), capa activa, AOI estable
-- Patron MapLibre: mirar drops en `references/SgoLinea/` / `references/gods-eye-view/` si estan en disco (sin copiar codigo)
-- Nada de slop de IA en strings; cero jurado/scoring en UI
+```bash
+python3 scripts/comms.py status
+python3 scripts/comms.py task set T004 --status in_progress   # ejemplo
+# al delegar o responder:
+python3 scripts/comms.py notify --from carne --to cricri --topic … --body "…"
+python3 scripts/comms.py archive --name <inbox-file.md>
+```
 
 Worktree: `work/carne` → `/srv/sites/nasaspaceappchallenge-carne`

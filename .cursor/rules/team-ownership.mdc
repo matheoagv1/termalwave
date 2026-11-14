@@ -1,14 +1,15 @@
 ---
-description: Team ownership cricri/carne/vps, worktrees, and comms
+description: Team ownership cricri/carne/vps, board, steers, and comms
 globs:
 alwaysApply: true
 ---
 
-# Team ownership
+# Team ownership + coordination
 
-- One repo: `/srv/sites/nasaspaceappchallenge`. Read root `AGENTS.md`, then `agents/<role>/AGENTS.md`, then `comms/` inbox.
-- Roles: vps (server / master), cricri/Cristian (tester+context, no system installs), carne/Emir (UI/UX MapLibre+timeline).
-- Worktrees: `work/cricri`, `work/carne`; integrate on `master` from VPS.
-- Notify via `comms/from-vps/` or `comms/<role>/inbox/`.
-- `references/` = code reference drops only.
-- Never put jury/scoring strategy into UI strings. UI copy: humanizer ES-AR-SGO.
+- One repo: `/srv/sites/nasaspaceappchallenge`.
+- Every turn: `comms/STEERS.md` → `comms/board.toml` → `comms/<role>/inbox/` → root `AGENTS.md` → `agents/<role>/AGENTS.md`.
+- CLI: `python3 scripts/comms.py status|notify|task|archive`.
+- Roles: vps (master), cricri (context + monigote), carne (UI MapLibre/timeline).
+- Delegate with `notify` + board task ownership. Do not rely on chat alone.
+- `references/` = code drops only. `brand/` = brand source of truth.
+- Never put jury/scoring or secrets into UI strings or `comms/`.

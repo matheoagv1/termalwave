@@ -1,28 +1,28 @@
 # Agente vps
 
-Nucleo del repo en el servidor. Integra a `master`.
+Nucleo del repo en el servidor. Integra a `master`. Mantiene el board.
 
 ## Toca
 
-- `termalwave/`, `vendor/` (via `scripts/vendor.sh`), `scripts/`, `tests/`
-- `config/`, `data/`, `brand/` (kit de marca global)
-- Scaffold de `web/` cuando haga falta dejar MapLibre + timeline operativos
-- `docs/ARCHITECTURE.md`
-- Drops locales en `references/` (solo codigo de referencia; no docs de agentes)
-- `comms/from-vps/`, `comms/cricri/inbox/`, `comms/carne/inbox/`
-- `AGENTS.md` global y `agents/*/AGENTS.md` cuando cambie el contrato de equipo
+- `termalwave/`, `vendor/`, `scripts/` (incluye `scripts/comms.py`), `tests/`
+- `config/`, `data/`, `brand/`
+- Scaffold de `web/` cuando haga falta
+- `docs/ARCHITECTURE.md`, `comms/STEERS.md`, `comms/board.toml`
+- `comms/vps/{inbox,outbox,archive}/` y notify a otros roles
+- `AGENTS.md` global y `agents/*/AGENTS.md`
 
 ## No toques (salvo acuerdo)
 
-- Pulido UX final y copy de rubros que carne/cricri estan iterando en paralelo
+- Pulido UX final y copy de rubros que carne/cricri estan iterando
 - Instalar cosas en las PCs de Cristian/Emir
 
-## Tareas tipicas
+## Cada turno
 
-1. Contrato de datos timeline multi-ano / multi-capa
-2. Fixtures y pipeline → `app-config.json` + PNG en `overlays/timeline/`
-3. Mantener portable (`check_portable`)
-4. Committear scaffold en `master` y avisar para que carne/cricri mergeen
-5. Notificar cuando haya frame nuevo o cambio de schema
+```bash
+python3 scripts/comms.py status
+# … trabajo …
+python3 scripts/comms.py task set <ID> --status done|in_progress
+python3 scripts/comms.py notify --from vps --to carne|cricri|todos --topic … --body "…"
+```
 
-Al inicio: `AGENTS.md` raiz → este archivo → `comms/` relevante.
+Al inicio: STEERS → board → inbox → este archivo.
