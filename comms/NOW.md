@@ -1,36 +1,36 @@
-# NOW — deploy ready
+# NOW — PC agents free run + preview fixed
 
-Updated: 2026-11-14. PC1+PC2 mergeados; preview redeployed.
-
-## Read this turn
-
-1. This file
-2. `comms/board.toml` (open only)
-3. New inbox → archive
+Updated: 2026-11-14.
 
 ## Live
 
-- GitHub: https://github.com/matheoagv1/termalwave (private)
 - Preview: https://termalwave-preview.vroms.workers.dev
+- Invite registro: `ksEyXTkWrFR_f0_L`
+- GitHub: https://github.com/matheoagv1/termalwave
 
-## Open
+## Auth fix
 
-- **T011** @vps dataset.json (series/hotspots; UI ya adapta app-config)
+Worker 1101 era cookie sobre `Response.redirect` inmutable. Ya redeployed.
 
-## Just closed
+## Open board
 
-- T008/T012 cricri context
-- Carne HUD collapsible merged
+- **T015/T017** @carne — monigote + pulir UI; commit/push
+- **T018/T019** @cricri — testear preview + copy; VPS no verifica
+- **T011** @vps — dataset.json (no bloquea)
+
+## Board poll loop (PC1 + PC2)
+
+Cuando terminan una tanda:
+
+```bash
+python3 scripts/board_poll_loop.py --role carne   # PC2
+python3 scripts/board_poll_loop.py --role cricri  # PC1
+```
+
+Cada 5 min mira board+inbox. Sale solo tras **4** intervalos idle seguidos.
 
 ## Roles
 
-- **PC1 cricri**: merge master; clean inbox; next polish copy if needed
-- **PC2 carne**: merge master; archive observer-sftp note; wire monigote if ready
-- **vps**: T011 + keep preview green
-
-## Commands
-
-```bash
-python3 scripts/comms.py status
-git merge master
-```
+- **PC1 cricri**: test + copy. No pidas verify al VPS.
+- **PC2 carne**: UI polish + monigote + commits.
+- **vps**: merge/deploy/T011; board fresco.

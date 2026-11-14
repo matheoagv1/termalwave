@@ -6,7 +6,7 @@ id = "T011"
 owner = "vps"
 status = "open"
 title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
-notes = "Alimenta setDataset/setHotspots. UI ya adapta app-config mientras tanto."
+notes = "No bloquea preview. UI adapta app-config."
 updated = "2026-11-14"
 
 [[task]]
@@ -14,13 +14,37 @@ id = "T015"
 owner = "carne"
 status = "open"
 title = "Integrar monigote desde brand/monigote en entrada y carga"
-notes = "Assets en brand/monigote/ (PNG + prototipo). Consumir desde brand/, no copiar a mano."
+notes = "Consume brand/. Commit + push work/carne. Redeploy lo hace VPS al mergear."
 updated = "2026-11-14"
 
 [[task]]
 id = "T016"
 owner = "carne"
 status = "done"
-title = "HUD plegable (dock/timeline/ficha + tecla H); escena DOM solo fallback sin WebGL"
-notes = "Merged master 3f8cbb3 + rebuild. Globe-first."
+title = "HUD plegable (dock/timeline/ficha + tecla H)"
+notes = "Merged + redeployed."
+updated = "2026-11-14"
+
+[[task]]
+id = "T017"
+owner = "carne"
+status = "open"
+title = "Pulir UI globe-first: tipografia, contraste, paneles que no tape el globo"
+notes = "Libertad de gusto. Commit frecuente en work/carne. Notify vps al cortar tanda."
+updated = "2026-11-14"
+
+[[task]]
+id = "T018"
+owner = "cricri"
+status = "open"
+title = "Testear preview auth+globo y reportar fallos via notify (no arreglar VPS)"
+notes = "URL https://termalwave-preview.vroms.workers.dev invite en NOW. Vos testeas; VPS no verifica."
+updated = "2026-11-14"
+
+[[task]]
+id = "T019"
+owner = "cricri"
+status = "open"
+title = "Seguir copy ES-AR-SGO capas/fuentes/trades segun hallazgos del test"
+notes = "Editar web/src/context/*.json. Commit work/cricri."
 updated = "2026-11-14"
