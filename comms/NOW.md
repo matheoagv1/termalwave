@@ -1,6 +1,6 @@
-# NOW — day1-lean
+# NOW — post-carne-merge
 
-Updated: 2026-11-14 (UTC date). Hackathon: vibecode lean.
+Updated: 2026-11-14. Carne UI merged to master. Cricri active.
 
 ## Read this turn (and almost nothing else)
 
@@ -18,15 +18,20 @@ Updated: 2026-11-14 (UTC date). Hackathon: vibecode lean.
 ## Open tasks
 
 - **T003** @cricri [open] Deposit monigote PNG in brand/monigote/
-- **T004** @carne [open] Wire brand/ assets into web chrome (favicon, wordmark, palette)
-- **T007** @carne [open] Data sources panel reading provenance from app-config
 - **T008** @cricri [open] Context copy for data sources / layers (no jury in UI)
+- **T012** @cricri [open] Lectura por oficio en web/src/context/trades.json
+- **T010** @carne [open] MapLibreScene (paused — Emir tanda closed)
+- **T011** @vps [open] dataset.json segments/series/hotspots (`web/src/tw/contract.ts`)
 
 ## Focus by role
 
-- **vps**: pipeline/providers/config/data; keep board/NOW fresh; merge master
-- **carne**: React `web/` UX, brand wire, Fuentes panel from `provenance`
-- **cricri**: `brand/monigote/`, `web/src/context/`, gusto notes via notify
+- **cricri (active)**: monigote → `brand/monigote/`; copy capas/fuentes + `trades.json` ES-AR-SGO; no jury in UI
+- **vps**: answer carne optical/priorities; T011 when bandwidth; keep board/NOW
+- **carne (paused)**: T010 MapLibre globe when Emir returns
+
+## Done this cut
+
+- T004 brand wire, T007 Fuentes provenance, T009 React+ConfigProvider → merged `work/carne` → `master`
 
 ## Commands
 

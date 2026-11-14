@@ -12,7 +12,7 @@ updated = "2026-11-14"
 [[task]]
 id = "T004"
 owner = "carne"
-status = "in_progress"
+status = "done"
 title = "Wire brand/ assets into web chrome (favicon, wordmark, palette)"
 notes = "Wordmark, favicon y paleta cableados desde brand/ via web/scripts/sync-brand.mjs. Falta el monigote (T003)."
 updated = "2026-11-14"
@@ -46,7 +46,7 @@ id = "T010"
 owner = "carne"
 status = "open"
 title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "Reemplaza la escena DOM interina. Requiere MapLibre 5.x para globo."
+notes = "Reemplaza la escena DOM interina. Requiere MapLibre 5.x para globo. Pausado: Emir termino tanda; retoma despues."
 updated = "2026-11-14"
 
 [[task]]
