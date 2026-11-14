@@ -5,7 +5,31 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from termalwave.model import Hotspot, utc_now
+from termalwave.model import AOI, Hotspot, Period, utc_now
+from termalwave.providers._fixture import parse_csv_text
+from termalwave.providers.http import http_get_text
+
+# FIRMS area CSV rejects day_range above 5 (HTTP 400 Invalid day range)
+FIRMS_AREA_MAX_DAYS = 5
+
+
+def fetch_firms_area_csv(
+    *,
+    template: str,
+    map_key: str,
+    aoi: AOI,
+    period: Period,
+) -> list[dict[str, str]]:
+    day_span = max(1, (period.end - period.start).days + 1)
+    url = template.format(
+        MAP_KEY=map_key,
+        west=aoi.west,
+        south=aoi.south,
+        east=aoi.east,
+        north=aoi.north,
+        day_range=min(day_span, FIRMS_AREA_MAX_DAYS),
+    )
+    return parse_csv_text(http_get_text(url))
 
 
 def rows_to_hotspots(

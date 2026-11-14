@@ -6,74 +6,21 @@
     {
       "provider": "firms_viirs_sp",
       "ok": true,
-      "count": 2
+      "count": 0
     },
     {
       "provider": "firms_viirs_nrt",
       "ok": true,
-      "count": 2
+      "count": 0
     },
     {
       "provider": "firms_modis",
       "ok": true,
-      "count": 1
+      "count": 0
     }
   ],
   "from_cache": false,
-  "records": [
-    {
-      "lat": -27.82,
-      "lon": -64.22,
-      "observed_at": "2024-06-14T12:00:00+00:00",
-      "brightness": 310.0,
-      "confidence": "86",
-      "source": "firms_modis",
-      "product": "MODIS_SP",
-      "retrieved_at": "2026-11-14T18:26:22.209375+00:00",
-      "quality_rank": 30,
-      "license": "NASA FIRMS"
-    },
-    {
-      "lat": -27.8,
-      "lon": -64.25,
-      "observed_at": "2024-06-15T01:30:00+00:00",
-      "brightness": 330.1,
-      "confidence": "high",
-      "source": "firms_viirs_sp",
-      "product": "VIIRS_SNPP_SP",
-      "retrieved_at": "2026-11-14T18:26:22.209190+00:00",
-      "quality_rank": 10,
-      "license": "NASA FIRMS"
-    },
-    {
-      "lat": -27.81,
-      "lon": -64.26,
-      "observed_at": "2024-06-15T01:31:00+00:00",
-      "brightness": 331.0,
-      "confidence": "high",
-      "source": "firms_viirs_sp",
-      "product": "VIIRS_SNPP_SP",
-      "retrieved_at": "2026-11-14T18:26:22.209190+00:00",
-      "quality_rank": 10,
-      "license": "NASA FIRMS"
-    },
-    {
-      "lat": -27.85,
-      "lon": -64.2,
-      "observed_at": "2024-06-16T02:00:00+00:00",
-      "brightness": 320.0,
-      "confidence": "low",
-      "source": "firms_viirs_nrt",
-      "product": "VIIRS_SNPP_NRT",
-      "retrieved_at": "2026-11-14T18:26:22.209307+00:00",
-      "quality_rank": 20,
-      "license": "NASA FIRMS"
-    }
-  ],
-  "selected_sources": [
-    "firms_modis",
-    "firms_viirs_nrt",
-    "firms_viirs_sp"
-  ],
-  "count": 4
+  "records": [],
+  "selected_sources": [],
+  "count": 0
 }

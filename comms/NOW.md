@@ -1,24 +1,19 @@
-# NOW — backend dataset + APIs catalog
+# NOW — stop subagentes; espera entrega cricri
 
-Updated: 2026-11-14.
+Updated: 2026-11-14 UTC.
 
-## Live
+## P0
 
-- Preview: https://termalwave-preview.vroms.workers.dev
-- Invite: `ksEyXTkWrFR_f0_L`
-- GitHub: https://github.com/matheoagv1/termalwave
-- APIs catalog: `docs/APIS.md` (no secrets)
+- Cricri: **STOP** subagentes. Solo entrega final → notify vps/carne.
+- Carne T026: review/merge cuando llegue el paquete.
+- VPS: T011/T022 providers+dataset.
 
 ## Open
 
-- **T011** @vps [in_progress] dataset.json emitted; live provider fetch next
-- **T020** @carne QA Cristian (Sin dato / landing / tildes)
+- T011 @vps dataset.json
+- T022 @vps live fetch
+- T026 @carne review lote UX
 
-## Backend note
-
-Providers by kind in `apis.toml`. New stubs: vessels/aviation/traffic. Secrets in `secrets.local.toml` only.
-Waiting Cristian new feedback before big UX brief to Carne.
-
-## Sync
-
-`git merge master` on worktrees.
+```bash
+python3 scripts/comms.py pulse
+```

@@ -1,16 +1,16 @@
-#!/usr/bin/env python3.11
-"""Cursor hook: inject TermalWave STEERS + board + inbox briefing."""
+#!/usr/bin/env python3
+"""Cursor hook: inject lean TermalWave board briefing (shared harness)."""
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 
 def repo_root_from_hook() -> Path:
-    # .cursor/hooks/agent-briefing.py → repo root
     return Path(__file__).resolve().parents[2]
 
 
@@ -24,6 +24,16 @@ def detect_role(workspace_roots: list[str]) -> str:
     return "vps"
 
 
+def primary_root(here: Path) -> Path:
+    name = here.name
+    for suffix in ("-carne", "-cricri"):
+        if name.endswith(suffix):
+            candidate = here.parent / name[: -len(suffix)]
+            if (candidate / "scripts" / "comms.py").is_file():
+                return candidate
+    return here
+
+
 def main() -> int:
     raw = sys.stdin.read()
     try:
@@ -32,10 +42,19 @@ def main() -> int:
         payload = {}
 
     root = repo_root_from_hook()
+    primary = primary_root(root)
     role = detect_role(list(payload.get("workspace_roots") or []))
-    script = root / "scripts" / "comms.py"
+    # Prefer primary scripts so worktrees share harness logic even before merge.
+    script = primary / "scripts" / "comms.py"
+    if not script.is_file():
+        script = root / "scripts" / "comms.py"
+
     briefing = ""
     if script.is_file():
+        env = os.environ.copy()
+        env["TW_AGENT_ROLE"] = role
+        env["TW_PRIMARY_ROOT"] = str(primary)
+        env["TW_COMMS_ROOT"] = str(primary / "comms")
         try:
             proc = subprocess.run(
                 [sys.executable, str(script), "briefing", "--role", role],
@@ -44,26 +63,29 @@ def main() -> int:
                 text=True,
                 cwd=str(root),
                 timeout=8,
+                env=env,
             )
             briefing = (proc.stdout or "").strip()
+            if proc.returncode != 0 and not briefing:
+                briefing = f"[TermalWave] role={role} harness_error"
         except (OSError, subprocess.TimeoutExpired):
-            briefing = f"[TermalWave coord] role={role}; failed to run scripts/comms.py briefing"
+            briefing = f"[TermalWave] role={role} harness_timeout"
 
     if not briefing:
-        briefing = (
-            f"[TermalWave coord] role={role}. "
-            "Read comms/STEERS.md, comms/board.toml, and your inbox."
-        )
+        briefing = f"[TermalWave] role={role}. python3 scripts/comms.py pulse"
 
     event = payload.get("hook_event_name") or ""
     out: dict = {
         "additional_context": briefing,
-        "env": {"TW_AGENT_ROLE": role, "TW_REPO_ROOT": str(root)},
+        "env": {
+            "TW_AGENT_ROLE": role,
+            "TW_REPO_ROOT": str(root),
+            "TW_PRIMARY_ROOT": str(primary),
+            "TW_COMMS_ROOT": str(primary / "comms"),
+        },
     }
-    # beforeSubmitPrompt supports continue; sessionStart ignores unknown fields safely.
     if event == "beforeSubmitPrompt" or "prompt" in event.lower():
         out["continue"] = True
-    # stop: do not auto-followup; keep quiet unless we want a nudge via agent_message (unsupported on stop)
     print(json.dumps(out, ensure_ascii=False))
     return 0
 

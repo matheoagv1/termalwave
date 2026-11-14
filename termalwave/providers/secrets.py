@@ -24,13 +24,20 @@ def load_credentials(repo_root: Path, apis: dict[str, Any]) -> dict[str, str]:
             if text:
                 creds[str(key)] = text
 
-    # Env overrides / fills empty secrets.
+    # Env overrides / fills empty secrets. Catalog: docs/APIS.md
     for env_name in (
         "EARTHDATA_TOKEN",
         "FIRMS_MAP_KEY",
         "METEOMATICS_USER",
         "METEOMATICS_PASSWORD",
         "PLANETARY_COMPUTER_TOKEN",
+        "AISSTREAM_API_KEY",
+        "OPENSKY_CLIENT_ID",
+        "OPENSKY_CLIENT_SECRET",
+        "TOMTOM_API_KEY",
+        "GOOGLE_MAPS_API_KEY",
+        "GOOGLE_MAPS_SERVER_API_KEY",
+        "CESIUM_ION_TOKEN",
     ):
         val = os.environ.get(env_name, "").strip()
         if val:

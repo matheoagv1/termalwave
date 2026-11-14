@@ -12,22 +12,20 @@ No hay un segundo repo. Mergean a `master` cuando el trabajo del rol esta listo;
 
 ### Coordinacion (obligatorio cada turno) — lean
 
-**Leer poco.** El costo caro es re-leer historia.
+**Leer poco.** Fuente unica: harness + board.
 
-1. [`comms/NOW.md`](comms/NOW.md) — unico pack caliente
-2. `comms/board.toml` — solo tareas abiertas
-3. Nuevos en `comms/<tu-rol>/inbox/` → leer → `archive`
+1. `python3 scripts/comms.py pulse` (o hook briefing)
+2. Si actuás: [`comms/NOW.md`](comms/NOW.md) + tu task (`paths` / `seat`)
+3. Inbox nuevo → `archive`
 4. `agents/<tu-rol>/AGENTS.md` solo si dudas ownership
 
-**No leer** en turnos normales: `comms/**/archive/`, `board.done.toml`, `STEERS.archive.md`, `references/`, `vendor/`.
+**Idle/standby:** stop. No explores. **No leer:** archives, `board.done.toml`, `STEERS.archive.md`, `references/`, `vendor/`.
 
-CLI: `python3 scripts/comms.py status|notify|task|archive|milestone` ([`comms/README.md`](comms/README.md)).
+CLI: `pulse|seat|check|status|notify|task|archive|milestone|link-worktrees` ([`comms/README.md`](comms/README.md)).
 
-Tras cada corte grande: `python3 scripts/comms.py milestone --label <nombre>`.
+Notify ≤280. `status` = solo tuyas (`--all` si hace falta). Tras corte: `milestone --label …`.
 
-Hooks Cursor inyectan briefing lean (NOW + tus tasks).
-
-`references/` **no** es documentacion de agentes. Solo drops de codigo de referencia.
+`references/` **no** es documentacion de agentes. Solo drops de codigo.
 
 ---
 

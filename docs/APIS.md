@@ -32,6 +32,8 @@ Credencial faltante → adapter skip (log), no crash.
 
 Strategy: `union_dedupe` (distancia + tiempo).
 
+Area CSV: `day_range` maximo 5 (API FIRMS). El adapter lo recorta solo.
+
 Docs: https://firms.modaps.eosdis.nasa.gov/api/
 
 ---
@@ -40,7 +42,7 @@ Docs: https://firms.modaps.eosdis.nasa.gov/api/
 
 | Id | Servicio | Credential | Notas |
 |---|---|---|---|
-| `open_meteo_archive` | Open-Meteo Archive | (ninguna) | Primera opcion |
+| `open_meteo_archive` | Open-Meteo Archive | (ninguna) | Primera opcion; chunk ~1 anio |
 | `meteomatics` | Meteomatics | `METEOMATICS_USER` + `METEOMATICS_PASSWORD` | Si hay cuenta |
 
 Strategy: `first_available`.

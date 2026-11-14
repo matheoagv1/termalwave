@@ -1,15 +1,13 @@
 ---
-description: Internal product framing for TermalWave agents — diverse professional appeal; never leak into UI
+description: TermalWave product context for agents (lean)
 globs:
 alwaysApply: true
 ---
 
 # Agent product context
 
-- Read `comms/STEERS.md` + `comms/board.toml` + role inbox every turn (or run `python3 scripts/comms.py status`).
-- Read and follow root `AGENTS.md` (global: challenge, jury profiling, rules), then `agents/<role>/AGENTS.md`.
-- Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization for a broad audience; default AOI is Santiago del Estero, fully config-driven for any location.
-- Design the globe + side controls, layers-by-job, and portable NISAR pipeline so the product stands on its own for the jury archetypes listed in `AGENTS.md` — without naming them in the UI.
-- User-facing copy: humanizer ES-AR-SGO only.
-- `references/` is code-drop only (SgoLinea, gods-eye-view). Do not put agent docs there.
-- Never put into the UI (or end-user README/demo overlays) any mention of juries, evaluators, hackathon scoring, or that features exist to impress a panel. No “diseñado para ingenieros/científicos/gobierno” style audience-bait in visible strings.
+- Start with hook briefing / `python3 scripts/comms.py pulse`. If idle/standby: wait, do not browse.
+- If acting: `comms/NOW.md` + open task + new inbox only. Role `AGENTS.md` only when ownership is unclear.
+- Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization; default AOI Santiago del Estero; config-driven for any location.
+- Globe first; side panels are controls. User-facing copy: humanizer ES-AR-SGO only.
+- `references/` is code-drop only. Never put jury/scoring into UI strings or `comms/`.

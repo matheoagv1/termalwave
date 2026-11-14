@@ -6,10 +6,11 @@ alwaysApply: true
 
 # Team ownership + coordination
 
-- One repo: `/srv/sites/nasaspaceappchallenge`.
-- Every turn: `comms/STEERS.md` → `comms/board.toml` → `comms/<role>/inbox/` → root `AGENTS.md` → `agents/<role>/AGENTS.md`.
-- CLI: `python3 scripts/comms.py status|notify|task|archive`.
-- Roles: vps (master), cricri (context + monigote), carne (UI MapLibre/timeline).
-- Delegate with `notify` + board task ownership. Do not rely on chat alone.
+- One repo: `/srv/sites/nasaspaceappchallenge` (primary). Worktrees: `-carne`, `-cricri`.
+- **Shared harness:** `python3 scripts/comms.py` + one live `comms/` (`link-worktrees` syncs scripts/hooks too).
+- Each turn: `pulse` → if busy: `NOW.md` + your task + new inbox → archive.
+- `seat` / `check`: role, branch, comms link, edit roots.
+- Roles: vps (pipeline/merge), cricri (context + monigote), carne (UI MapLibre/timeline).
+- Delegate with short `notify` + board `paths=…`. Chat alone does not count.
 - `references/` = code drops only. `brand/` = brand source of truth.
 - Never put jury/scoring or secrets into UI strings or `comms/`.

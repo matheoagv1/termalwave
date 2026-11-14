@@ -1,84 +1,47 @@
-# Coordinacion entre agentes y steers
+# Coordinacion — harness compartido
 
-Un solo canal. No uses el chat entre PCs como fuente de verdad.
+Un canal. Un `comms/` vivo en el VPS (master). Worktrees **symlink** + `link-worktrees` copia scripts/hooks/rules para que no driften.
 
-## Lectura al arrancar un turno (lean)
+## Arranque (lean)
 
-1. [`NOW.md`](NOW.md) — pack caliente (casi siempre alcanza)
-2. [`board.toml`](board.toml) — solo tareas abiertas
-3. Tu `inbox/` (archivar apenas leas)
-4. `agents/<rol>/AGENTS.md` solo si hace falta
+1. Hook briefing, o `python3 scripts/comms.py pulse`
+2. Si hay trabajo: [`NOW.md`](NOW.md) + tu task (`paths` si hay)
+3. Inbox nuevo → archive
+4. Editá solo `own/` (`seat`) o `task.paths`
 
-**No leas** `archive/`, `board.done.toml`, `STEERS.archive.md`, `milestones/` en turnos normales.
+**Idle / standby:** no explores. Volvé a `pulse`.
 
-El hook inyecta un briefing corto (NOW + tus tasks).
+No leas `archive/`, `board.done.toml`, `STEERS.archive.md`, `milestones/` en turnos normales.
 
-### Milestone (bajar contexto)
-
-Despues de un corte grande (providers, UI React, etc.):
+## CLI
 
 ```bash
-python3 scripts/comms.py milestone --label day1-providers
-# opcional: --keep archivo.md  para no archivar un inbox puntual
+python3 scripts/comms.py pulse
+python3 scripts/comms.py seat
+python3 scripts/comms.py check
+python3 scripts/comms.py status          # solo tuyas
+python3 scripts/comms.py status --all
+python3 scripts/comms.py now --label live
+python3 scripts/comms.py task add --owner carne --title "…" --paths "web/src/…"
+python3 scripts/comms.py task set T004 --status in_progress --paths "web/…"
+python3 scripts/comms.py notify --from vps --to cricri --topic x --body "corta"
+python3 scripts/comms.py archive --name 20261114-….md
+python3 scripts/comms.py milestone --label cut
+python3 scripts/comms.py link-worktrees
 ```
 
-Eso archiva inbox/outbox viejos, mueve tasks `done` a `board.done.toml`, compacta steers y reescribe `NOW.md`.
+`notify` ≤280 chars (clip silencioso en la misma linea). Sin secretos en `comms/`.
 
-## Roles y carpetas
+## Roles
 
-| Rol | Humano | Bandejas |
+| Rol | Humano | Edit roots (`seat`) |
 |---|---|---|
-| `vps` | Farid/Matheo | `comms/vps/{inbox,outbox,archive}/` |
-| `carne` | Emir | `comms/carne/{inbox,outbox,archive}/` |
-| `cricri` | Cristian | `comms/cricri/{inbox,outbox,archive}/` |
+| `vps` | Farid/Matheo | `termalwave/` `scripts/` `config/` … |
+| `carne` | Emir | `web/` `brand/` |
+| `cricri` | Cristian | `web/src/context/` `brand/monigote/` |
 
-## CLI (preferida)
+## Delegar
 
-Desde la raiz del repo:
-
-```bash
-python3 scripts/comms.py whoami
-python3 scripts/comms.py status
-python3 scripts/comms.py task list --status open
-python3 scripts/comms.py task add --owner carne --title "Wire favicon from brand/"
-python3 scripts/comms.py task set T004 --status in_progress
-python3 scripts/comms.py notify --from vps --to cricri --topic monigote --body "Copia el PNG a brand/monigote/"
-python3 scripts/comms.py notify --from carne --to todos --topic ux-ready --body "Scrub listo para review"
-python3 scripts/comms.py archive --name 20261114-....md
-```
-
-`notify` escribe en tu `outbox/` y copia a la `inbox/` del destinatario (o a todos).
-
-## Mensajes manuales
-
-Si no usas el CLI, nombre: `YYYYMMDD-HHMM-<de>-<para>-<tema>.md`
-
-```markdown
-# <tema>
-De: <vps|cricri|carne>
-Para: <vps|cricri|carne|todos>
-Estado: abierto|hecho
-
-## Pedido o feedback
-...
-
-## Archivos
-- path/...
-
-## Respuesta esperada
-...
-```
-
-Cuando esta hecho: `Estado: hecho` y `scripts/comms.py archive --name …` (mueve a `archive/`).
-
-## Steers (humanos)
-
-- Editan `STEERS.md` (entradas nuevas arriba).
-- Pueden agregar/cerrar tareas en el board via CLI o editando `board.toml`.
-- Nunca pegan tokens/secretos en `comms/`.
-
-## Delegar rapido
-
-1. `task add --owner <rol> --title "..."` (o `task set` si ya existe)
-2. `notify --from <tu-rol> --to <rol> --topic ... --body "..."`
-3. Al cerrar tu parte: `task set ID --status done` + archive del aviso
+1. `task add` / `task set` (+ `--paths` cuando se pueda)
+2. `notify` corto
+3. Al cerrar: `task set … done` + `archive`

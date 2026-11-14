@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Poll open board tasks for a role every 5 minutes.
+"""Quiet board pulse for a role. Prints only on change (or --verbose).
 
-Stop after N consecutive idle intervals (no open/in_progress tasks for the
-role, and no new inbox files). Default: 4 idle ticks -> exit.
+Default: every 5 minutes; exit after 4 idle ticks with no tasks/inbox.
+Uses shared harness: python3 scripts/comms.py pulse
 """
 
 from __future__ import annotations
@@ -18,44 +18,26 @@ INTERVAL_SEC = 5 * 60
 IDLE_STOP = 4
 
 
-def run(cmd: list[str]) -> str:
-    p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
-    return (p.stdout or "") + (p.stderr or "")
+def pulse(role: str) -> str:
+    p = subprocess.run(
+        [sys.executable, "scripts/comms.py", "pulse", "--role", role],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return (p.stdout or "").strip() or f"{role}: harness_error"
 
 
-def open_tasks(role: str) -> list[str]:
-    out = run([sys.executable, "scripts/comms.py", "status", "--role", role])
-    lines = []
-    for line in out.splitlines():
-        if f"@{role}" in line or (line.startswith("T") and f"[{role}]" in line):
-            lines.append(line.strip())
-        # status format: T011 [open] ... under "board (yours)"
-        if line.strip().startswith("T") and "[" in line and "]" in line:
-            # only count when inside "yours" section — heuristic: collected after marker
-            pass
-    yours = False
-    found: list[str] = []
-    for line in out.splitlines():
-        if "board (yours)" in line:
-            yours = True
-            continue
-        if yours and line.startswith("---"):
-            break
-        if yours and line.strip().startswith("T"):
-            found.append(line.strip())
-        if yours and "(none)" in line:
-            break
-    return found
-
-
-def new_inbox(role: str, seen: set[str]) -> list[str]:
-    inbox = ROOT / "comms" / role / "inbox"
-    if not inbox.is_dir():
-        return []
-    files = sorted(p.name for p in inbox.glob("*.md") if p.name != ".gitkeep")
-    fresh = [f for f in files if f not in seen]
-    seen.update(files)
-    return fresh
+def is_idle(line: str) -> bool:
+    # standby counts as idle only with empty inbox (inbox must wake the poller)
+    if "inbox" in line:
+        return False
+    return (
+        " idle " in f" {line} "
+        or " standby " in f" {line} "
+        or line.endswith("idle — wait; do not explore")
+        or "— wait; do not explore" in line
+    )
 
 
 def main() -> int:
@@ -64,38 +46,28 @@ def main() -> int:
     ap.add_argument("--interval", type=int, default=INTERVAL_SEC)
     ap.add_argument("--idle-stop", type=int, default=IDLE_STOP)
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
 
-    seen: set[str] = set()
-    new_inbox(args.role, seen)  # seed
     idle = 0
     tick = 0
+    last = ""
     while True:
         tick += 1
-        tasks = open_tasks(args.role)
-        inbox = new_inbox(args.role, seen)
-        busy = bool(tasks) or bool(inbox)
-        print(
-            f"[poll {args.role} #{tick}] tasks={len(tasks)} inbox_new={len(inbox)} idle={idle}",
-            flush=True,
-        )
-        for t in tasks:
-            print(f"  task: {t}", flush=True)
-        for f in inbox:
-            print(f"  inbox: {f}", flush=True)
+        line = pulse(args.role)
+        changed = line != last
+        last = line
+        if args.verbose or changed:
+            print(f"[poll #{tick}] {line}", flush=True)
 
-        if busy:
-            idle = 0
-            print(
-                f"[poll {args.role}] work pending — do it, then this loop sleeps",
-                flush=True,
-            )
-        else:
+        if is_idle(line):
             idle += 1
-            print(f"[poll {args.role}] idle tick {idle}/{args.idle_stop}", flush=True)
             if idle >= args.idle_stop:
-                print(f"[poll {args.role}] stop: {args.idle_stop} idle intervals", flush=True)
+                if args.verbose or changed:
+                    print(f"[poll] stop after {idle} idle", flush=True)
                 return 0
+        else:
+            idle = 0
 
         if args.once:
             return 0

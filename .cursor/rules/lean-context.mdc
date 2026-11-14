@@ -1,22 +1,30 @@
 ---
-description: Keep hackathon agent context lean — prefer NOW.md, avoid archives and heavy trees
+description: Keep hackathon agent context lean — shared board harness, avoid archives
 globs:
 alwaysApply: true
 ---
 
 # Lean context (hackathon)
 
-Reading is expensive. Default each turn:
+Reading is expensive. **One live `comms/`** on the VPS (worktrees symlink). Prefer CLI over browsing.
 
-1. `comms/NOW.md`
-2. Open tasks from `comms/board.toml` (or `python3 scripts/comms.py status`)
-3. Only **new** inbox files, then archive them
-4. Touch the few source files needed for the task
+Each turn:
+
+1. Hook briefing, or `python3 scripts/comms.py pulse`
+2. If acting: `comms/NOW.md` + your open task only
+3. New inbox → read → `archive`
+4. Edit **only** `own/` dirs (see `seat`) or `task.paths`
+
+Idle or standby (`pulse` says wait): **stop**. Do not explore. Re-check with `pulse`.
 
 Do **not** open unless blocked:
 
-- `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`, `comms/milestones/`
+- `comms/**/archive/`, `board.done.toml`, `STEERS.archive.md`, `milestones/`
 - `references/`, `vendor/`, `web/dist/assets/`, brand binaries
-- Full jury tables in root `AGENTS.md` (already internalized)
+- Full jury tables in root `AGENTS.md`
 
-After a milestone: VPS runs `python3 scripts/comms.py milestone --label …` so history leaves the hot path.
+Outputs stay short: notify ≤280 chars; no stderr spam; `status` is yours only (`--all` if needed).
+
+If board/scripts drift: `python3 scripts/comms.py check` then `link-worktrees`.
+
+After a milestone: `python3 scripts/comms.py milestone --label …`

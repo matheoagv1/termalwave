@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from termalwave.model import AOI, Hotspot, Period
-from termalwave.providers._fixture import load_csv_fixture, parse_csv_text
-from termalwave.providers.fires._common import quality_for, rows_to_hotspots
-from termalwave.providers.http import http_get_text
+from termalwave.providers._fixture import load_csv_fixture
+from termalwave.providers.fires._common import fetch_firms_area_csv, quality_for, rows_to_hotspots
 from termalwave.providers.secrets import require_credential
 
 
@@ -48,18 +47,12 @@ class FirmsModis:
         key = require_credential(self.credentials, str(self.meta.get("credential") or ""))
         if key is None:
             raise RuntimeError(f"{self.name}: missing FIRMS_MAP_KEY")
-        day_range = max(1, (period.end - period.start).days + 1)
-        template = self.endpoints.get(self.name) or ""
-        url = template.format(
-            MAP_KEY=key,
-            west=aoi.west,
-            south=aoi.south,
-            east=aoi.east,
-            north=aoi.north,
-            day_range=min(day_range, 10),
+        rows = fetch_firms_area_csv(
+            template=self.endpoints.get(self.name) or "",
+            map_key=key,
+            aoi=aoi,
+            period=period,
         )
-        text = http_get_text(url)
-        rows = parse_csv_text(text)
         return rows_to_hotspots(
             rows,
             source=self.name,
