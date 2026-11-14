@@ -1,4 +1,4 @@
-import { sourceNote } from "../data/layer-defaults";
+import { layersAviso, sourceNote } from "../data/layer-defaults";
 import { F, T } from "../tw/catalog.es-AR.js";
 import type { LayerDef, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
 import type { AppState, Flat } from "./types";
@@ -434,7 +434,25 @@ export function buildView(m: Model) {
   // tarjeta de detalle
   const hp = S.pick ? S.hotspots.find((h) => h.id === S.pick) : undefined;
   const pp = S.pickPos;
-  const dc = { on: false, title: "", value: "", delta: "", hasDelta: false, layer: "", moment: "", left: "auto", right: "auto", top: "auto", bottom: "auto", w: "auto" };
+  const dc = {
+    on: false,
+    title: "",
+    value: "",
+    delta: "",
+    hasDelta: false,
+    layer: "",
+    moment: "",
+    left: "auto",
+    right: "auto",
+    top: "auto",
+    bottom: "auto",
+    w: "auto",
+    spotSerOn: false,
+    spotLineD: "",
+    spotAx: 0,
+    spotAy: 0,
+    spotW: 168,
+  };
   if (hp && cam === "detail" && pp) {
     dc.on = true;
     dc.title = hp.title;
@@ -443,6 +461,38 @@ export function buildView(m: Model) {
     dc.hasDelta = !!hp.delta;
     dc.layer = L ? L.label : "";
     dc.moment = fa ? nameOf(fa) : "";
+    const trail = S.spotTrail[S.pick!] ?? [];
+    if (L && trail.length > 1) {
+      const span = L.range[1] - L.range[0] || 1;
+      const sw = dc.spotW;
+      const sh = 40;
+      const byTick = new Map(trail.map((p) => [p.tickId, p.v]));
+      const pts: Array<{ i: number; v: number }> = [];
+      m.flat.forEach((f, i) => {
+        const v = byTick.get(f.tick.id);
+        if (v != null) pts.push({ i, v });
+      });
+      if (pts.length > 1) {
+        const xOf = (i: number): number =>
+          m.flat.length < 2 ? sw / 2 : 2 + ((sw - 4) * i) / (m.flat.length - 1);
+        const yOf = (v: number): number => sh - 4 - ((sh - 8) * (v - L.range[0])) / span;
+        let pen = false;
+        let lineD = "";
+        for (const p of pts) {
+          const x = xOf(p.i);
+          const y = yOf(p.v);
+          lineD += `${pen ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)} `;
+          pen = true;
+        }
+        const cur = pts.find((p) => p.i === iA);
+        dc.spotSerOn = true;
+        dc.spotLineD = lineD;
+        if (cur) {
+          dc.spotAx = xOf(cur.i);
+          dc.spotAy = yOf(cur.v);
+        }
+      }
+    }
     if (isM) {
       dc.left = "8px";
       dc.right = "8px";
@@ -576,7 +626,10 @@ export function buildView(m: Model) {
     noSeries,
     isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
     tabSourcesLine: S.tab === "sources" ? "var(--acc-fg)" : "transparent",
-    sources, sourcesAt, noSources: sources.length === 0,
+    sources,
+    sourcesAt,
+    sourcesAviso: mock ? layersAviso() ?? "" : "",
+    noSources: sources.length === 0,
     tabAreaLine: S.tab === "area" ? "var(--acc-fg)" : "transparent",
     tabReadLine: S.tab === "read" ? "var(--acc-fg)" : "transparent",
     cardToggleText: cardOpen ? T.card.close : T.card.open,

@@ -336,6 +336,15 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           <div style={s("font:11px var(--mono);color:var(--fg2)")}>
             {t.detail.at}: {v.dc.moment}
           </div>
+          {v.dc.spotSerOn && (
+            <div style={s("margin-top:4px")}>
+              <div style={s("font:10px var(--mono);color:var(--fg3);margin-bottom:2px")}>{t.explore.series}</div>
+              <svg width={v.dc.spotW} height={40} style={s("display:block;overflow:visible")}>
+                <path d={v.dc.spotLineD} style={s("fill:none;stroke:var(--fg2);stroke-width:1.5")} />
+                <circle cx={v.dc.spotAx} cy={v.dc.spotAy} r={3.5} style={s("fill:var(--acc)")} />
+              </svg>
+            </div>
+          )}
         </div>
       )}
 
@@ -764,6 +773,9 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                 {v.isTabSources && (
                   <>
                     <div style={s("color:var(--fg2)")}>{t.sources.lead}</div>
+                    {v.sourcesAviso ? (
+                      <div style={s("font:12px var(--sans);color:var(--warn);text-wrap:pretty")}>{v.sourcesAviso}</div>
+                    ) : null}
                     {v.sourcesAt && <div style={s("font:11px var(--mono);color:var(--fg3)")}>{v.sourcesAt}</div>}
                     {v.noSources && <div style={s("color:var(--fg2)")}>{t.sources.empty}</div>}
                     {v.sources.map((g) => (
