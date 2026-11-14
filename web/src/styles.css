@@ -11,9 +11,11 @@
   --ink: #e7f2f6;
   --muted: #8eacb8;
   --accent: #3ec7a4;
+  --warn: #e0b45a;
   --bar: rgba(7, 16, 24, 0.92);
   --panel: rgba(10, 22, 30, 0.94);
   --line: rgba(62, 199, 164, 0.28);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 * {
@@ -30,6 +32,15 @@ body,
   font-family: "Sora", "Segoe UI", sans-serif;
 }
 
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 #app {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -38,7 +49,7 @@ body,
 
 .chrome {
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 2.2fr) auto;
+  grid-template-columns: minmax(12rem, 1fr) minmax(18rem, 2.4fr) auto;
   gap: 0.75rem 1.25rem;
   align-items: center;
   padding: 0.7rem 1rem;
@@ -77,32 +88,86 @@ body,
 }
 
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.78rem;
   color: var(--accent);
   justify-self: end;
   text-align: right;
 }
 
+.status::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.status[data-mode="offline"] {
+  color: var(--warn);
+}
+
+.status[data-mode="loading"] {
+  color: var(--muted);
+}
+
+.status[data-mode="loading"]::before {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .timeline {
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  gap: 0.35rem 0.75rem;
+  grid-template-columns: auto auto 1fr;
   align-items: center;
+  gap: 0.35rem 0.75rem;
 }
 
 .timeline-label {
-  grid-row: 1 / span 2;
   color: var(--muted);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
+.timeline-play {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(62, 199, 164, 0.08);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  min-width: 6.25rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.timeline-play:hover,
+.timeline-play.is-playing {
+  background: rgba(62, 199, 164, 0.18);
+  border-color: var(--accent);
+}
+
+.timeline-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+/* El padding iguala el medio pulgar del slider para que cada año quede sobre su marca. */
 .timeline-track {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+  justify-content: space-between;
+  padding: 0 0.2rem;
 }
 
 .timeline-year {
@@ -112,9 +177,11 @@ body,
   color: var(--muted);
   font: inherit;
   font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
   padding: 0.2rem 0.45rem;
   cursor: pointer;
-  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease),
+    background 160ms var(--ease);
 }
 
 .timeline-year:hover {
@@ -129,6 +196,7 @@ body,
 
 .timeline-scrub {
   width: 100%;
+  margin: 0;
   accent-color: var(--accent);
 }
 
@@ -170,7 +238,7 @@ body,
   font-size: 0.9rem;
   padding: 0.55rem 0.7rem;
   cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition: border-color 160ms var(--ease), background 160ms var(--ease);
 }
 
 .layer-btn:hover {
@@ -195,11 +263,30 @@ body,
   line-height: 1.4;
 }
 
-#map {
-  width: 100%;
-  height: 100%;
+.map-wrap {
+  position: relative;
   min-height: 320px;
+  min-width: 0;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
   background: #0e1a22;
+}
+
+.map-caption {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  background: var(--bar);
+  border: 1px solid var(--line);
+  pointer-events: none;
 }
 
 .maplibregl-ctrl-attrib {
@@ -215,6 +302,14 @@ body,
 @media (max-width: 820px) {
   .chrome {
     grid-template-columns: 1fr;
+  }
+
+  .timeline {
+    grid-template-columns: auto 1fr;
+  }
+
+  .timeline-label {
+    grid-column: 1 / -1;
   }
 
   .status {
@@ -235,5 +330,19 @@ body,
   .layers {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .timeline-year {
+    padding: 0.2rem 0.2rem;
+    font-size: 0.78rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title></title>
-    <script type="module" crossorigin src="./assets/index-CkRCufCC.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-RCeNGR_n.css">
+    <script type="module" crossorigin src="./assets/index-B455xq2M.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CaeMOoD8.css">
   </head>
   <body>
     <div id="app">
@@ -21,7 +21,7 @@
           role="group"
           aria-label=""
         ></div>
-        <div class="status" id="status" role="status"></div>
+        <div class="status" id="status" role="status" data-mode="loading"></div>
       </header>
       <div class="stage">
         <aside class="side" aria-label="Controles">
@@ -33,7 +33,10 @@
             <div id="context-mount" data-context-root></div>
           </section>
         </aside>
-        <main id="map" aria-label="Mapa"></main>
+        <div class="map-wrap">
+          <main id="map" aria-label="Mapa"></main>
+          <p class="map-caption" id="map-caption" aria-live="polite"></p>
+        </div>
       </div>
     </div>
   </body>
