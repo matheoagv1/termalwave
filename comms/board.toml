@@ -20,9 +20,9 @@ updated = "2026-11-14"
 [[task]]
 id = "T010"
 owner = "carne"
-status = "in_progress"
+status = "done"
 title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
-notes = "P0 norte Gods Eye View. Capas drapadas al globo (image source + bounds). HUD 2D opcional/colapsable. MapLibre 5.x OK. Retomar ya."
+notes = "MapLibreScene (MapLibre 5.24, globo) detras de SceneApi: orbita, aproximacion, territorio con inclinacion, cortina de comparar, hotspots, anillo. Basemap GIBS. Relieve DEM terrarium opcional sin verificar. Fallback a escena DOM con #scene=dom o sin WebGL."
 updated = "2026-11-14"
 
 [[task]]
