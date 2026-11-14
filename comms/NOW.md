@@ -1,19 +1,18 @@
-# NOW — layers fallback live
+# NOW — dataset.json layers live
 
-Updated: 2026-11-14 UTC. Role: **vps** (central).
+Updated: 2026-11-14 UTC. Role: **vps**.
 
 ## Live
 
 - Preview: https://termalwave-preview.vroms.workers.dev
-- Fix: `dataset.json` con `layers:[]` ya no tumba la app; cae a `app-config.json` (4 capas).
-- Redeployed version `b7cc18b2…`
+- `dataset.json` LIVE: 4 layers + 5 ticks (ya no vacio)
+- Client fallback a app-config sigue por si acaso
 
 ## Open
 
-- **T011** @vps — dataset.json deberia traer layers (no publicarlo vacio)
-- **T022** @vps si sigue abierto
-- Carne/cricri: idle salvo bugs nuevos
+- **T022** @vps — fetch vivo FIRMS/weather/optical/radar
+- Carne/cricri: idle salvo bugs
 
-## Note
+## Done just now
 
-Permisos agente-carne: reintentar g+rw en COMMIT_EDITMSG si falla de nuevo.
+- T011: regenerate + refuse empty layers export

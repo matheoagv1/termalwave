@@ -274,26 +274,26 @@
   },
   "provenance": {
     "version": 1,
-    "generated_at": "2026-11-14T18:33:14.354870+00:00",
+    "generated_at": "2026-11-14T20:21:42.049812+00:00",
     "layers": {
       "fires": {
         "strategy": "union_dedupe",
-        "status": "cache",
+        "status": "ok",
         "tried": [
           {
             "provider": "firms_viirs_sp",
-            "ok": false,
-            "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/VIIRS_SNPP_SP/-64.35,-27.9,-64.15,-27.7/10"
+            "ok": true,
+            "count": 2
           },
           {
             "provider": "firms_viirs_nrt",
-            "ok": false,
-            "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/VIIRS_SNPP_NRT/-64.35,-27.9,-64.15,-27.7/10"
+            "ok": true,
+            "count": 2
           },
           {
             "provider": "firms_modis",
-            "ok": false,
-            "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/MODIS_SP/-64.35,-27.9,-64.15,-27.7/10"
+            "ok": true,
+            "count": 1
           }
         ],
         "selected_sources": [
@@ -301,30 +301,30 @@
           "firms_viirs_nrt",
           "firms_viirs_sp"
         ],
-        "from_cache": true,
-        "count": 0
+        "from_cache": false,
+        "count": 4
       },
       "weather": {
         "strategy": "first_available",
-        "status": "cache",
+        "status": "ok",
         "tried": [
           {
             "provider": "open_meteo_archive",
-            "ok": false,
-            "error": "HTTP 400 for https://archive-api.open-meteo.com/v1/archive?latitude=-27.799999999999997&longitude=-64.25&start_date=2018-01-01&end_date=2026-12-31&daily=temperature_2m_max%2Ctemperature_2m_min%2Cprecipitation_sum&timezone=UTC"
+            "ok": true,
+            "count": 3
           },
           {
             "provider": "meteomatics",
-            "ok": false,
-            "error": "meteomatics: missing METEOMATICS_USER/PASSWORD"
+            "ok": true,
+            "count": 2
           }
         ],
         "selected_sources": [
           "open_meteo_archive",
           "open_meteo_archive+meteomatics"
         ],
-        "from_cache": true,
-        "count": 0
+        "from_cache": false,
+        "count": 3
       },
       "optical": {
         "strategy": "least_cloudy_near_nisar",
@@ -333,14 +333,12 @@
           {
             "provider": "planetary_computer_s2",
             "ok": true,
-            "count": 50
+            "count": 3
           }
         ],
-        "selected_sources": [
-          "planetary_computer_s2"
-        ],
+        "selected_sources": [],
         "from_cache": false,
-        "count": 1
+        "count": 0
       },
       "radar": {
         "strategy": "prefer_validated",
@@ -349,12 +347,14 @@
           {
             "provider": "earthdata_nisar_gcov",
             "ok": true,
-            "count": 0
+            "count": 3
           }
         ],
-        "selected_sources": [],
+        "selected_sources": [
+          "earthdata_nisar_gcov"
+        ],
         "from_cache": false,
-        "count": 0
+        "count": 2
       },
       "vessels": {
         "strategy": "union_dedupe",
@@ -403,22 +403,22 @@
   "data_sources": {
     "fires": {
       "strategy": "union_dedupe",
-      "status": "cache",
+      "status": "ok",
       "tried": [
         {
           "provider": "firms_viirs_sp",
-          "ok": false,
-          "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/VIIRS_SNPP_SP/-64.35,-27.9,-64.15,-27.7/10"
+          "ok": true,
+          "count": 2
         },
         {
           "provider": "firms_viirs_nrt",
-          "ok": false,
-          "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/VIIRS_SNPP_NRT/-64.35,-27.9,-64.15,-27.7/10"
+          "ok": true,
+          "count": 2
         },
         {
           "provider": "firms_modis",
-          "ok": false,
-          "error": "HTTP 400 for https://firms.modaps.eosdis.nasa.gov/api/area/csv/9ef70b4546660056786a6e7078aa2f58/MODIS_SP/-64.35,-27.9,-64.15,-27.7/10"
+          "ok": true,
+          "count": 1
         }
       ],
       "selected_sources": [
@@ -426,30 +426,30 @@
         "firms_viirs_nrt",
         "firms_viirs_sp"
       ],
-      "from_cache": true,
-      "count": 0
+      "from_cache": false,
+      "count": 4
     },
     "weather": {
       "strategy": "first_available",
-      "status": "cache",
+      "status": "ok",
       "tried": [
         {
           "provider": "open_meteo_archive",
-          "ok": false,
-          "error": "HTTP 400 for https://archive-api.open-meteo.com/v1/archive?latitude=-27.799999999999997&longitude=-64.25&start_date=2018-01-01&end_date=2026-12-31&daily=temperature_2m_max%2Ctemperature_2m_min%2Cprecipitation_sum&timezone=UTC"
+          "ok": true,
+          "count": 3
         },
         {
           "provider": "meteomatics",
-          "ok": false,
-          "error": "meteomatics: missing METEOMATICS_USER/PASSWORD"
+          "ok": true,
+          "count": 2
         }
       ],
       "selected_sources": [
         "open_meteo_archive",
         "open_meteo_archive+meteomatics"
       ],
-      "from_cache": true,
-      "count": 0
+      "from_cache": false,
+      "count": 3
     },
     "optical": {
       "strategy": "least_cloudy_near_nisar",
@@ -458,14 +458,12 @@
         {
           "provider": "planetary_computer_s2",
           "ok": true,
-          "count": 50
+          "count": 3
         }
       ],
-      "selected_sources": [
-        "planetary_computer_s2"
-      ],
+      "selected_sources": [],
       "from_cache": false,
-      "count": 1
+      "count": 0
     },
     "radar": {
       "strategy": "prefer_validated",
@@ -474,12 +472,14 @@
         {
           "provider": "earthdata_nisar_gcov",
           "ok": true,
-          "count": 0
+          "count": 3
         }
       ],
-      "selected_sources": [],
+      "selected_sources": [
+        "earthdata_nisar_gcov"
+      ],
       "from_cache": false,
-      "count": 0
+      "count": 2
     },
     "vessels": {
       "strategy": "union_dedupe",

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-14T19:13:07.242538+00:00",
-  "offline": false,
+  "generated_at": "2026-11-14T20:21:42.049812+00:00",
+  "offline": true,
   "aoi": {
     "west": -64.35,
     "east": -64.15,
@@ -15,31 +15,36 @@
   "layers": {
     "fires": {
       "status": "ok",
-      "count": 0,
+      "count": 4,
       "from_cache": false,
-      "selected_sources": []
+      "selected_sources": [
+        "firms_modis",
+        "firms_viirs_nrt",
+        "firms_viirs_sp"
+      ]
     },
     "weather": {
       "status": "ok",
-      "count": 3240,
+      "count": 3,
       "from_cache": false,
       "selected_sources": [
-        "open_meteo_archive"
+        "open_meteo_archive",
+        "open_meteo_archive+meteomatics"
       ]
     },
     "optical": {
       "status": "ok",
-      "count": 1,
-      "from_cache": false,
-      "selected_sources": [
-        "planetary_computer_s2"
-      ]
-    },
-    "radar": {
-      "status": "ok",
       "count": 0,
       "from_cache": false,
       "selected_sources": []
+    },
+    "radar": {
+      "status": "ok",
+      "count": 2,
+      "from_cache": false,
+      "selected_sources": [
+        "earthdata_nisar_gcov"
+      ]
     },
     "vessels": {
       "status": "ok",

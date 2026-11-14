@@ -12,16 +12,302 @@
       -27.799999999999997
     ]
   },
-  "layers": [],
+  "layers": [
+    {
+      "id": "radar",
+      "label": "Radar",
+      "unit": "",
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": ""
+    },
+    {
+      "id": "suelo",
+      "label": "Estado del suelo",
+      "unit": "",
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": ""
+    },
+    {
+      "id": "contaminacion",
+      "label": "Contaminacion",
+      "unit": "",
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": ""
+    },
+    {
+      "id": "incendios",
+      "label": "Incendios",
+      "unit": "",
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": ""
+    }
+  ],
   "segments": [
     {
       "id": "anual",
       "label": "Anos",
-      "from": "2000-01-01",
-      "to": "2000-12-31",
+      "from": "2018-01-01",
+      "to": "2026-12-31",
       "granularity": "year",
       "kind": "composite",
-      "ticks": []
+      "ticks": [
+        {
+          "id": "y-2018",
+          "start": "2018-01-01",
+          "end": "2018-12-31",
+          "label": "2018",
+          "frames": {
+            "radar": {
+              "url": "./overlays/timeline/radar/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            }
+          }
+        },
+        {
+          "id": "y-2020",
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "label": "2020",
+          "frames": {
+            "radar": {
+              "url": "./overlays/timeline/radar/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            }
+          }
+        },
+        {
+          "id": "y-2022",
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "label": "2022",
+          "frames": {
+            "radar": {
+              "url": "./overlays/timeline/radar/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            }
+          }
+        },
+        {
+          "id": "y-2024",
+          "start": "2024-01-01",
+          "end": "2024-12-31",
+          "label": "2024",
+          "frames": {
+            "radar": {
+              "url": "./overlays/timeline/radar/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            }
+          }
+        },
+        {
+          "id": "y-2026",
+          "start": "2026-01-01",
+          "end": "2026-12-31",
+          "label": "2026",
+          "frames": {
+            "radar": {
+              "url": "./overlays/timeline/radar/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite"
+            }
+          }
+        }
+      ]
     }
   ],
   "events": [],
@@ -31,80 +317,85 @@
       "kind": "fires",
       "strategy": "union_dedupe",
       "status": "ok",
-      "selected": [],
+      "selected": [
+        "firms_modis",
+        "firms_viirs_nrt",
+        "firms_viirs_sp"
+      ],
       "tried": [
         {
           "provider": "firms_viirs_sp",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_viirs_nrt",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_modis",
           "ok": true,
-          "count": 0
+          "count": 1
         }
       ],
       "fromCache": false,
-      "count": 0
+      "count": 4
     },
     {
       "kind": "weather",
       "strategy": "first_available",
       "status": "ok",
       "selected": [
-        "open_meteo_archive"
+        "open_meteo_archive",
+        "open_meteo_archive+meteomatics"
       ],
       "tried": [
         {
           "provider": "open_meteo_archive",
           "ok": true,
-          "count": 3240
+          "count": 3
         },
         {
           "provider": "meteomatics",
-          "ok": false,
-          "count": null
+          "ok": true,
+          "count": 2
         }
       ],
       "fromCache": false,
-      "count": 3240
+      "count": 3
     },
     {
       "kind": "optical",
       "strategy": "least_cloudy_near_nisar",
       "status": "ok",
-      "selected": [
-        "planetary_computer_s2"
-      ],
+      "selected": [],
       "tried": [
         {
           "provider": "planetary_computer_s2",
           "ok": true,
-          "count": 50
+          "count": 3
         }
       ],
       "fromCache": false,
-      "count": 1
+      "count": 0
     },
     {
       "kind": "radar",
       "strategy": "prefer_validated",
       "status": "ok",
-      "selected": [],
+      "selected": [
+        "earthdata_nisar_gcov"
+      ],
       "tried": [
         {
           "provider": "earthdata_nisar_gcov",
           "ok": true,
-          "count": 0
+          "count": 3
         }
       ],
       "fromCache": false,
-      "count": 0
+      "count": 2
     },
     {
       "kind": "vessels",
@@ -152,6 +443,6 @@
       "count": 0
     }
   ],
-  "sourcesAt": "2026-11-14T18:45:47.073931+00:00",
+  "sourcesAt": "2026-11-14T20:21:42.049812+00:00",
   "isMock": true
 }

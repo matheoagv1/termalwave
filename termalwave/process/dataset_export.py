@@ -178,7 +178,12 @@ def write_dataset_bundle(
     timeline: dict[str, Any],
     provenance: dict[str, Any] | None = None,
 ) -> list[Path]:
+    # never publish a contract shell that the UI cannot render
+    if not (timeline.get("layers") or cfg.get("layers")):
+        raise ValueError("dataset export refused: timeline/config has no layers")
     dataset = build_dataset(cfg, timeline, provenance)
+    if not dataset.get("layers"):
+        raise ValueError("dataset export refused: layers empty after build")
     written: list[Path] = []
     for rel in ("web/public/dataset.json", "web/dist/dataset.json"):
         out = repo_root / rel

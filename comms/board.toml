@@ -5,9 +5,9 @@
 [[task]]
 id = "T011"
 owner = "vps"
-status = "in_progress"
+status = "done"
 title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
-notes = "dataset.json live provenance refresheado; weather 3240; fires 0 en ventana FIRMS"
+notes = "dataset.json regenerado con 4 layers+5 ticks; guard anti-vacio; preview redeployed. Series siguen null hasta stats reales."
 updated = "2026-11-14"
 
 [[task]]

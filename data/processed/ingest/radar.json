@@ -6,11 +6,36 @@
     {
       "provider": "earthdata_nisar_gcov",
       "ok": true,
-      "count": 0
+      "count": 3
     }
   ],
   "from_cache": false,
-  "records": [],
-  "selected_sources": [],
-  "count": 0
+  "records": [
+    {
+      "granule_id": "G2",
+      "acquired_at": "2024-06-15T06:00:00+00:00",
+      "status": "validated",
+      "href": "https://example.invalid/g2.h5",
+      "source": "earthdata_nisar_gcov",
+      "product": "NISAR_L2_GCOV",
+      "retrieved_at": "2026-11-14T20:21:42.048684+00:00",
+      "quality_rank": 10,
+      "license": "NASA Earthdata"
+    },
+    {
+      "granule_id": "G3",
+      "acquired_at": "2024-06-20T00:00:00+00:00",
+      "status": "validated",
+      "href": "https://example.invalid/g3.h5",
+      "source": "earthdata_nisar_gcov",
+      "product": "NISAR_L2_GCOV",
+      "retrieved_at": "2026-11-14T20:21:42.048684+00:00",
+      "quality_rank": 10,
+      "license": "NASA Earthdata"
+    }
+  ],
+  "selected_sources": [
+    "earthdata_nisar_gcov"
+  ],
+  "count": 2
 }
