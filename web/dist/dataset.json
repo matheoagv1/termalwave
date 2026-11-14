@@ -317,80 +317,85 @@
       "kind": "fires",
       "strategy": "union_dedupe",
       "status": "ok",
-      "selected": [],
+      "selected": [
+        "firms_modis",
+        "firms_viirs_nrt",
+        "firms_viirs_sp"
+      ],
       "tried": [
         {
           "provider": "firms_viirs_sp",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_viirs_nrt",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_modis",
           "ok": true,
-          "count": 0
+          "count": 1
         }
       ],
       "fromCache": false,
-      "count": 0
+      "count": 4
     },
     {
       "kind": "weather",
       "strategy": "first_available",
       "status": "ok",
       "selected": [
-        "open_meteo_archive"
+        "open_meteo_archive",
+        "open_meteo_archive+meteomatics"
       ],
       "tried": [
         {
           "provider": "open_meteo_archive",
           "ok": true,
-          "count": 3240
+          "count": 3
         },
         {
           "provider": "meteomatics",
-          "ok": false,
-          "count": null
+          "ok": true,
+          "count": 2
         }
       ],
       "fromCache": false,
-      "count": 3240
+      "count": 3
     },
     {
       "kind": "optical",
       "strategy": "least_cloudy_near_nisar",
       "status": "ok",
-      "selected": [
-        "planetary_computer_s2"
-      ],
+      "selected": [],
       "tried": [
         {
           "provider": "planetary_computer_s2",
           "ok": true,
-          "count": 50
+          "count": 3
         }
       ],
       "fromCache": false,
-      "count": 1
+      "count": 0
     },
     {
       "kind": "radar",
       "strategy": "prefer_validated",
       "status": "ok",
-      "selected": [],
+      "selected": [
+        "earthdata_nisar_gcov"
+      ],
       "tried": [
         {
           "provider": "earthdata_nisar_gcov",
           "ok": true,
-          "count": 0
+          "count": 3
         }
       ],
       "fromCache": false,
-      "count": 0
+      "count": 2
     },
     {
       "kind": "vessels",
@@ -438,6 +443,6 @@
       "count": 0
     }
   ],
-  "sourcesAt": "2026-11-14T20:28:10.002602+00:00",
+  "sourcesAt": "2026-11-14T20:40:40.162222+00:00",
   "isMock": true
 }
