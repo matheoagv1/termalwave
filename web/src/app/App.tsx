@@ -32,6 +32,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     H: 800,
     tlH: 200,
     hotspots: [],
+    spotTrail: {},
     series: {},
     pick: null,
     pickPos: null,
@@ -214,6 +215,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.unC = this.scene.onChange((st) => {
       const prev = this.state.scene;
       this.setState({ scene: st });
+      if (prev.layer !== st.layer) {
+        if (this.state.pick) this.onPick(null);
+        this.setState({ spotTrail: {} });
+      }
       if (prev.layer !== st.layer || prev.tickId !== st.tickId) void this.loadHotspots(st);
       this.writeHash(st);
     });
@@ -222,6 +227,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       ds: null,
       err: null,
       hotspots: [],
+      spotTrail: {},
       series: {},
       pick: null,
       pickPos: null,
@@ -367,7 +373,15 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     }
     if (tok !== this.hsTok || !this.scene) return;
     this.scene.setHotspots(list);
-    this.setState({ hotspots: list });
+    const trail = { ...this.state.spotTrail };
+    for (const h of list) {
+      if (h.sample == null) continue;
+      const prev = trail[h.id] ?? [];
+      const ix = prev.findIndex((p) => p.tickId === st.tickId);
+      const pt = { tickId: st.tickId, v: h.sample };
+      trail[h.id] = ix >= 0 ? prev.map((p, i) => (i === ix ? pt : p)) : [...prev, pt];
+    }
+    this.setState({ hotspots: list, spotTrail: trail });
     const pk = this.state.pick;
     if (pk && !list.find((h) => h.id === pk)) {
       this.setState({ pick: null });
@@ -575,7 +589,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   enter = (): void => {
     if (!this.state.ds || !this.scene) return;
-    this.setState({ explore: false });
+    this.setState({ explore: false, ficha: this.state.W >= 760 });
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory");
   };
@@ -669,6 +683,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     else if (k === " " && tag !== "BUTTON") go(this.togglePlay);
     else if (k === "c" || k === "C") go(this.toggleCompare);
     else if (k === "o" || k === "O") go(this.toOrbit);
+    else if (k === "p" || k === "P") go(this.cycleHotspot);
     else if (k === "1") go(() => this.setViewScale("campo"));
     else if (k === "2") go(() => this.setViewScale("urbano"));
   };
