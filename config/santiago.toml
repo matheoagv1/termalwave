@@ -42,6 +42,29 @@ bounds_attr_keys = ["west", "east", "south", "north"]
 output_stem = "santiago_overlay"
 sidecar_type = "termalwave_overlay"
 
+[timeline]
+years = [2018, 2020, 2022, 2024, 2026]
+default_year = 2026
+default_layer = "radar"
+frame_height = 160
+frame_width = 200
+
+[[layers]]
+id = "radar"
+label = "Radar"
+
+[[layers]]
+id = "suelo"
+label = "Estado del suelo"
+
+[[layers]]
+id = "contaminacion"
+label = "Contaminacion"
+
+[[layers]]
+id = "incendios"
+label = "Incendios"
+
 [colormap]
 percentile_low = 2.0
 percentile_high = 98.0
@@ -79,24 +102,27 @@ map_min_zoom = 3
 map_max_zoom = 14
 fit_padding_px = 28
 overlay_opacity = 0.82
-overlay_class_name = "tw-overlay"
+overlay_fade_ms = 280
+overlay_source_id = "tw-timeline"
+overlay_layer_id = "tw-timeline-raster"
+base_source_id = "tw-base"
+base_layer_id = "tw-base-raster"
+bg_layer_id = "tw-bg"
 offline_query_param = "offline"
 tile_error_threshold = 3
 gibs_url_template = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg"
 gibs_attribution = "Imagery © NASA GIBS"
 gibs_max_zoom = 8
-gibs_max_native_zoom = 8
-offline_attribution = "Sin conexión · TermalWave"
+gibs_tile_size = 256
+offline_attribution = "Sin conexion · TermalWave"
 status_loading = "Cargando…"
-status_online = "Base GIBS · capa procesada"
-status_offline = "Sin conexión · capa PNG"
-status_fallback = "Sin teselas · capa PNG"
-tile_size = 256
-plain_fill = "#0e1a22"
-plain_gradient_start = "rgba(34, 74, 92, 0.35)"
-plain_gradient_end = "rgba(12, 24, 32, 0.15)"
-plain_stroke = "rgba(255,255,255,0.03)"
-plain_label = "rgba(180, 210, 220, 0.12)"
-plain_label_font = "10px sans-serif"
-plain_label_x = 8
-plain_label_y = 16
+status_online = "Base GIBS · timeline local"
+status_offline = "Sin conexion · timeline local"
+status_fallback = "Sin teselas · timeline local"
+timeline_aria = "Linea de tiempo por ano"
+layers_aria = "Capas de observacion"
+panel_title = "Capas"
+context_slot_title = "Contexto"
+context_slot_body = "Hueco para briefings por oficio (cricri)."
+year_scrub_label = "Ano"
+bg_color = "#0e1a22"

@@ -41,7 +41,11 @@ def load_config(path: Path, repo_root: Path) -> dict[str, Any]:
     return data
 
 
-def write_web_app_config(cfg: dict[str, Any], repo_root: Path) -> list[Path]:
+def write_web_app_config(
+    cfg: dict[str, Any],
+    repo_root: Path,
+    timeline: dict[str, Any] | None = None,
+) -> list[Path]:
     """Emit JSON consumed by the static web UI (no hardcoded UI values in TS)."""
     project = cfg.get("project", {})
     aoi = cfg.get("aoi", {})
@@ -52,7 +56,7 @@ def write_web_app_config(cfg: dict[str, Any], repo_root: Path) -> list[Path]:
     if not web:
         raise KeyError("Config missing required [web] section")
 
-    payload = {
+    payload: dict[str, Any] = {
         "project": project,
         "aoi": aoi,
         "product": {
@@ -61,6 +65,20 @@ def write_web_app_config(cfg: dict[str, Any], repo_root: Path) -> list[Path]:
         },
         "web": web,
     }
+    if timeline is not None:
+        payload["timeline"] = timeline
+    elif "timeline" in cfg and "layers" in cfg:
+        # Minimal stub when frames were not generated in this pass.
+        payload["timeline"] = {
+            "years": [int(y) for y in cfg["timeline"]["years"]],
+            "default_year": int(cfg["timeline"]["default_year"]),
+            "default_layer": str(cfg["timeline"]["default_layer"]),
+            "layers": [
+                {"id": str(layer["id"]), "label": str(layer["label"])}
+                for layer in cfg["layers"]
+            ],
+            "frames": {},
+        }
 
     written: list[Path] = []
     for key in ("web_config_out", "web_dist_config_out"):

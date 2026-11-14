@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,15 +7,32 @@
   </head>
   <body>
     <div id="app">
-      <header class="topbar">
-        <div class="brand">
+      <header class="chrome">
+        <div class="chrome-brand">
           <span class="brand-mark" aria-hidden="true"></span>
           <h1 id="brand-name"></h1>
+          <p class="tagline" id="tagline"></p>
         </div>
-        <p class="tagline" id="tagline"></p>
+        <div
+          class="timeline"
+          id="timeline"
+          role="group"
+          aria-label=""
+        ></div>
         <div class="status" id="status" role="status"></div>
       </header>
-      <main id="map" aria-label="Map"></main>
+      <div class="stage">
+        <aside class="side" aria-label="Controles">
+          <h2 class="side-title" id="panel-title"></h2>
+          <div class="layers" id="layers" role="radiogroup" aria-label=""></div>
+          <section class="context-slot">
+            <h3 id="context-title"></h3>
+            <p id="context-body"></p>
+            <div id="context-mount" data-context-root></div>
+          </section>
+        </aside>
+        <main id="map" aria-label="Mapa"></main>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

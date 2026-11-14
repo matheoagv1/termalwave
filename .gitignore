@@ -40,4 +40,7 @@ vendor/.tmp/
 ssh-keys/
 
 .worktrees/
+
+# Large local code-reference drops (look on VPS disk; not agent docs)
 references/gods-eye-view/
+references/SgoLinea/

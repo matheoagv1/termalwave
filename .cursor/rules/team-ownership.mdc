@@ -1,14 +1,14 @@
 ---
-description: Three-person ownership, worktrees, and comms inboxes
+description: Team ownership cricri/carne/vps, worktrees, and comms
 globs:
 alwaysApply: true
 ---
 
 # Team ownership
 
-- Follow `references/OWNERSHIP.md` and `references/AGENTS.md`.
-- VPS agent owns Python/vendor/portable/data and writes notifications under `comms/from-vps/` or `comms/pcN/inbox/`.
-- PC1 owns `web/src/context/` (+ taste test notes in `comms/pc1/`); no systemwide installs.
-- PC2 owns `web/` UX/flow; must read PC1 and VPS feedback before large UI changes.
-- Prefer git worktrees: `work/pc1`, `work/pc2`, integrate on `master` from VPS.
-- Never put jury/scoring strategy into UI strings.
+- One repo: `/srv/sites/nasaspaceappchallenge`. Read root `AGENTS.md`, then `agents/<role>/AGENTS.md`, then `comms/` inbox.
+- Roles: vps (server / master), cricri/Cristian (tester+context, no system installs), carne/Emir (UI/UX MapLibre+timeline).
+- Worktrees: `work/cricri`, `work/carne`; integrate on `master` from VPS.
+- Notify via `comms/from-vps/` or `comms/<role>/inbox/`.
+- `references/` = code reference drops only.
+- Never put jury/scoring strategy into UI strings. UI copy: humanizer ES-AR-SGO.

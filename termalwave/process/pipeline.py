@@ -17,6 +17,7 @@ from termalwave.process.georef import (
     bounds_from_latlon_grids,
     read_geotransform,
 )
+from termalwave.process.timeline import build_timeline_frames
 
 
 def _find_dataset(
@@ -191,7 +192,16 @@ def run_pipeline(
     repo_root: Path,
 ) -> dict[str, str]:
     cfg = load_config(config_path, repo_root)
-    for section in ("paths", "hdf5", "product", "colormap", "aoi", "web"):
+    for section in (
+        "paths",
+        "hdf5",
+        "product",
+        "colormap",
+        "aoi",
+        "web",
+        "timeline",
+        "layers",
+    ):
         if section not in cfg:
             raise KeyError(f"Config missing required [{section}] section")
 
@@ -223,5 +233,12 @@ def run_pipeline(
         colormap=cfg["colormap"],
         mirror_dirs=mirrors,
     )
-    write_web_app_config(cfg, repo_root)
-    return {"png": str(out_png), "sidecar": str(out_json), "source": str(h5_path)}
+    timeline_index = build_timeline_frames(cfg, bounds, repo_root)
+    write_web_app_config(cfg, repo_root, timeline=timeline_index)
+    return {
+        "png": str(out_png),
+        "sidecar": str(out_json),
+        "source": str(h5_path),
+        "timeline_layers": str(len(timeline_index["layers"])),
+        "timeline_years": str(len(timeline_index["years"])),
+    }

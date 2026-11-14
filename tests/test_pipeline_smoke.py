@@ -41,6 +41,18 @@ class PipelineSmokeTests(unittest.TestCase):
         self.assertTrue(any((m / f"{stem}.png").is_file() for m in mirrors))
         web_cfg = Path(cfg["paths"]["web_config_out"])
         self.assertTrue(web_cfg.is_file())
+        app = json.loads(web_cfg.read_text(encoding="utf-8"))
+        self.assertIn("timeline", app)
+        years = [int(y) for y in cfg["timeline"]["years"]]
+        self.assertEqual(app["timeline"]["years"], years)
+        processed = Path(cfg["paths"]["processed_dir"]) / "timeline"
+        for layer in cfg["layers"]:
+            layer_id = layer["id"]
+            self.assertIn(layer_id, app["timeline"]["frames"])
+            for year in years:
+                frame_png = processed / layer_id / f"{year}.png"
+                self.assertTrue(frame_png.is_file(), msg=str(frame_png))
+                self.assertIn(str(year), app["timeline"]["frames"][layer_id])
 
 
 if __name__ == "__main__":
