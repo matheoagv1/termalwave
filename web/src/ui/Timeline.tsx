@@ -16,7 +16,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
       role="region"
       aria-label={t.timeline.region}
       style={s(
-        `position:absolute;left:${lay.tlL};right:${lay.tlR};bottom:${lay.tlB};pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px`,
+        `position:absolute;left:${lay.tlL};right:${lay.tlR};bottom:${lay.tlB};pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px);padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px`,
       )}
     >
       {v.tlLoading && (

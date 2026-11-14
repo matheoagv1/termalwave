@@ -66,6 +66,8 @@ switch ($Cmd) {
   }
   "put" {
     if ($Rest.Count -lt 2) { "uso: put <local> <remoto>"; break }
+    # Si el archivo remoto es de otro usuario no se puede sobrescribir, pero sí borrar y recrear.
+    if (Test-Path $Rest[0] -PathType Leaf) { Remote "rm -f $(Sq $Rest[1]) 2>&1 | tail -1" 2 | Out-Null }
     scp -rq $Rest[0] "${H}:$R/$($Rest[1])" 2>&1 | Select-Object -First 3
     if ($LASTEXITCODE -eq 0) { "subido: $($Rest[1])" } else { "fallo al subir" }
   }

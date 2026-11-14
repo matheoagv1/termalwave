@@ -16,6 +16,7 @@ const files = [
   "pwa/icon-512.png",
   "pwa/maskable-512.png",
   "fonts/PressStart2P-Regular.ttf",
+  "monigote/monigote.png",
 ];
 
 mkdirSync(out, { recursive: true });
