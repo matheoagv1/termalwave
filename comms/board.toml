@@ -163,3 +163,11 @@ title = "Harness lean: pulse/standby/status-mine/paths/sync scripts"
 notes = "Harness lean shipped: seat/check/now, standby=wait, status mine, paths, notify<=280, link syncs scripts/hooks/rules"
 paths = ["scripts/comms.py", "scripts/board_poll_loop.py", ".cursor/hooks/", ".cursor/rules/", "comms/README.md", "AGENTS.md"]
 updated = "2026-11-14"
+
+[[task]]
+id = "T034"
+owner = "vps"
+status = "done"
+title = "Replace Google Maps with free elevation/geocode/basemap providers"
+notes = "Free elevation/geocode/basemaps; Google disabled; offline tests OK"
+updated = "2026-11-14"

@@ -103,16 +103,21 @@ Docs: https://developer.tomtom.com/
 
 ---
 
-## Kind: basemap / geocode (contexto espacial) — UI / escena
+## Kind: elevation / geocode (server-side)
 
-| Id | Servicio | Credential | Uso previsto |
+| Id | Servicio | Credential | Uso |
 |---|---|---|---|
-| `google_maps` | Google Maps Platform | `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_SERVER_API_KEY` | Geocoding, tiles opcionales (globo usa GIBS/MapLibre por defecto) |
-| `cesium_ion` | Cesium ion | `CESIUM_ION_TOKEN` | Terreno 3D / tileset si la escena lo pide |
+| `open_meteo_elevation` | Open-Meteo elevation | — | DEM Copernicus GLO-90 |
+| `opentopodata_srtm30m` | OpenTopoData | — | SRTM 30 m |
+| `photon` | Photon/Komoot | — | search + reverse |
+| `open_meteo_geocode` | Open-Meteo geocoding | — | search only |
+| `nominatim` | OSM Nominatim | User-Agent in config | search + reverse |
 
-No reemplazan el Protocol de fenomenos; alimentan **escena** (DEM, busqueda, basemap).
+Ver `docs/api/*.md`. Google Maps: **rechazado** (`docs/api/REJECTED.md`).
 
-Docs: https://developers.google.com/maps · https://cesium.com/ion/
+## Kind: basemap (frontend config → app-config)
+
+GIBS MODIS/VIIRS · OpenFreeMap · EOX s2cloudless · Cesium World Terrain (`CESIUM_ION_TOKEN`). Detalle: `docs/api/basemaps.md`.
 
 ---
 
@@ -127,7 +132,7 @@ Docs: https://developers.google.com/maps · https://cesium.com/ion/
 | `AISSTREAM_API_KEY` | vessels |
 | `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET` | aviation |
 | `TOMTOM_API_KEY` | traffic |
-| `GOOGLE_MAPS_API_KEY` / `GOOGLE_MAPS_SERVER_API_KEY` | basemap/geocode |
+| `GOOGLE_MAPS_*` | **disabled** — see docs/api/REJECTED.md |
 | `CESIUM_ION_TOKEN` | terrain / 3D |
 
 Nunca pegar valores en `comms/`, UI, board ni este archivo.

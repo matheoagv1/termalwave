@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from termalwave.model import AOI, DailyWeather, GranuleRef, Hotspot, Period, SceneRef
+from termalwave.model import (
+    AOI,
+    DailyWeather,
+    ElevationSample,
+    GranuleRef,
+    Hotspot,
+    LatLon,
+    Period,
+    Place,
+    SceneRef,
+)
 
 
 @runtime_checkable
@@ -36,4 +46,23 @@ class RadarScene(Protocol):
     name: str
 
     def fetch(self, aoi: AOI, date_window: Period) -> list[GranuleRef]:
+        ...
+
+
+@runtime_checkable
+class Elevation(Protocol):
+    name: str
+
+    def elevations(self, points: list[LatLon]) -> list[ElevationSample]:
+        ...
+
+
+@runtime_checkable
+class Geocoder(Protocol):
+    name: str
+
+    def search(self, query: str) -> list[Place]:
+        ...
+
+    def reverse(self, lat: float, lon: float) -> Place | None:
         ...

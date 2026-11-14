@@ -274,7 +274,7 @@
   },
   "provenance": {
     "version": 1,
-    "generated_at": "2026-11-14T20:28:10.002602+00:00",
+    "generated_at": "2026-11-14T20:40:40.162222+00:00",
     "layers": {
       "fires": {
         "strategy": "union_dedupe",
@@ -283,22 +283,26 @@
           {
             "provider": "firms_viirs_sp",
             "ok": true,
-            "count": 0
+            "count": 2
           },
           {
             "provider": "firms_viirs_nrt",
             "ok": true,
-            "count": 0
+            "count": 2
           },
           {
             "provider": "firms_modis",
             "ok": true,
-            "count": 0
+            "count": 1
           }
         ],
-        "selected_sources": [],
+        "selected_sources": [
+          "firms_modis",
+          "firms_viirs_nrt",
+          "firms_viirs_sp"
+        ],
         "from_cache": false,
-        "count": 0
+        "count": 4
       },
       "weather": {
         "strategy": "first_available",
@@ -307,19 +311,20 @@
           {
             "provider": "open_meteo_archive",
             "ok": true,
-            "count": 3240
+            "count": 3
           },
           {
             "provider": "meteomatics",
-            "ok": false,
-            "error": "meteomatics: missing METEOMATICS_USER/PASSWORD"
+            "ok": true,
+            "count": 2
           }
         ],
         "selected_sources": [
-          "open_meteo_archive"
+          "open_meteo_archive",
+          "open_meteo_archive+meteomatics"
         ],
         "from_cache": false,
-        "count": 3240
+        "count": 3
       },
       "optical": {
         "strategy": "least_cloudy_near_nisar",
@@ -328,14 +333,12 @@
           {
             "provider": "planetary_computer_s2",
             "ok": true,
-            "count": 50
+            "count": 3
           }
         ],
-        "selected_sources": [
-          "planetary_computer_s2"
-        ],
+        "selected_sources": [],
         "from_cache": false,
-        "count": 1
+        "count": 0
       },
       "radar": {
         "strategy": "prefer_validated",
@@ -344,12 +347,14 @@
           {
             "provider": "earthdata_nisar_gcov",
             "ok": true,
-            "count": 0
+            "count": 3
           }
         ],
-        "selected_sources": [],
+        "selected_sources": [
+          "earthdata_nisar_gcov"
+        ],
         "from_cache": false,
-        "count": 0
+        "count": 2
       },
       "vessels": {
         "strategy": "union_dedupe",
@@ -403,22 +408,26 @@
         {
           "provider": "firms_viirs_sp",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_viirs_nrt",
           "ok": true,
-          "count": 0
+          "count": 2
         },
         {
           "provider": "firms_modis",
           "ok": true,
-          "count": 0
+          "count": 1
         }
       ],
-      "selected_sources": [],
+      "selected_sources": [
+        "firms_modis",
+        "firms_viirs_nrt",
+        "firms_viirs_sp"
+      ],
       "from_cache": false,
-      "count": 0
+      "count": 4
     },
     "weather": {
       "strategy": "first_available",
@@ -427,19 +436,20 @@
         {
           "provider": "open_meteo_archive",
           "ok": true,
-          "count": 3240
+          "count": 3
         },
         {
           "provider": "meteomatics",
-          "ok": false,
-          "error": "meteomatics: missing METEOMATICS_USER/PASSWORD"
+          "ok": true,
+          "count": 2
         }
       ],
       "selected_sources": [
-        "open_meteo_archive"
+        "open_meteo_archive",
+        "open_meteo_archive+meteomatics"
       ],
       "from_cache": false,
-      "count": 3240
+      "count": 3
     },
     "optical": {
       "strategy": "least_cloudy_near_nisar",
@@ -448,14 +458,12 @@
         {
           "provider": "planetary_computer_s2",
           "ok": true,
-          "count": 50
+          "count": 3
         }
       ],
-      "selected_sources": [
-        "planetary_computer_s2"
-      ],
+      "selected_sources": [],
       "from_cache": false,
-      "count": 1
+      "count": 0
     },
     "radar": {
       "strategy": "prefer_validated",
@@ -464,12 +472,14 @@
         {
           "provider": "earthdata_nisar_gcov",
           "ok": true,
-          "count": 0
+          "count": 3
         }
       ],
-      "selected_sources": [],
+      "selected_sources": [
+        "earthdata_nisar_gcov"
+      ],
       "from_cache": false,
-      "count": 0
+      "count": 2
     },
     "vessels": {
       "strategy": "union_dedupe",
@@ -513,5 +523,129 @@
       "from_cache": false,
       "count": 0
     }
+  },
+  "basemaps": {
+    "default": "gibs_modis_truecolor",
+    "engine_primary": "cesium",
+    "engine_fallback_2d": "leaflet",
+    "entries": [
+      {
+        "id": "gibs_modis_truecolor",
+        "kind": "raster",
+        "url_template": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+        "attribution": "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+        "license": "NASA GIBS",
+        "max_zoom": 9,
+        "time_dimension": true,
+        "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS"
+      },
+      {
+        "id": "gibs_viirs_truecolor",
+        "kind": "raster",
+        "url_template": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+        "attribution": "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+        "license": "NASA GIBS",
+        "max_zoom": 9,
+        "time_dimension": true,
+        "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS"
+      },
+      {
+        "id": "openfreemap_liberty",
+        "kind": "vector",
+        "url_template": "https://tiles.openfreemap.org/styles/liberty",
+        "attribution": "\u00a9 OpenStreetMap contributors \u00b7 OpenFreeMap \u00a9 OpenMapTiles",
+        "license": "ODbL / OpenMapTiles",
+        "max_zoom": 14,
+        "time_dimension": false,
+        "docs_url": "https://openfreemap.org/",
+        "engines": [
+          "maplibre"
+        ]
+      },
+      {
+        "id": "eox_s2cloudless_2025",
+        "kind": "raster",
+        "url_template": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
+        "attribution": "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)",
+        "license": "CC BY-NC-SA 4.0",
+        "max_zoom": 16,
+        "time_dimension": false,
+        "docs_url": "https://tiles.maps.eox.at/",
+        "do_not_store_tiles": true
+      },
+      {
+        "id": "cesium_world_terrain",
+        "kind": "terrain",
+        "url_template": "ion://1",
+        "attribution": "Cesium World Terrain \u00b7 Cesium ion",
+        "license": "Cesium ion",
+        "max_zoom": 15,
+        "time_dimension": false,
+        "docs_url": "https://cesium.com/learn/cesiumjs/ref-doc/createWorldTerrain.html",
+        "requires_credential": "CESIUM_ION_TOKEN",
+        "ion_asset": 1
+      }
+    ],
+    "credits": [
+      {
+        "id": "gibs_modis_truecolor",
+        "attribution": "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+        "license": "NASA GIBS",
+        "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS"
+      },
+      {
+        "id": "openfreemap_liberty",
+        "attribution": "\u00a9 OpenStreetMap contributors \u00b7 OpenFreeMap \u00a9 OpenMapTiles",
+        "license": "ODbL / OpenMapTiles",
+        "docs_url": "https://openfreemap.org/"
+      },
+      {
+        "id": "eox_s2cloudless_2025",
+        "attribution": "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)",
+        "license": "CC BY-NC-SA 4.0",
+        "docs_url": "https://tiles.maps.eox.at/"
+      },
+      {
+        "id": "cesium_world_terrain",
+        "attribution": "Cesium World Terrain \u00b7 Cesium ion",
+        "license": "Cesium ion",
+        "docs_url": "https://cesium.com/learn/cesiumjs/ref-doc/createWorldTerrain.html"
+      },
+      {
+        "id": "open_meteo_elevation",
+        "attribution": "Elevation data by Open-Meteo.com (CC BY 4.0), Copernicus DEM",
+        "license": "Open-Meteo / Copernicus DEM CC BY 4.0",
+        "docs_url": "https://open-meteo.com/en/docs/elevation-api"
+      },
+      {
+        "id": "opentopodata_srtm30m",
+        "attribution": "Elevation from SRTM (NASA/USGS) via OpenTopoData",
+        "license": "SRTM NASA/USGS via OpenTopoData",
+        "docs_url": "https://www.opentopodata.org/"
+      },
+      {
+        "id": "photon",
+        "attribution": "\u00a9 OpenStreetMap contributors (via Photon/Komoot)",
+        "license": "ODbL (OpenStreetMap)",
+        "docs_url": "https://github.com/komoot/photon"
+      },
+      {
+        "id": "open_meteo_geocode",
+        "attribution": "Geocoding by Open-Meteo.com (CC BY 4.0)",
+        "license": "Open-Meteo CC BY 4.0",
+        "docs_url": "https://open-meteo.com/en/docs/geocoding-api"
+      },
+      {
+        "id": "nominatim",
+        "attribution": "\u00a9 OpenStreetMap contributors (Nominatim)",
+        "license": "ODbL (OpenStreetMap)",
+        "docs_url": "https://nominatim.org/release-docs/latest/api/Overview/"
+      }
+    ]
+  },
+  "scene": {
+    "google_maps_enabled": false,
+    "cesium_ion_credential": "CESIUM_ION_TOKEN",
+    "cesium_ion_asset_world_terrain": 1
   }
 }

@@ -92,6 +92,51 @@ class GranuleRef:
     license: str
 
 
+@dataclass(frozen=True)
+class LatLon:
+    lat: float
+    lon: float
+
+
+@dataclass
+class ElevationSample:
+    lat: float
+    lon: float
+    meters: float | None
+    dem: str
+    resolution_m: float | None
+    source: str
+    product: str
+    retrieved_at: datetime
+    quality_rank: int
+    license: str
+    disagree: bool = False
+
+
+@dataclass
+class Place:
+    name: str
+    lat: float
+    lon: float
+    display: str
+    source: str
+    product: str
+    retrieved_at: datetime
+    quality_rank: int
+    license: str
+
+
+@dataclass(frozen=True)
+class BasemapDef:
+    id: str
+    kind: str  # raster | vector | terrain
+    url_template: str
+    attribution: str
+    license: str
+    max_zoom: int
+    time_dimension: bool = False
+
+
 def record_to_dict(obj: Any) -> dict[str, Any]:
     data = asdict(obj)
     for key, value in list(data.items()):

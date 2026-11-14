@@ -46,6 +46,7 @@ def write_web_app_config(
     repo_root: Path,
     timeline: dict[str, Any] | None = None,
     provenance: dict[str, Any] | None = None,
+    apis: dict[str, Any] | None = None,
 ) -> list[Path]:
     """Emit JSON consumed by the static web UI (no hardcoded UI values in TS)."""
     project = cfg.get("project", {})
@@ -84,6 +85,31 @@ def write_web_app_config(
         payload["provenance"] = provenance
         # Friendly alias for the web "Data sources" panel.
         payload["data_sources"] = provenance.get("layers", {})
+
+    if apis is None:
+        from termalwave.providers.registry import load_apis_config
+
+        apis = load_apis_config(repo_root)
+    from termalwave.merge import basemap_attributions
+    from termalwave.providers.registry import basemap_defs
+
+    basemaps_section = apis.get("basemaps") or {}
+    if basemaps_section:
+        payload["basemaps"] = {
+            "default": basemaps_section.get("default"),
+            "engine_primary": basemaps_section.get("engine_primary"),
+            "engine_fallback_2d": basemaps_section.get("engine_fallback_2d"),
+            "entries": basemap_defs(apis),
+            "credits": basemap_attributions(apis),
+        }
+    scene = apis.get("scene") or {}
+    payload["scene"] = {
+        "google_maps_enabled": bool(scene.get("google_maps_enabled", False)),
+        "cesium_ion_credential": scene.get("cesium_ion_credential"),
+        "cesium_ion_asset_world_terrain": basemaps_section.get(
+            "cesium_ion_asset_world_terrain"
+        ),
+    }
 
     written: list[Path] = []
     for key in ("web_config_out", "web_dist_config_out"):

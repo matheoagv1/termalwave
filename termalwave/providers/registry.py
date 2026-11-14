@@ -24,6 +24,24 @@ def _import_factory(module_path: str) -> Callable[..., Any]:
     return factory
 
 
+def order_for_kind(apis: dict[str, Any], kind: str, *, order_key: str | None = None) -> list[str]:
+    """Resolve provider order from config. Geocode uses search/reverse lists."""
+    section = apis.get(kind) or {}
+    if order_key:
+        return list(section.get(order_key) or [])
+    order = list(section.get("order") or [])
+    if order:
+        return order
+    if kind == "geocode":
+        seen: list[str] = []
+        for key in ("search", "reverse"):
+            for name in section.get(key) or []:
+                if name not in seen:
+                    seen.append(str(name))
+        return seen
+    return []
+
+
 def providers_for_kind(
     kind: str,
     apis: dict[str, Any],
@@ -31,9 +49,10 @@ def providers_for_kind(
     credentials: dict[str, str],
     offline: bool,
     fixtures_dir: Path,
+    order_key: str | None = None,
 ) -> list[Any]:
     section = apis.get(kind) or {}
-    order = list(section.get("order") or [])
+    order = order_for_kind(apis, kind, order_key=order_key)
     catalog = apis.get("providers") or {}
     built: list[Any] = []
     for name in order:
@@ -55,3 +74,16 @@ def providers_for_kind(
             )
         )
     return built
+
+
+def basemap_defs(apis: dict[str, Any]) -> list[dict[str, Any]]:
+    """Frontend basemap entries from [basemaps] — no secrets, config only."""
+    section = apis.get("basemaps") or {}
+    entries = section.get("entries") or {}
+    out: list[dict[str, Any]] = []
+    for key in section.get("list") or []:
+        entry = entries.get(key)
+        if not entry:
+            continue
+        out.append(dict(entry))
+    return out

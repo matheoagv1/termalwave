@@ -6,7 +6,14 @@ import math
 from datetime import datetime, timedelta
 from typing import Iterable
 
-from termalwave.model import DailyWeather, GranuleRef, Hotspot, SceneRef
+from termalwave.model import (
+    DailyWeather,
+    ElevationSample,
+    GranuleRef,
+    Hotspot,
+    Place,
+    SceneRef,
+)
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -142,3 +149,134 @@ def prefer_validated_granules(granules: list[GranuleRef]) -> list[GranuleRef]:
             if granule.quality_rank < current.quality_rank:
                 by_day[key] = granule
     return [by_day[k] for k in sorted(by_day.keys())]
+
+
+def merge_elevation_first_available(
+    batches: list[list[ElevationSample]],
+    *,
+    disagree_meters: float = 30.0,
+) -> list[ElevationSample]:
+    """Per point index: first non-null meters; flag if later providers differ > threshold."""
+    if not batches:
+        return []
+    length = max((len(b) for b in batches), default=0)
+    out: list[ElevationSample] = []
+    for idx in range(length):
+        chosen: ElevationSample | None = None
+        others: list[float] = []
+        for batch in batches:
+            if idx >= len(batch):
+                continue
+            sample = batch[idx]
+            if sample.meters is None:
+                continue
+            if chosen is None:
+                chosen = sample
+            else:
+                others.append(float(sample.meters))
+        if chosen is None:
+            # Keep a placeholder from the first batch that had this index.
+            for batch in batches:
+                if idx < len(batch):
+                    out.append(batch[idx])
+                    break
+            continue
+        disagree = False
+        if chosen.meters is not None and others:
+            base = float(chosen.meters)
+            disagree = any(abs(v - base) > disagree_meters for v in others)
+        if disagree != chosen.disagree:
+            chosen = ElevationSample(
+                lat=chosen.lat,
+                lon=chosen.lon,
+                meters=chosen.meters,
+                dem=chosen.dem,
+                resolution_m=chosen.resolution_m,
+                source=chosen.source,
+                product=chosen.product,
+                retrieved_at=chosen.retrieved_at,
+                quality_rank=chosen.quality_rank,
+                license=chosen.license,
+                disagree=disagree,
+            )
+        out.append(chosen)
+    return out
+
+
+def merge_geocode_first_nonempty(
+    batches: list[list[Place]],
+    *,
+    dedupe_distance_m: float = 500.0,
+) -> list[Place]:
+    """First non-empty provider wins; drop later hits within distance threshold."""
+    primary: list[Place] = []
+    for batch in batches:
+        if batch:
+            primary = list(batch)
+            break
+    if not primary:
+        return []
+    distance_km = dedupe_distance_m / 1000.0
+    merged: list[Place] = []
+    for place in primary:
+        if any(
+            _haversine_km(place.lat, place.lon, existing.lat, existing.lon) < distance_km
+            for existing in merged
+        ):
+            continue
+        merged.append(place)
+    # Fold later batches only as gap-fill far from existing.
+    started = False
+    for batch in batches:
+        if not batch:
+            continue
+        if not started:
+            started = True
+            continue
+        for place in batch:
+            if any(
+                _haversine_km(place.lat, place.lon, existing.lat, existing.lon) < distance_km
+                for existing in merged
+            ):
+                continue
+            merged.append(place)
+    return merged
+
+
+def basemap_attributions(apis: dict) -> list[dict[str, str]]:
+    """Build visible credits list from [basemaps.entries] + provider attributions."""
+    credits: list[dict[str, str]] = []
+    seen: set[str] = set()
+    basemaps = apis.get("basemaps") or {}
+    entries = basemaps.get("entries") or {}
+    for key in list(basemaps.get("list") or []) + list(entries.keys()):
+        entry = entries.get(key) or {}
+        attr = str(entry.get("attribution") or "").strip()
+        if not attr or attr in seen:
+            continue
+        seen.add(attr)
+        credits.append(
+            {
+                "id": str(entry.get("id") or key),
+                "attribution": attr,
+                "license": str(entry.get("license") or ""),
+                "docs_url": str(entry.get("docs_url") or ""),
+            }
+        )
+    catalog = apis.get("providers") or {}
+    for name, meta in catalog.items():
+        if meta.get("kind") not in ("elevation", "geocode"):
+            continue
+        attr = str(meta.get("attribution") or "").strip()
+        if not attr or attr in seen:
+            continue
+        seen.add(attr)
+        credits.append(
+            {
+                "id": str(name),
+                "attribution": attr,
+                "license": str(meta.get("license") or ""),
+                "docs_url": str(meta.get("docs_url") or ""),
+            }
+        )
+    return credits
