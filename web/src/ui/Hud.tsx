@@ -72,6 +72,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           soundLabel={v.soundOn ? v.t.moni.soundOn : v.t.moni.soundOff}
           closeLabel={v.t.moni.close}
           buddyLabel={v.t.moni.buddy}
+          bottom={v.moniB}
         />
       )}
 
@@ -147,6 +148,24 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                 <span aria-hidden="true" style={s("width:10px;height:10px;border:2px solid currentColor;border-radius:50%")} />
                 Inicio
               </button>
+              {v.basemapItems.length > 0 && (
+                <div role="radiogroup" aria-label="Mapa base" style={s("display:flex;flex-direction:column;gap:4px;margin-top:4px")}>
+                  <div className="tw-pixel" style={s("font-size:7px;line-height:1.6;color:var(--fg2)")}>Mapa base</div>
+                  {v.basemapItems.map((bm) => (
+                    <button
+                      key={bm.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={bm.on}
+                      className="tw-hov"
+                      onClick={bm.go}
+                      style={s(`height:${lay.hit};padding:0 10px;text-align:left;${SECONDARY};font:12px var(--sans);color:var(--fg);background:${bm.on ? "var(--sel)" : "transparent"};border-color:${bm.on ? "var(--acc)" : "var(--line2)"}`)}
+                    >
+                      {bm.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {v.dockOpen && v.layerItems.map((l) => (

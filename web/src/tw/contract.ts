@@ -138,6 +138,15 @@ export interface SceneOptions {
   labels: { curtain: string };
 }
 
+export interface BasemapOption {
+  id: string;
+  label: string;
+  url: string;
+  tileSize: number;
+  maxzoom: number;
+  attribution: string;
+}
+
 export interface SceneApi {
   mount(el: HTMLElement): void;
   // agregado: set acepta null en compare y focus para borrarlos
@@ -151,6 +160,8 @@ export interface SceneApi {
   onChange(cb: (state: SceneState) => void): () => void;
   onPick(cb: (hotspotId: string | null) => void): () => void;
   status(): { online: boolean; terrain: boolean; basemap: boolean };
+  // opcional: cambia el mapa base raster (solo la escena real)
+  setBasemap?(b: BasemapOption): void;
 
   // agregados
   setDataset(ds: Dataset): void;               // la escena necesita limites y urls de cada imagen

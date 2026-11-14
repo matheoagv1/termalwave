@@ -6,7 +6,7 @@ import { ConfigProvider } from "./data/config-provider";
 import { MapLibreScene, type BasemapTiles } from "./scene/maplibre-scene";
 import { MockProvider } from "./tw/mock-provider.js";
 import { MockScene } from "./tw/mock-scene.js";
-import type { DataProvider, SceneApi, SceneOptions } from "./tw/contract";
+import type { BasemapOption, DataProvider, SceneApi, SceneOptions } from "./tw/contract";
 
 // Modo demo: #mock=1 o cualquier #escenario=... usa los datos de ejemplo.
 // Sin eso la app lee el backend (dataset.json o app-config.json).
@@ -21,13 +21,53 @@ type WebCfg = {
   dem_url_template?: string;
 };
 
-async function webConfig(): Promise<WebCfg> {
+type BmEntry = {
+  id?: string;
+  kind?: string;
+  url_template?: string;
+  attribution?: string;
+  max_zoom?: number;
+  label?: string;
+  tile_size?: number;
+};
+type BmCfg = { default?: string; entries?: Record<string, BmEntry>; labels?: Record<string, string> };
+
+const BM_LABELS: Record<string, string> = {
+  gibs_modis_truecolor: "NASA GIBS MODIS",
+  gibs_viirs_truecolor: "NASA GIBS VIIRS",
+  eox_s2cloudless_2025: "Sentinel-2 sin nubes (EOX)",
+};
+
+// GIBS publica el dia en curso a medias: se pide una fecha ya procesada.
+function gibsDate(): string {
+  return new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10);
+}
+
+// Solo se ofrecen los rasters; el vector (OpenFreeMap) y el relieve de Cesium no son de esta escena.
+function basemapOptions(cfg: BmCfg | undefined): BasemapOption[] {
+  const list = Object.values(cfg?.entries ?? {})
+    .filter((e) => e.kind === "raster" && e.url_template)
+    .map((e) => ({
+      id: String(e.id),
+      label: e.label ?? BM_LABELS[String(e.id)] ?? String(e.id),
+      url: String(e.url_template).replace("{date}", gibsDate()),
+      tileSize: e.tile_size ?? 256,
+      maxzoom: e.max_zoom ?? 8,
+      attribution: e.attribution ?? "",
+    }));
+  const first = list.findIndex((o) => o.id === cfg?.default);
+  if (first > 0) list.unshift(...list.splice(first, 1));
+  return list;
+}
+
+async function appConfig(): Promise<{ web: WebCfg; basemaps?: BmCfg }> {
   try {
     const res = await fetch("./app-config.json");
-    if (!res.ok) return {};
-    return ((await res.json()) as { web?: WebCfg }).web ?? {};
+    if (!res.ok) return { web: {} };
+    const c = (await res.json()) as { web?: WebCfg; basemaps?: BmCfg };
+    return { web: c.web ?? {}, basemaps: c.basemaps };
   } catch {
-    return {};
+    return { web: {} };
   }
 }
 
@@ -44,8 +84,12 @@ function hasWebGL(): boolean {
 const DEFAULT_DEM = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
 
 async function start(): Promise<void> {
-  const web = await webConfig();
-  const basemapTiles: BasemapTiles | undefined = web.gibs_url_template
+  const cfg = await appConfig();
+  const web = cfg.web;
+  const bmOpts = basemapOptions(cfg.basemaps);
+  const basemapTiles: BasemapTiles | undefined = bmOpts[0]
+    ? { url: bmOpts[0].url, tileSize: bmOpts[0].tileSize, maxzoom: bmOpts[0].maxzoom, attribution: bmOpts[0].attribution }
+    : web.gibs_url_template
     ? {
         url: web.gibs_url_template,
         tileSize: web.gibs_tile_size ?? 256,
@@ -72,6 +116,7 @@ async function start(): Promise<void> {
         allowScenarios={demo}
         // con WebGL y conexion hay relieve; el estado se informa tal cual
         realTerrain={!useDom}
+        basemaps={useDom ? undefined : bmOpts}
         theme="dark"
         reducedMotion={false}
       />,

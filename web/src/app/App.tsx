@@ -1,6 +1,7 @@
 import React from "react";
 import { T } from "../tw/catalog.es-AR.js";
 import type {
+  BasemapOption,
   Dataset,
   DataProvider,
   Hotspot,
@@ -53,6 +54,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     explore: false,
     status: { online: true, terrain: true, basemap: true },
     dockOpen: false,
+    basemap: this.props.basemaps?.[0]?.id ?? "",
     tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     immersive: false,
     introOpen: !intro0.done,
@@ -212,6 +214,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const host = this.sceneRef.current;
     if (!host) return;
     this.scene.mount(host);
+    const bmo = this.props.basemaps?.find((x) => x.id === this.state.basemap);
+    if (bmo && bmo.id !== this.props.basemaps?.[0]?.id) this.scene.setBasemap?.(bmo);
     this.unC = this.scene.onChange((st) => {
       const prev = this.state.scene;
       this.setState({ scene: st });
@@ -593,6 +597,16 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.setState({ explore: false, ficha: this.state.W >= 760 });
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory");
+  };
+
+  get basemaps(): BasemapOption[] {
+    return this.props.basemaps ?? [];
+  }
+  setBasemap = (id: string): void => {
+    const o = this.basemaps.find((x) => x.id === id);
+    if (!o) return;
+    this.setState({ basemap: id });
+    this.scene?.setBasemap?.(o);
   };
 
   toOrbit = (): void => {
