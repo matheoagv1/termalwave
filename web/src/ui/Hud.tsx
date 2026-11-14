@@ -98,13 +98,22 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
       {v.showExplore && (
         <section
           style={s(
-            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:14px;display:flex;flex-direction:column;gap:10px`,
+            `position:absolute;left:${lay.entL};right:${lay.entR};bottom:${lay.entB};width:${lay.entW};pointer-events:auto;${PANEL};padding:14px;display:flex;align-items:center;gap:12px`,
           )}
         >
-          <button onClick={a.enter} disabled={v.noDs} style={s(`height:${lay.hit};padding:0 16px;${PRIMARY}`)}>
-            {t.entry.backToArea}
-          </button>
-          <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.entry.dragHint}</div>
+          <img
+            src={MONI}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            style={s("flex:none;height:56px;width:auto;image-rendering:pixelated")}
+          />
+          <div style={s("min-width:0;display:flex;flex-direction:column;gap:8px;flex:1")}>
+            <button onClick={a.enter} disabled={v.noDs} style={s(`height:${lay.hit};padding:0 16px;align-self:flex-start;${PRIMARY}`)}>
+              {t.entry.backToArea}
+            </button>
+            <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.entry.dragHint}</div>
+          </div>
         </section>
       )}
 
