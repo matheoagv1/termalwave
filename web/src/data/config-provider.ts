@@ -82,7 +82,7 @@ export class ConfigProvider implements DataProvider {
   async load(): Promise<Dataset> {
     // Contrato nuevo: el backend publica dataset.json con tramos.
     const direct = await tryJson<Dataset>(this.base + "dataset.json");
-    if (direct && Array.isArray(direct.segments)) {
+    if (direct && Array.isArray(direct.segments) && direct.layers?.length) {
       // same fallback as legacy: empty/missing context gets trades.json
       if (!Array.isArray(direct.context) || direct.context.length === 0) {
         direct.context =
