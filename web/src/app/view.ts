@@ -133,7 +133,9 @@ export function buildView(m: Model) {
   const compareOn = !!sc.compare && !!fb && !!fa;
   const iA = fa ? (m.idx[sc.tickId] ?? -1) : -1;
   const iB = fb && sc.compare ? (m.idx[sc.compare.tickId] ?? -1) : -1;
-  const sp = L ? S.series[L.id] : undefined;
+  const rawSeries = L ? S.series[L.id] : undefined;
+  const byTickId = new Map(rawSeries?.map((point) => [point.tickId, point]));
+  const sp = rawSeries ? m.flat.map((item) => byTickId.get(item.tick.id) ?? { tickId: item.tick.id, date: item.tick.start, value: null }) : undefined;
   // El backend todavía no publicó valores para esta capa: se explica en vez de repetir "Sin dato".
   const noSeries = !!sp && sp.length > 0 && sp.every((p) => p.value == null);
   const spA = sp ? sp[iA] : undefined;
@@ -160,7 +162,7 @@ export function buildView(m: Model) {
     else if (!noSeries) valueText = T.card.noValue;
   }
   let deltaText = "";
-  if (pickHit?.delta) deltaText = pickHit.delta;
+  if (!meanValue && pickHit?.delta) deltaText = pickHit.delta;
   else if (spA && spA.value != null && L && sp) {
     let j = iA - 1;
     while (j >= 0 && sp[j]?.value == null) j -= 1;
@@ -432,7 +434,7 @@ export function buildView(m: Model) {
   };
 
   // tarjeta de detalle
-  const hp = S.pick ? S.hotspots.find((h) => h.id === S.pick) : undefined;
+  const hp = pickHit;
   const pp = S.pickPos;
   const dc = {
     on: false,
@@ -461,7 +463,7 @@ export function buildView(m: Model) {
     dc.hasDelta = !!hp.delta;
     dc.layer = L ? L.label : "";
     dc.moment = fa ? nameOf(fa) : "";
-    const trail = S.spotTrail[S.pick!] ?? [];
+    const trail = S.spotTrail[JSON.stringify([hp.layer, hp.id])] ?? [];
     if (L && trail.length > 1) {
       const span = L.range[1] - L.range[0] || 1;
       const sw = dc.spotW;
@@ -476,13 +478,13 @@ export function buildView(m: Model) {
         const xOf = (i: number): number =>
           m.flat.length < 2 ? sw / 2 : 2 + ((sw - 4) * i) / (m.flat.length - 1);
         const yOf = (v: number): number => sh - 4 - ((sh - 8) * (v - L.range[0])) / span;
-        let pen = false;
+        let previousIndex = -2;
         let lineD = "";
         for (const p of pts) {
           const x = xOf(p.i);
           const y = yOf(p.v);
-          lineD += `${pen ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)} `;
-          pen = true;
+          lineD += `${p.i === previousIndex + 1 ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)} `;
+          previousIndex = p.i;
         }
         const cur = pts.find((p) => p.i === iA);
         dc.spotSerOn = true;
@@ -533,7 +535,7 @@ export function buildView(m: Model) {
   const provName = (id: string): string =>
     id.split("+").map((p) => lookup(T.sources.provider, p)).join(" + ");
   const sourceUnused = (g: { selected: string[]; count: number; status: string }): boolean =>
-    g.status === "ok" && g.selected.length === 0 && g.count === 0;
+    g.status === "ok" && (g.selected ?? []).length === 0 && g.count === 0;
   const sources = (ds?.sources ?? []).map((g) => {
     const unused = sourceUnused(g);
     return {
@@ -548,15 +550,19 @@ export function buildView(m: Model) {
             ? "var(--acc-fg)"
             : "var(--warn)",
       strategy: lookup(T.sources.strategy, g.strategy),
-      selected: g.selected.map(provName),
-      tried: g.tried.map((x) => ({
+      selected: (g.selected ?? []).map(provName),
+      selectedNotes: (g.selected ?? []).flatMap((id) => id.split("+").flatMap((part) => {
+        const description = sourceNote(part);
+        return description ? [{ key: part, name: provName(part), description }] : [];
+      })),
+      tried: (g.tried ?? []).map((x) => ({
         key: x.provider,
         name: provName(x.provider),
         ok: x.ok,
-        note: x.ok ? T.sources.records(x.count ?? 0) : T.sources.failed,
+        note: !x.ok ? T.sources.failed : x.count == null ? "Cantidad no informada" : x.count === 0 ? "Sin registros" : T.sources.records(x.count),
         hint: sourceNote(x.provider) ?? "",
       })),
-      count: T.sources.records(g.count),
+      count: g.count == null ? "Cantidad no informada" : g.count === 0 ? "Sin registros" : T.sources.records(g.count),
       fromCache: g.fromCache,
     };
   });

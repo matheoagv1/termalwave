@@ -709,7 +709,22 @@ export class MapLibreScene implements SceneApi {
         this.whenReady(() => this.go(n.camera as CameraMode, { fly: false, ms: 700 }));
       } else void this.flyTo(n.camera);
     } else if ((tiltChanged || northChanged || scaleChanged) && (s.camera === "territory" || s.camera === "detail")) {
-      this.whenReady(() => this.go(s.camera, { fly: false, ms: 700 }));
+      const zoomDelta = scaleChanged ? (s.viewScale === "urbano" ? URBAN_ZOOM : -URBAN_ZOOM) : 0;
+      this.whenReady(() => {
+        const minZoom = this.map.getMinZoom();
+        const maxZoom = this.map.getMaxZoom();
+        this.territoryZoom = clamp(this.territoryZoom + zoomDelta, minZoom, maxZoom);
+        this.map.easeTo({
+          center: this.map.getCenter(),
+          zoom: clamp(this.map.getZoom() + zoomDelta, minZoom, maxZoom),
+          pitch: clamp(s.tilt + (this.urban() ? URBAN_PITCH : 0), 0, 70),
+          bearing: s.northUp ? 0 : -18,
+          duration: this.dur(700),
+          essential: true,
+        });
+      });
+    } else if ("focus" in n && s.camera === "detail" && s.focus) {
+      this.whenReady(() => this.go("detail", { fly: false, ms: 700 }));
     } else if ("focus" in n && s.camera === "orbit") {
       this.whenReady(() => this.go("orbit", { fly: false, ms: 900 }));
     }

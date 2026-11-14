@@ -249,3 +249,27 @@ body {
     flex-basis: auto;
   }
 }
+
+[data-tw-theme] .tw-layers-dock {
+  max-height: max(10rem, calc(100dvh - 84px - var(--tw-pad-b, 0px)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+[data-tw-theme] .maplibregl-ctrl-attrib,
+[data-tw-theme] .maplibregl-ctrl-attrib.maplibregl-compact,
+[data-tw-theme] .maplibregl-ctrl-attrib-inner,
+[data-tw-theme] .maplibregl-ctrl-attrib a {
+  color: #fff !important;
+}
+
+[data-tw-theme] .maplibregl-ctrl-attrib-inner {
+  max-height: min(20dvh, 10rem);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+[data-tw-theme] .maplibregl-ctrl-attrib-button:focus-visible {
+  outline: 2px solid #fff !important;
+  outline-offset: 2px;
+}

@@ -1,11 +1,12 @@
 import React from "react";
 import { s } from "../app/css";
-import { T } from "../tw/catalog.es-AR.js";
+import { intro } from "./intro-copy";
 import { tradeChoices, writeIntroPrefs } from "./intro-prefs";
 import { Sfx } from "./sfx";
 
 const MONI = "./brand/monigote.png";
 const PANEL = "background:var(--panel-solid);border:1px solid var(--line2)";
+const OTHER = "Ninguno de estos";
 
 type P = {
   sound: boolean;
@@ -18,17 +19,17 @@ type Step = "hola" | "nombre" | "rubro" | "listo";
 export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement {
   const [step, setStep] = React.useState<Step>("hola");
   const [name, setName] = React.useState("");
-  const [trade, setTrade] = React.useState(tradeChoices()[0] ?? "");
+  const [trade, setTrade] = React.useState("");
   const [typed, setTyped] = React.useState("");
-  const trades = tradeChoices();
+  const trades = [...tradeChoices(), OTHER];
   const line =
     step === "hola"
-      ? T.intro.hola
+      ? intro.hola
       : step === "nombre"
-        ? T.intro.askName
+        ? intro.askName
         : step === "rubro"
-          ? T.intro.askTrade
-          : T.intro.ready(name.trim() || T.intro.guest);
+          ? intro.askTrade
+          : intro.ready(name.trim() || intro.guest);
 
   React.useEffect(() => {
     if (reduced) {
@@ -61,17 +62,18 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
   };
 
   const finish = (): void => {
-    const n = name.trim() || T.intro.guest;
-    writeIntroPrefs({ done: true, name: n, trade, sound });
+    const n = name.trim() || intro.guest;
+    const selectedTrade = trade === OTHER ? "" : trade;
+    writeIntroPrefs({ done: true, name: n, trade: selectedTrade, sound });
     if (sound) Sfx.ok();
-    onDone(n, trade);
+    onDone(n, selectedTrade);
   };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={T.intro.title}
+      aria-label={intro.title}
       style={s("position:absolute;inset:0;pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px;z-index:40")}
     >
       <div
@@ -93,16 +95,19 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
           style={s("align-self:center;height:128px;width:auto;image-rendering:pixelated")}
         />
         <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--acc-fg);text-align:center")}>
-          {T.intro.kicker}
+          {intro.kicker}
         </div>
-        <p style={s("margin:0;min-height:3.2em;font:15px/1.45 var(--sans);color:var(--fg);text-wrap:pretty")}>{typed}</p>
+        <p aria-hidden="true" style={s("margin:0;min-height:3.2em;font:15px/1.45 var(--sans);color:var(--fg);text-wrap:pretty")}>{typed}</p>
+        <p role="status" style={s("position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0")}>{line}</p>
 
         {step === "nombre" && (
           <input
+            aria-label={intro.askName}
+            maxLength={48}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && nextFromName()}
-            placeholder={T.intro.namePh}
+            placeholder={intro.namePh}
             autoComplete="nickname"
             autoFocus
             style={s(
@@ -114,27 +119,28 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
         {step === "rubro" && (
           <div
             role="radiogroup"
-            aria-label={T.intro.askTrade}
+            aria-label={intro.askTrade}
             style={s("display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto")}
           >
             {trades.map((tr) => {
               const on = tr === trade;
               return (
-                <button
+                <label
                   key={tr}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => {
-                    setTrade(tr);
-                    ping();
-                  }}
                   style={s(
-                    `white-space:normal;text-align:left;min-height:36px;padding:6px 10px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--sans)`,
+                    `display:flex;align-items:center;gap:7px;white-space:normal;text-align:left;min-height:44px;padding:6px 10px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--sans)`,
                   )}
                 >
+                  <input
+                    type="radio"
+                    name="trade"
+                    value={tr}
+                    checked={on}
+                    onChange={() => { setTrade(tr); ping(); }}
+                    style={s("accent-color:var(--acc)")}
+                  />
                   {tr}
-                </button>
+                </label>
               );
             })}
           </div>
@@ -142,24 +148,25 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
 
         <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:4px")}>
           {step === "hola" && (
-            <Primary onClick={nextFromHola}>{T.intro.continue}</Primary>
+            <Primary onClick={nextFromHola}>{intro.continue}</Primary>
           )}
           {step === "nombre" && (
             <Primary onClick={nextFromName} disabled={!name.trim()}>
-              {T.intro.continue}
+              {intro.continue}
             </Primary>
           )}
           {step === "rubro" && (
             <Primary
+              disabled={!trade}
               onClick={() => {
                 ping();
                 setStep("listo");
               }}
             >
-              {T.intro.continue}
+              {intro.continue}
             </Primary>
           )}
-          {step === "listo" && <Primary onClick={finish}>{T.intro.start}</Primary>}
+          {step === "listo" && <Primary onClick={finish}>{intro.start}</Primary>}
         </div>
       </section>
     </div>

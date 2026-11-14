@@ -160,6 +160,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
 
       {v.dockOn && (
         <div
+          className="tw-layers-dock"
           role="radiogroup"
           aria-label={t.layers.title}
           style={s(
@@ -790,6 +791,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                         <div style={s("font:12px var(--sans);color:var(--fg2);text-wrap:pretty")}>{g.strategy}</div>
                         <div style={s("font:11px var(--mono);color:var(--fg2)")}>
                           {t.sources.selected}: {g.selected.length ? g.selected.join(", ") : t.sources.none}
+                          {g.selectedNotes.map((item) => <div key={item.key} style={s("font:12px var(--sans);color:var(--fg2);text-wrap:pretty")}>{item.name}: {item.description}</div>)}
                         </div>
                         <div style={s("font:11px var(--mono);color:var(--fg3)")}>
                           {g.count}

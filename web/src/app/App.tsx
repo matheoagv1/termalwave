@@ -376,10 +376,11 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const trail = { ...this.state.spotTrail };
     for (const h of list) {
       if (h.sample == null) continue;
-      const prev = trail[h.id] ?? [];
+      const key = JSON.stringify([st.layer, h.id]);
+      const prev = trail[key] ?? [];
       const ix = prev.findIndex((p) => p.tickId === st.tickId);
       const pt = { tickId: st.tickId, v: h.sample };
-      trail[h.id] = ix >= 0 ? prev.map((p, i) => (i === ix ? pt : p)) : [...prev, pt];
+      trail[key] = ix >= 0 ? prev.map((p, i) => (i === ix ? pt : p)) : [...prev, pt];
     }
     this.setState({ hotspots: list, spotTrail: trail });
     const pk = this.state.pick;

@@ -64,7 +64,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               className="tw-tl-sel"
               style={s("flex:1 1 160px;min-width:0;padding:4px 8px 4px 10px;border-left:3px solid var(--acc);background:var(--sel)")}
             >
-              <div style={s("font:600 15px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.name}</div>
+              <div style={s("font:11px var(--sans);color:var(--fg2)")}>{v.compareOn ? "Fecha activa para comparar" : "Fecha seleccionada"}</div><div style={s("font:600 15px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.name}</div>
               <div style={s("font:11px var(--mono);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.meta}</div>
             </div>
             {v.compareOn && (
@@ -206,6 +206,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               )}
             </>
           )}
+          {v.compareOn && v.tlOpen && <p style={s("margin:0;font:12px var(--sans);color:var(--fg2);line-height:1.35")}>Elegí A o B y después una fecha para comparar las dos imágenes.</p>}
           {tl.single && v.tlOpen && <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.timeline.singlePoint}</div>}
           {v.compareOn && v.tlOpen && (
             <div style={s("font:11px var(--sans);color:var(--fg2);padding:2px 0;line-height:1.35")}>{v.compareHint}</div>
@@ -222,10 +223,10 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 aria-valuemax={tl.max}
                 aria-valuenow={tl.idx}
                 aria-valuetext={tl.name}
-                style={s(`display:flex;gap:6px;overflow-x:${tl.ox};overflow-y:hidden;padding-bottom:2px`)}
+                style={s(`display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 0 6px;scrollbar-width:thin`)}
               >
                 {tl.segs.map((seg) => (
-                  <div key={seg.id} style={s(`flex:${seg.flex};min-width:${seg.minW};display:flex;flex-direction:column;gap:3px`)}>
+                  <div key={seg.id} style={s(`flex:${seg.flex};min-width:${Math.max(parseInt(seg.minW, 10) || 0, seg.ticks.length * 68)}px;display:flex;flex-direction:column;gap:3px`)}>
                     <button
                       className="tw-hov"
                       onClick={seg.head}
@@ -264,8 +265,10 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                             title={tk.title}
                             aria-label={tk.title}
                             aria-current={tk.cur ? "true" : undefined}
-                            style={s(`display:block;width:100%;height:${tk.h}px;padding:0;border:0;cursor:pointer;background:${tk.bg};box-shadow:${tk.ring}`)}
-                          />
+                            style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px solid var(--line2);cursor:pointer;background:${tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
+                          >
+                            {tk.title.split(" · ")[0]}
+                          </button>
                           {tk.pips.map((pp) => (
                             <div
                               key={pp.key}
