@@ -208,6 +208,23 @@ export class MapLibreScene implements SceneApi {
     } as StyleSpecification;
   }
 
+  setBasemap(bt: BasemapTiles): void {
+    this.o.basemapTiles = bt;
+    const map = this.map;
+    if (!map || !this.ready || !this.o.basemap || !this.o.online) return;
+    try {
+      const ids = map.getStyle().layers.map((l) => l.id);
+      const had = ids.indexOf("tw-base");
+      const before = ids[(had >= 0 ? had : ids.indexOf("tw-bg")) + 1];
+      if (map.getLayer("tw-base")) map.removeLayer("tw-base");
+      if (map.getSource("tw-base")) map.removeSource("tw-base");
+      map.addSource("tw-base", { type: "raster", tiles: [bt.url], tileSize: bt.tileSize, maxzoom: bt.maxzoom, attribution: bt.attribution });
+      map.addLayer({ id: "tw-base", type: "raster", source: "tw-base" }, before);
+    } catch {
+      /* si falla se conserva el estilo actual */
+    }
+  }
+
   private onStyle(): void {
     const map = this.map;
     if (!map.getSource("tw-curtain")) {

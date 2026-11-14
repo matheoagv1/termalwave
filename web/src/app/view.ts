@@ -14,6 +14,8 @@ export interface Model {
   granText(seg: TimeSegment): string;
   enter(): void;
   toOrbit(): void;
+  basemaps: Array<{ id: string; label: string }>;
+  setBasemap(id: string): void;
   retry(): void;
   closePick(): void;
   togglePlay(): void;
@@ -609,6 +611,7 @@ export function buildView(m: Model) {
     showStatusText: !isM, noTerrain: !st.terrain,
     sceneSoft: S.introOpen,
     introOpen: S.introOpen,
+    moniB: S.tlH + (isM ? 52 : 0) + 20 + "px",
     moniOn: S.introDone && !S.introOpen && !imm,
     moniTip,
     moniOpen: S.moniOpen,
@@ -619,6 +622,7 @@ export function buildView(m: Model) {
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
     dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems,
+    basemapItems: m.basemaps.length > 1 ? m.basemaps.map((x) => ({ id: x.id, label: x.label, on: x.id === S.basemap, go: () => m.setBasemap(x.id) })) : [],
     camOn: hud, northOn: !sc.northUp,
     northLabel: sc.northUp ? T.camera.northUp : T.camera.northFree,
     northDeg: sc.northUp ? 0 : -18,

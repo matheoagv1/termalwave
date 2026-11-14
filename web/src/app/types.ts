@@ -1,4 +1,4 @@
-import type {
+﻿import type { BasemapOption,
   CameraMode,
   Dataset,
   DataProvider,
@@ -57,6 +57,7 @@ export type AppState = {
   userTrade: string;
   soundOn: boolean;
   moniOpen: boolean;
+  basemap: string;
 };
 
 export type AppProps = {
@@ -68,6 +69,8 @@ export type AppProps = {
   realTerrain: boolean;
   theme: "dark" | "light";
   reducedMotion: boolean;
+  // mapas base elegibles (el primero es el que arranca)
+  basemaps?: BasemapOption[];
 };
 
 export type { CameraMode };

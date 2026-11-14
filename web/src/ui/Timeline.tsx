@@ -184,15 +184,15 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:22px;background:url(./ui/rail.png) center/100% 12px no-repeat")}>
-                  <div style={s("position:absolute;left:10px;right:10px;bottom:0;height:3px;display:flex;gap:2px")}>
+                <div style={s("position:relative;flex:1;height:28px;box-sizing:border-box;border-style:solid;border-width:0 32px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 32px 0 32px stretch")}>
+                  <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
                     {tl.real.map((r) => (
                       <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
                     ))}
                   </div>
-                  <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:0;left:${tl.aLeft};width:16px;height:16px;margin-left:-8px;image-rendering:pixelated`)} />
+                  <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:4px;left:${tl.aLeft};width:20px;height:20px;margin-left:-10px;image-rendering:pixelated`)} />
                   {v.compareOn && (
-                    <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:0;left:${tl.bLeft};width:16px;height:16px;margin-left:-8px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
+                    <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:4px;left:${tl.bLeft};width:20px;height:20px;margin-left:-10px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>
@@ -291,15 +291,15 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:26px;background:url(./ui/rail.png) center/100% 14px no-repeat")}>
-                  <div style={s("position:absolute;left:10px;right:10px;bottom:0;height:3px;display:flex;gap:2px")}>
+                <div style={s("position:relative;flex:1;height:34px;box-sizing:border-box;border-style:solid;border-width:0 38px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 38px 0 38px stretch")}>
+                  <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
                     {tl.real.map((r) => (
                       <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
                     ))}
                   </div>
-                  <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:1px;left:${tl.aLeft};width:18px;height:18px;margin-left:-9px;image-rendering:pixelated`)} />
+                  <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:5px;left:${tl.aLeft};width:24px;height:24px;margin-left:-12px;image-rendering:pixelated`)} />
                   {v.compareOn && (
-                    <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:1px;left:${tl.bLeft};width:18px;height:18px;margin-left:-9px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
+                    <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:5px;left:${tl.bLeft};width:24px;height:24px;margin-left:-12px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>

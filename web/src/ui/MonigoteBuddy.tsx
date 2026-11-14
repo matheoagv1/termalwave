@@ -15,6 +15,7 @@ type P = {
   soundLabel: string;
   closeLabel: string;
   buddyLabel: string;
+  bottom: string;
 };
 
 export function MonigoteBuddy({
@@ -29,11 +30,12 @@ export function MonigoteBuddy({
   soundLabel,
   closeLabel,
   buddyLabel,
+  bottom,
 }: P): React.ReactElement {
   const greet = name ? `, ${name}` : "";
   return (
     <div
-      style={s("position:absolute;right:12px;bottom:var(--tw-moni-b, 72px);pointer-events:auto;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px")}
+      style={s(`position:absolute;right:12px;bottom:${bottom};pointer-events:auto;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px`)}
     >
       {open && tip && (
         <div
