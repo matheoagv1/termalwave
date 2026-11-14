@@ -1,0 +1,14 @@
+---
+description: Three-person ownership, worktrees, and comms inboxes
+globs:
+alwaysApply: true
+---
+
+# Team ownership
+
+- Follow `references/OWNERSHIP.md` and `references/AGENTS.md`.
+- VPS agent owns Python/vendor/portable/data and writes notifications under `comms/from-vps/` or `comms/pcN/inbox/`.
+- PC1 owns `web/src/context/` (+ taste test notes in `comms/pc1/`); no systemwide installs.
+- PC2 owns `web/` UX/flow; must read PC1 and VPS feedback before large UI changes.
+- Prefer git worktrees: `work/pc1`, `work/pc2`, integrate on `master` from VPS.
+- Never put jury/scoring strategy into UI strings.

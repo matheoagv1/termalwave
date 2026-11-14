@@ -1,0 +1,14 @@
+---
+description: Internal product framing for TermalWave agents — diverse professional appeal; never leak into UI
+globs:
+alwaysApply: true
+---
+
+# Agent product context
+
+- Read and follow `references/AGENTS.md`, `references/OWNERSHIP.md`, `references/AI_CONTEXT.md`, and `references/NASA_CHALLENGE.md`.
+- Check `comms/` inboxes relevant to your role every turn.
+- Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization for a broad audience; default AOI is Santiago del Estero, fully config-driven for any location.
+- Design the globe + side controls, layers-by-job, and portable NISAR pipeline so the product stands on its own for science, engineering, environment, aerospace, data, and public-tech transfer audiences.
+- User-facing copy: humanizer ES-AR-SGO only.
+- Never put into the UI (or end-user README/demo overlays) any mention of juries, evaluators, hackathon scoring, or that features exist to impress a panel. No “diseñado para ingenieros/científicos/gobierno” style audience-bait in visible strings.

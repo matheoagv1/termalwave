@@ -1,0 +1,43 @@
+# Raw NISAR downloads (not committed)
+data/raw/**
+!data/raw/.gitkeep
+
+# Ignore HDF5 granules everywhere except the tiny committed fixture
+*.h5
+!data/fixtures/
+!data/fixtures/**/*.h5
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg
+
+# Node / Vite (source deps only; web/dist is committed)
+web/node_modules/
+web/.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Vendor build scratch
+vendor/.wheels/
+vendor/.tmp/
+
+# SSH private keys for team (never commit)
+ssh-keys/
+
+.worktrees/
+references/gods-eye-view/

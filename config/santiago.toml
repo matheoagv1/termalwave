@@ -1,0 +1,102 @@
+# Default site config — Santiago del Estero (swap this file or paths.default_config for any AOI).
+
+[project]
+name = "TermalWave"
+tagline = "Cambio de superficie con radar NISAR"
+
+[aoi]
+name = "Santiago del Estero"
+west = -64.35
+east = -64.15
+south = -27.90
+north = -27.70
+
+[paths]
+raw_dir = "data/raw"
+processed_dir = "data/processed"
+fixture_dir = "data/fixtures"
+input_h5 = "data/fixtures/santiago_sample.h5"
+fixture_h5 = "data/fixtures/santiago_sample.h5"
+overlay_mirrors = [
+  "web/public/overlays",
+  "web/dist/overlays",
+]
+web_config_out = "web/public/app-config.json"
+web_dist_config_out = "web/dist/app-config.json"
+
+[hdf5]
+raster_candidates = [
+  "/science/LSAR/RSLC/swaths/frequencyA/HH/amplitude",
+  "/science/LSAR/RSLC/swaths/frequencyA/HH",
+  "/data/amplitude",
+  "/amplitude",
+  "amplitude",
+]
+raster_name_hints = ["amplitude", "intensity", "sigma0", "data", "raster"]
+latitude_candidates = ["/latitude", "latitude", "/data/latitude"]
+longitude_candidates = ["/longitude", "longitude", "/data/longitude"]
+geotransform_attr_keys = ["geotransform", "GeoTransform", "geo_transform"]
+bounds_attr_keys = ["west", "east", "south", "north"]
+
+[product]
+output_stem = "santiago_overlay"
+sidecar_type = "termalwave_overlay"
+
+[colormap]
+percentile_low = 2.0
+percentile_high = 98.0
+alpha_positive = 200
+r_scale = 1.5
+r_offset = -0.2
+g_center = 0.5
+g_width = 2.5
+g_peak = 1.5
+b_scale = -1.5
+b_offset = 1.2
+
+[fixture]
+height = 128
+width = 160
+amplitude_path = "/data/amplitude"
+latitude_path = "/data/latitude"
+longitude_path = "/data/longitude"
+title = "TermalWave synthetic Santiago del Estero fixture"
+compression = "gzip"
+center_x_ratio = 0.55
+center_y_ratio = 0.45
+blob_sigma_x = 40.0
+blob_sigma_y = 25.0
+ripple_amp = 0.35
+ripple_x = 8.0
+ripple_y = 6.0
+
+[web]
+overlay_sidecar = "./overlays/santiago_overlay.json"
+map_center_lat = -27.80
+map_center_lon = -64.25
+map_zoom = 11
+map_min_zoom = 3
+map_max_zoom = 14
+fit_padding_px = 28
+overlay_opacity = 0.82
+overlay_class_name = "tw-overlay"
+offline_query_param = "offline"
+tile_error_threshold = 3
+gibs_url_template = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg"
+gibs_attribution = "Imagery © NASA GIBS"
+gibs_max_zoom = 8
+gibs_max_native_zoom = 8
+offline_attribution = "Sin conexión · TermalWave"
+status_loading = "Cargando…"
+status_online = "Base GIBS · capa procesada"
+status_offline = "Sin conexión · capa PNG"
+status_fallback = "Sin teselas · capa PNG"
+tile_size = 256
+plain_fill = "#0e1a22"
+plain_gradient_start = "rgba(34, 74, 92, 0.35)"
+plain_gradient_end = "rgba(12, 24, 32, 0.15)"
+plain_stroke = "rgba(255,255,255,0.03)"
+plain_label = "rgba(180, 210, 220, 0.12)"
+plain_label_font = "10px sans-serif"
+plain_label_x = 8
+plain_label_y = 16

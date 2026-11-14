@@ -1,0 +1,48 @@
+{
+  "project": {
+    "name": "TermalWave",
+    "tagline": "Cambio de superficie con radar NISAR"
+  },
+  "aoi": {
+    "name": "Santiago del Estero",
+    "west": -64.35,
+    "east": -64.15,
+    "south": -27.9,
+    "north": -27.7
+  },
+  "product": {
+    "output_stem": "santiago_overlay",
+    "sidecar_type": "termalwave_overlay"
+  },
+  "web": {
+    "overlay_sidecar": "./overlays/santiago_overlay.json",
+    "map_center_lat": -27.8,
+    "map_center_lon": -64.25,
+    "map_zoom": 11,
+    "map_min_zoom": 3,
+    "map_max_zoom": 14,
+    "fit_padding_px": 28,
+    "overlay_opacity": 0.82,
+    "overlay_class_name": "tw-overlay",
+    "offline_query_param": "offline",
+    "tile_error_threshold": 3,
+    "gibs_url_template": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg",
+    "gibs_attribution": "Imagery \u00a9 NASA GIBS",
+    "gibs_max_zoom": 8,
+    "gibs_max_native_zoom": 8,
+    "offline_attribution": "Sin conexi\u00f3n \u00b7 TermalWave",
+    "status_loading": "Cargando\u2026",
+    "status_online": "Base GIBS \u00b7 capa procesada",
+    "status_offline": "Sin conexi\u00f3n \u00b7 capa PNG",
+    "status_fallback": "Sin teselas \u00b7 capa PNG",
+    "tile_size": 256,
+    "plain_fill": "#0e1a22",
+    "plain_gradient_start": "rgba(34, 74, 92, 0.35)",
+    "plain_gradient_end": "rgba(12, 24, 32, 0.15)",
+    "plain_stroke": "rgba(255,255,255,0.03)",
+    "plain_label": "rgba(180, 210, 220, 0.12)",
+    "plain_label_font": "10px sans-serif",
+    "plain_label_x": 8,
+    "plain_label_y": 16
+  }
+}
