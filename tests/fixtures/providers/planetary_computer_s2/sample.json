@@ -1,0 +1,40 @@
+{
+  "features": [
+    {
+      "id": "S2_A",
+      "properties": {
+        "datetime": "2024-06-14T14:00:00Z",
+        "eo:cloud_cover": 5
+      },
+      "assets": {
+        "visual": {
+          "href": "https://example.invalid/a.tif"
+        }
+      }
+    },
+    {
+      "id": "S2_B",
+      "properties": {
+        "datetime": "2024-06-16T14:00:00Z",
+        "eo:cloud_cover": 40
+      },
+      "assets": {
+        "visual": {
+          "href": "https://example.invalid/b.tif"
+        }
+      }
+    },
+    {
+      "id": "S2_C",
+      "properties": {
+        "datetime": "2024-06-20T14:00:00Z",
+        "eo:cloud_cover": 80
+      },
+      "assets": {
+        "visual": {
+          "href": "https://example.invalid/c.tif"
+        }
+      }
+    }
+  ]
+}

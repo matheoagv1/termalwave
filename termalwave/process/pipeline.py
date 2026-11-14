@@ -17,6 +17,7 @@ from termalwave.process.georef import (
     bounds_from_latlon_grids,
     read_geotransform,
 )
+from termalwave.process.ingest import run_ingest
 from termalwave.process.timeline import build_timeline_frames
 
 
@@ -234,11 +235,18 @@ def run_pipeline(
         mirror_dirs=mirrors,
     )
     timeline_index = build_timeline_frames(cfg, bounds, repo_root)
-    write_web_app_config(cfg, repo_root, timeline=timeline_index)
+    ingest = run_ingest(cfg, repo_root=repo_root, offline=offline)
+    write_web_app_config(
+        cfg,
+        repo_root,
+        timeline=timeline_index,
+        provenance=ingest["provenance"],
+    )
     return {
         "png": str(out_png),
         "sidecar": str(out_json),
         "source": str(h5_path),
         "timeline_layers": str(len(timeline_index["layers"])),
         "timeline_years": str(len(timeline_index["years"])),
+        "stats": ingest["stats_path"],
     }

@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-11-14T16:59:02.759044+00:00",
+  "offline": true,
+  "aoi": {
+    "west": -64.35,
+    "east": -64.15,
+    "south": -27.9,
+    "north": -27.7,
+    "name": "Santiago del Estero"
+  },
+  "period": {
+    "start": "2018-01-01",
+    "end": "2026-12-31"
+  },
+  "layers": {
+    "fires": {
+      "status": "ok",
+      "count": 4,
+      "from_cache": false,
+      "selected_sources": [
+        "firms_modis",
+        "firms_viirs_nrt",
+        "firms_viirs_sp"
+      ]
+    },
+    "weather": {
+      "status": "ok",
+      "count": 3,
+      "from_cache": false,
+      "selected_sources": [
+        "open_meteo_archive",
+        "open_meteo_archive+meteomatics"
+      ]
+    },
+    "optical": {
+      "status": "ok",
+      "count": 0,
+      "from_cache": false,
+      "selected_sources": []
+    },
+    "radar": {
+      "status": "ok",
+      "count": 2,
+      "from_cache": false,
+      "selected_sources": [
+        "earthdata_nisar_gcov"
+      ]
+    }
+  }
+}

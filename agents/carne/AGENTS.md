@@ -8,8 +8,8 @@ UI, UX y flujo. Prompt largo en ingles (`prompts/CARNE-AGENT.md`); UI visible en
 
 ## Toca
 
-- `web/` (MapLibre, timeline, panel, estilos)
-- Consume `brand/`
+- `web/` (MapLibre, timeline, panel Fuentes de datos, estilos)
+- Consume `brand/` y `app-config.json` → `provenance`
 - `comms/carne/{inbox,outbox,archive}/` + board via CLI
 
 ## No toca

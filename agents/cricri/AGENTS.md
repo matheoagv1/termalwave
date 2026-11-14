@@ -9,7 +9,7 @@ Tester de gusto + contexto por rubro + monigote.
 
 ## Toca
 
-- `web/src/context/`
+- `web/src/context/` (briefings por capa/fuente: FIRMS, Open-Meteo, NISAR, etc.; sin jurado)
 - `brand/monigote/` (depositar monigote; ver README ahi)
 - `comms/cricri/{inbox,outbox,archive}/` + board via CLI
 

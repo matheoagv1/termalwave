@@ -23,6 +23,14 @@ type LegacyConfig = {
   };
 };
 
+// Lectura por oficio: la escribe cricri en web/src/context/trades.json
+// como [{ "trade": "...", "text": "..." }]. Si no existe, la lista queda vacía.
+const tradeFiles = import.meta.glob<ContextEntry[]>("../context/trades.json", {
+  eager: true,
+  import: "default",
+});
+const bundledTrades: ContextEntry[] = Object.values(tradeFiles)[0] ?? [];
+
 export class ConfigError extends Error {
   code: string;
   constructor(code: string, message: string) {
@@ -72,7 +80,7 @@ export class ConfigProvider implements DataProvider {
     const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
     if (!cfg) throw new ConfigError("config", "No se pudo leer app-config.json");
     const ds = this.fromLegacy(cfg);
-    ds.context = (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? [];
+    ds.context = (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
     this.check(ds);
     this.ds = ds;
     return ds;

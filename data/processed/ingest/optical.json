@@ -1,0 +1,16 @@
+{
+  "kind": "optical",
+  "strategy": "least_cloudy_near_nisar",
+  "status": "ok",
+  "tried": [
+    {
+      "provider": "planetary_computer_s2",
+      "ok": true,
+      "count": 3
+    }
+  ],
+  "from_cache": false,
+  "records": [],
+  "selected_sources": [],
+  "count": 0
+}

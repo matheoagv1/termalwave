@@ -45,6 +45,7 @@ def write_web_app_config(
     cfg: dict[str, Any],
     repo_root: Path,
     timeline: dict[str, Any] | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> list[Path]:
     """Emit JSON consumed by the static web UI (no hardcoded UI values in TS)."""
     project = cfg.get("project", {})
@@ -79,6 +80,10 @@ def write_web_app_config(
             ],
             "frames": {},
         }
+    if provenance is not None:
+        payload["provenance"] = provenance
+        # Friendly alias for the web "Data sources" panel.
+        payload["data_sources"] = provenance.get("layers", {})
 
     written: list[Path] = []
     for key in ("web_config_out", "web_dist_config_out"):

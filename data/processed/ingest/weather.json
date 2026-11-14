@@ -1,0 +1,61 @@
+{
+  "kind": "weather",
+  "strategy": "first_available",
+  "status": "ok",
+  "tried": [
+    {
+      "provider": "open_meteo_archive",
+      "ok": true,
+      "count": 3
+    },
+    {
+      "provider": "meteomatics",
+      "ok": true,
+      "count": 2
+    }
+  ],
+  "from_cache": false,
+  "records": [
+    {
+      "day": "2024-06-14",
+      "temp_max_c": 28.1,
+      "temp_min_c": 14.0,
+      "precip_mm": 0.0,
+      "source": "open_meteo_archive",
+      "product": "open-meteo-archive",
+      "retrieved_at": "2026-11-14T16:59:02.756476+00:00",
+      "quality_rank": 10,
+      "license": "Open-Meteo / CC-BY",
+      "filled": false
+    },
+    {
+      "day": "2024-06-15",
+      "temp_max_c": 29.0,
+      "temp_min_c": 15.2,
+      "precip_mm": 1.0,
+      "source": "open_meteo_archive+meteomatics",
+      "product": "open-meteo-archive",
+      "retrieved_at": "2026-11-14T16:59:02.756558+00:00",
+      "quality_rank": 10,
+      "license": "Open-Meteo / CC-BY",
+      "filled": true
+    },
+    {
+      "day": "2024-06-16",
+      "temp_max_c": 27.0,
+      "temp_min_c": 13.5,
+      "precip_mm": 2.5,
+      "source": "open_meteo_archive+meteomatics",
+      "product": "open-meteo-archive",
+      "retrieved_at": "2026-11-14T16:59:02.756558+00:00",
+      "quality_rank": 10,
+      "license": "Open-Meteo / CC-BY",
+      "filled": true
+    }
+  ],
+  "selected_sources": [
+    "open_meteo_archive",
+    "open_meteo_archive+meteomatics"
+  ],
+  "count": 3
+}

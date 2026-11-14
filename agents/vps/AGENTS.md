@@ -4,8 +4,8 @@ Nucleo del repo en el servidor. Integra a `master`. Mantiene el board.
 
 ## Toca
 
-- `termalwave/`, `vendor/`, `scripts/` (incluye `scripts/comms.py`), `tests/`
-- `config/`, `data/`, `brand/`
+- `termalwave/` (pipeline, `providers/`, `merge.py`, ingest), `vendor/`, `scripts/`, `tests/`
+- `config/` (`apis.toml`, `secrets.local.toml` gitignored), `data/`, `brand/`
 - Scaffold de `web/` cuando haga falta
 - `docs/ARCHITECTURE.md`, `comms/STEERS.md`, `comms/board.toml`
 - `comms/vps/{inbox,outbox,archive}/` y notify a otros roles
