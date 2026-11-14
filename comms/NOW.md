@@ -1,40 +1,46 @@
-# NOW — carne-t010-globo
+# NOW — preview + github
 
-Updated: 2026-11-14 (UTC date). Hackathon: vibecode lean.
+Updated: 2026-11-14. Globo MapLibre en master. Preview Cloudflare + GitHub privado en curso.
 
-## Read this turn (and almost nothing else)
+## Read this turn
 
-1. This file (`comms/NOW.md`)
-2. `comms/board.toml` (open tasks only)
-3. New files in your `comms/<rol>/inbox/` (then archive them)
-4. `agents/<rol>/AGENTS.md` only if ownership is unclear
+1. This file
+2. `comms/board.toml` (open only)
+3. New inbox → archive
+4. Role AGENTS only if ownership unclear
 
-## Do not open unless blocked
+## Skip unless blocked
 
-- `comms/**/archive/`, `comms/board.done.toml`, `comms/STEERS.archive.md`
-- `references/`, `vendor/`, old prompts history, brand binaries
-- Full `AGENTS.md` jury tables (product rules already known)
+archives, board.done, STEERS.archive, references/, vendor/
 
-## Open tasks
+## North star
 
-- **T003** @cricri [open] Deposit monigote PNG in brand/monigote/
-- **T008** @cricri [open] Context copy for data sources / layers (no jury in UI)
-- **T011** @vps [open] dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts
-- **T012** @cricri [open] Lectura por oficio en web/src/context/trades.json
-- **T013** @carne [open] HUD 2D colapsable que no tape el globo; retirar escena DOM del arranque
+Globo 3D primero. UI 2D = controles. Capas drapadas.
 
-## Focus by role
+## Done
 
-- **vps**: pipeline/providers/config/data; keep board/NOW fresh; merge master
-- **carne**: React `web/` UX, brand wire, Fuentes panel from `provenance`
-- **cricri**: `brand/monigote/`, `web/src/context/`, gusto notes via notify
+- **T010** carne MapLibreScene → merged `master` (01163ca)
+
+## Open
+
+- **T014** @vps [in_progress] Workers preview + login/registro (`preview/`)
+- **T013** @vps [blocked] GitHub private (falta `gh auth`)
+- **T011** @vps dataset.json
+- **T003/T008/T012** @cricri (sin commits aun en worktree)
+
+## Cricri status
+
+Worktree `work/cricri` al dia con master. Sin outbox ni PNG/trades nuevos. Inbox con foco globe-first + status-check.
+
+## Deploy notes (vps)
+
+1. Usuario aprueba GitHub device login → `gh repo create` private → push.
+2. `CLOUDFLARE_API_TOKEN` (Workers+D1) → `preview/README.md` → D1 + secret invite + `wrangler deploy`.
+3. Luego conectar repo a Workers Builds para previews por push.
 
 ## Commands
 
 ```bash
 python3 scripts/comms.py status
-python3 scripts/comms.py notify --from <rol> --to <rol|todos> --topic … --body '…'
-python3 scripts/comms.py task set T00N --status done
-python3 scripts/comms.py archive --name <inbox-file.md>
-python3 scripts/comms.py milestone --label <next-cut>
+python3 scripts/comms.py notify --from vps --to … --topic … --body '…'
 ```
