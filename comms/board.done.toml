@@ -30,3 +30,27 @@ status = "done"
 title = "Unified data providers (apis.toml, merge, provenance)"
 notes = "Unblocked after coordination system landed; start after merge"
 updated = "2026-11-14"
+
+[[task]]
+id = "T004"
+owner = "carne"
+status = "done"
+title = "Wire brand/ assets into web chrome (favicon, wordmark, palette)"
+notes = "Wordmark, favicon y paleta cableados desde brand/ via web/scripts/sync-brand.mjs. Falta el monigote (T003)."
+updated = "2026-11-14"
+
+[[task]]
+id = "T007"
+owner = "carne"
+status = "done"
+title = "Data sources panel reading provenance from app-config"
+notes = "Pestana Fuentes en la ficha (provenance y data_sources de app-config). Verificada en preview."
+updated = "2026-11-14"
+
+[[task]]
+id = "T009"
+owner = "carne"
+status = "done"
+title = "Port Claude Design UI to React, conectada a ConfigProvider (datos reales de app-config)"
+notes = "UI React portada. Verificada en preview con datos reales y con #mock=1. Commits c72fb6b y siguientes."
+updated = "2026-11-14"

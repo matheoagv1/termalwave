@@ -27,3 +27,19 @@ Bandejas: `comms/<rol>/{inbox,outbox,archive}/`. Siguiente foco de producto: T00
 4. Carne: cablear `brand/` en la UI cuando pueda; panel Fuentes espera provenance del VPS.
 
 Regla: no pegar secretos en `comms/`, prompts, ni board.
+
+
+---
+# archived at milestone post-carne-merge (20261114-1706)
+
+# Steers — current only
+
+Entradas nuevas arriba. Historial: `STEERS.archive.md` (no leer en turnos normales).
+
+## 2026-11-14 — milestone `day1-lean`
+
+1. Context lean: agents read `comms/NOW.md` first. Run `milestone` after each big cut.
+2. Open work is only what is on `board.toml` (done tasks live in `board.done.toml`).
+3. Cricri: monigote + context fuentes. Carne: brand + Fuentes React. VPS: merge/unblock.
+
+No secrets in comms.
