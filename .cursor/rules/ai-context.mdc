@@ -6,8 +6,8 @@ alwaysApply: true
 
 # Agent product context
 
+- Read `comms/STEERS.md` + `comms/board.toml` + role inbox every turn (or run `python3 scripts/comms.py status`).
 - Read and follow root `AGENTS.md` (global: challenge, jury profiling, rules), then `agents/<role>/AGENTS.md`.
-- Check `comms/` inboxes relevant to your role every turn.
 - Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization for a broad audience; default AOI is Santiago del Estero, fully config-driven for any location.
 - Design the globe + side controls, layers-by-job, and portable NISAR pipeline so the product stands on its own for the jury archetypes listed in `AGENTS.md` — without naming them in the UI.
 - User-facing copy: humanizer ES-AR-SGO only.

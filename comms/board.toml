@@ -1,0 +1,64 @@
+# Shared task board. Agents + steers update via: python3 scripts/comms.py task …
+# status: open | in_progress | blocked | done | cancelled
+
+[[task]]
+id = "T001"
+owner = "vps"
+status = "done"
+title = "MapLibre + timeline scaffold on master"
+updated = "2026-11-14"
+
+[[task]]
+id = "T002"
+owner = "vps"
+status = "done"
+title = "Global AGENTS.md + brand/ kit"
+updated = "2026-11-14"
+
+[[task]]
+id = "T003"
+owner = "cricri"
+status = "open"
+title = "Deposit monigote PNG in brand/monigote/"
+notes = "See brand/monigote/README.md and inbox monigote-brand"
+updated = "2026-11-14"
+
+[[task]]
+id = "T004"
+owner = "carne"
+status = "open"
+title = "Wire brand/ assets into web chrome (favicon, wordmark, palette)"
+notes = "Consume brand/; monigote after T003"
+updated = "2026-11-14"
+
+[[task]]
+id = "T005"
+owner = "vps"
+status = "done"
+title = "Agent coordination board + hooks (this system)"
+notes = "comms board/STEERS/CLI/hooks"
+updated = "2026-11-14"
+
+[[task]]
+id = "T006"
+owner = "vps"
+status = "open"
+title = "Unified data providers (apis.toml, merge, provenance)"
+notes = "Unblocked after coordination system landed; start after merge"
+updated = "2026-11-14"
+
+[[task]]
+id = "T007"
+owner = "carne"
+status = "blocked"
+title = "Data sources panel reading provenance from app-config"
+blocked_by = ["T006"]
+updated = "2026-11-14"
+
+[[task]]
+id = "T008"
+owner = "cricri"
+status = "blocked"
+title = "Context copy for data sources / layers (no jury in UI)"
+blocked_by = ["T006", "T007"]
+updated = "2026-11-14"
