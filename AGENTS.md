@@ -7,23 +7,24 @@ Un solo repo. Ruta VPS: `/srv/sites/nasaspaceappchallenge`.
 | vps | Farid / Matheo (servidor) | `master` | `/srv/sites/nasaspaceappchallenge` |
 | cricri | Cristian | `work/cricri` | `/srv/sites/nasaspaceappchallenge-cricri` |
 | carne | Emir | `work/carne` | `/srv/sites/nasaspaceappchallenge-carne` |
+| anto | Anto | `work/anto` | `/srv/sites/nasaspaceappchallenge-anto` |
 
 No hay un segundo repo. Mergean a `master` cuando el trabajo del rol esta listo; el VPS integra.
 
-### Coordinacion (obligatorio cada turno) — lean
+### Coordinacion (obligatorio cada turno) — hub next
 
-**Leer poco.** Fuente unica: harness + board.
+**Leer poco.** Fuente unica: `twd` + hub UI (`http://…:7443`).
 
-1. `python3 scripts/comms.py pulse` (o hook briefing)
-2. Si actuás: [`comms/NOW.md`](comms/NOW.md) + tu task (`paths` / `seat`)
-3. Inbox nuevo → `archive`
+1. `twd whoami` · `twd sessions` · `twd wakes`
+2. Si actuás: mensajes / `twd events` de tu sesión; responder con `twd send`
+3. Abrir chat: `twd open --title "…" --agent <rol>` desde el worktree
 4. `agents/<tu-rol>/AGENTS.md` solo si dudas ownership
 
-**Idle/standby:** stop. No explores. **No leer:** archives, `board.done.toml`, `STEERS.archive.md`, `references/`, `vendor/`.
+**Idle / sin wakes:** stop. No explores. **No leer:** archives, `board.done.toml`, `STEERS.archive.md`, `references/`, `vendor/`.
 
-CLI: `pulse|seat|check|status|notify|task|archive|milestone|link-worktrees` ([`comms/README.md`](comms/README.md)).
+**Legacy muerto:** no uses `tw`, `tw pulse`, `scripts/comms.py`, ni `.tw/`. Config: `.twd/config.json` (gitignored). Guía: `docs/handoff/hub-next-vps-matheo.txt`.
 
-Notify ≤280. `status` = solo tuyas (`--all` si hace falta). Tras corte: `milestone --label …`.
+Sin board de tasks/pins: el estado se reporta por mensajes. LAND → FF en master ≤10 min → DEPLOY.
 
 `references/` **no** es documentacion de agentes. Solo drops de codigo.
 

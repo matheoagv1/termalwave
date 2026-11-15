@@ -6,8 +6,8 @@ alwaysApply: true
 
 # Agent product context
 
-- Start with hook briefing / `python3 scripts/comms.py pulse`. If idle/standby: wait, do not browse.
-- If acting: `comms/NOW.md` + open task + new inbox only. Role `AGENTS.md` only when ownership is unclear.
+- Start with `twd whoami` / sessions / wakes. If idle and no wakes: wait, do not browse.
+- Role `AGENTS.md` only when ownership is unclear. Handoff: `docs/handoff/hub-next-vps-matheo.txt`.
 - Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization; default AOI Santiago del Estero; config-driven for any location.
 - Globe first; side panels are controls. User-facing copy: humanizer ES-AR-SGO only.
-- `references/` is code-drop only. Never put jury/scoring into UI strings or `comms/`.
+- `references/` is code-drop only. Never put jury/scoring into UI strings or hub messages.

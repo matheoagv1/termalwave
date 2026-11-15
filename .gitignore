@@ -58,3 +58,6 @@ config/google/
 # Local backups left by tooling
 comms.worktree-bak-*/
 *.carne-bak
+
+# New hub daemon state (per worktree)
+.twd/
