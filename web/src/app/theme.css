@@ -254,6 +254,8 @@ body {
   max-height: max(10rem, calc(100dvh - 84px - var(--tw-pad-b, 0px)));
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-color: var(--line2) var(--panel-solid);
+  scrollbar-width: thin;
 }
 
 [data-tw-theme] .maplibregl-ctrl-attrib,
