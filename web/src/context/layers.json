@@ -1,9 +1,9 @@
 {
   "capas": {
-    "radar": "Acá ves la respuesta del radar a la superficie. Si cambia entre fechas, puede ser humedad, vegetación, rugosidad o el ángulo de la pasada. Una sola capa no alcanza para señalar la causa.",
-    "suelo": "La respuesta del radar puede aportar información sobre las condiciones superficiales del suelo. Revisá la fuente, la unidad y la validación de esta capa; no mide directamente el agua disponible para las raíces.",
-    "contaminacion": "Es un índice de apoyo, no un ensayo de laboratorio. Revisá la fuente y el método. NISAR no mide concentración de contaminantes ni confirma contaminación de agua o suelo.",
-    "incendios": "Los focos de calor son detecciones de actividad térmica en el momento de la observación. Un foco no equivale a un incendio confirmado ni mide por sí solo la superficie quemada. Revisá la fecha, la cobertura y los reportes locales."
+    "radar": "El radar NISAR registra la señal que vuelve de la superficie, llamada retrodispersión o backscatter. Comparar fechas ayuda a observar cambios. La humedad, la vegetación, la rugosidad y la geometría de observación pueden influir en la señal; hace falta contrastar otras fuentes para interpretar la causa.",
+    "suelo": "La imagen de ejemplo no es una medición de humedad del suelo. Para estimar humedad se necesitan datos procesados, un método definido y validación con mediciones de campo. No muestra el agua disponible para las raíces.",
+    "contaminacion": "Es un índice de apoyo, no un análisis de laboratorio. Revisá la fuente y el método. NISAR no mide la concentración de contaminantes ni confirma por sí solo contaminación del agua o del suelo.",
+    "incendios": "Los focos térmicos indican señales de calor detectadas por satélite. No todos son incendios, y la ausencia de un foco no demuestra que no haya fuego. Compará la fecha y la cobertura con información del lugar y avisos oficiales."
   },
   "fuentes": {
     "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisá la fecha, la colección y si esa observación ya está validada.",
