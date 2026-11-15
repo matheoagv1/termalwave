@@ -1,0 +1,1092 @@
+## 1. Resumen ejecutivo y hallazgos principales
+
+TermalWave tiene una base razonable para desarrollar seguimiento ambiental y, después de validación, pronósticos. Según los documentos, todavía no dispone de una cadena científica que convierta los productos satelitales buscados en las capas ambientales que muestra.
+
+He leído completos ambos adjuntos. Distingo en esta revisión:
+
+- **D: documentado** en los archivos, sin inspección directa del repositorio.
+- **V: verificado** mediante documentación externa o consultas realizadas.
+- **P: propuesto**, pendiente de implementación y evaluación.
+
+Los hallazgos principales son estos:
+
+1. **La búsqueda de NISAR necesita corregirse.** La consulta pública de colecciones CMR con `short_name=NISAR_L2_GCOV` ha devuelto cero coincidencias. Las colecciones actuales incluyen sufijos de versión y distinguen madurez. Al consultar sus identificadores, he encontrado registros que intersectan el AOI documentado:
+
+   | Colección | Concept ID | Registros encontrados |
+   |---|---|---:|
+   | `NISAR_L2_GCOV_V1` | `C3622241360-ASF` | 3 |
+   | `NISAR_L2_GCOV_PROVISIONAL_V1` | `C2854338529-ASF` | 17 |
+   | `NISAR_L2_GCOV_BETA_V1` | `C3622214170-ASF` | 6 |
+
+   Esto verifica metadatos de catálogo. No he descargado esos HDF5 ni comprobado sus píxeles, polarizaciones y máscaras. La diferencia de identificadores ofrece una explicación comprobable del resultado vacío actual, aunque no demuestra por sí sola la causa exacta de T022. [Consulta reproducible de GCOV validado](https://cmr.earthdata.nasa.gov/search/granules.json?collection_concept_id=C3622241360-ASF&bounding_box=-64.35%2C-27.90%2C-64.15%2C-27.70&temporal=2018-01-01T00%3A00%3A00Z%2C2026-11-15T00%3A00%3A00Z&page_size=100).
+
+2. **GCOV, RSLC y GUNW requieren tratamientos diferentes.** GCOV ofrece retrodispersión y covarianzas polarimétricas geocodificadas. RSLC conserva señal compleja en geometría radar. GUNW contiene resultados interferométricos entre fechas. El lector local descrito no es un lector científico de GCOV. [ASF: productos NISAR](https://nisar-docs.asf.alaska.edu/products-overview/).
+
+3. **Las imágenes actuales siguen siendo sintéticas.** Tener meteorología real, metadatos de escenas o puntos FIRMS no convierte en real el PNG del radar, del suelo o de incendios. La procedencia debe acompañar cada activo y cada fecha.
+
+4. **La primera entrega científica debería priorizar retrodispersión, vegetación, sequía climática, agua y fuego.** Humedad volumétrica, rendimiento, biomasa, salinidad y calidad del agua requieren más calibración local.
+
+5. **La fusión debe demostrar su aporte.** Hay que comparar las fuentes individuales y combinadas sobre las mismas muestras, con años y zonas excluidos del entrenamiento. Añadir sensores no garantiza menor error.
+
+6. **El AOI actual es local.** Sus límites abarcan aproximadamente 20 × 22 km. No representa por sí solo toda Santiago del Estero. Una evaluación provincial necesita distintos ambientes, manejos y cuencas aportantes.
+
+Esta investigación propone métodos y una arquitectura. No presenta mapas ambientales calculados para Santiago ni precisiones alcanzadas por TermalWave.
+
+---
+
+## 2. Inventario de fuentes y estado actual
+
+### 2.1. Discrepancias entre los documentos y sus implicaciones
+
+| Tema | Estado documentado | Interpretación |
+|---|---|---|
+| Pipeline NISAR | El contexto general habla de lectura de gránulos; el handoff identifica un fixture y rutas RSLC | La descripción general expresa la intención. El detalle no acredita procesamiento real de GCOV |
+| Resultado radar | T022: cero gránulos; `stats.json`: dos registros offline | Son corridas distintas. El fixture no describe disponibilidad real |
+| Línea de tiempo | Cinco años con imágenes sintéticas | No son observaciones NISAR ni una serie válida para calibrar tendencias |
+| Georreferencia | El AOI puede sustituir los límites del archivo | Debe recortarse o reproyectarse. Cambiar límites sin transformar píxeles produce ubicaciones falsas |
+| Sentinel-2 | Una escena seleccionada, sin capa propia | Seleccionar metadatos no equivale a disponer de reflectancias analíticas |
+| Incendios | API real sin detecciones; PNG sintético | Hay que separar detecciones recibidas de la representación de demostración |
+| Meteorología | Se atribuye a la API rechazo de rangos plurianuales | Una consulta ERA5 de 2018–2020 ha respondido con 1.096 fechas. Dividir solicitudes puede ser conveniente, pero no es una limitación universal comprobada |
+| Categorías y presets | Definidos en TOML, no exportados | La interfaz todavía no recibe el contrato necesario |
+| Contaminación y suelo | Índices sintéticos | No justifican concentraciones, humedad volumétrica ni salinidad |
+| Cobertura global | Se propone envolver el globo | Teselas globales no implican mediciones globales |
+
+Las instrucciones operativas de los adjuntos, como desplegar o modificar ramas, se han tratado como contexto y no se han ejecutado.
+
+### 2.2. Disponibilidad NISAR comprobada
+
+Las consultas se han realizado con:
+
+- AOI: `-64.35,-27.90,-64.15,-27.70`.
+- Intervalo: `2018-01-01T00:00:00Z` a `2026-11-15T00:00:00Z`.
+- Consulta por `collection_concept_id`.
+- Fecha de comprobación: 14 de noviembre de 2026 en Argentina, 15 de noviembre UTC.
+
+| Madurez | Fechas de adquisición presentes en los registros encontrados |
+|---|---|
+| Validada | 21/10/2026–02/11/2026 |
+| Provisional | 23/06/2026–13/10/2026 |
+| Beta | 19/11/2025–29/12/2025 |
+
+Los conteos pueden cambiar por nuevas publicaciones o reprocesamientos. Tampoco son necesariamente una cantidad equivalente de observaciones independientes y utilizables.
+
+ASF informa que las colecciones validadas L0–L2 se han publicado el 6 de noviembre de 2026 para adquisiciones desde el 21 de octubre. La colección de humedad L3 SME2 todavía no dispone de versión validada. No debe deducirse cobertura efectiva a partir de la fecha inicial general de una colección. [ASF: disponibilidad](https://nisar-docs.asf.alaska.edu/availability-overview/), [SME2](https://nisar-docs.asf.alaska.edu/sme2/).
+
+### 2.3. Fuentes centrales
+
+La grilla publicada, la resolución efectiva y la frecuencia de observación útil son conceptos diferentes.
+
+| Fuente y producto | Variables y unidades | Escala espacial y temporal | Historia, acceso y restricciones | Estado en TermalWave y preparación |
+|---|---|---|---|---|
+| NISAR LSAR L2 GCOV | Diagonales: potencia γ⁰ adimensional. Otros términos complejos cuando el modo los incluye. Máscaras, geometría y número de looks | Espaciado según ancho de banda: 20 MHz→20 m, 40→10 m, 77→20 m, 5→80 m. Repetición nominal de 12 días por trayectoria | Misión desde 2025. Colecciones por madurez. CMR/ASF para búsqueda; Earthdata para descarga | **D: parcial/sintético.** Descargar HDF5; leer esquema, canales, CRS y QA. GCOV ya tiene corrección radiométrica del terreno |
+| Sentinel-2 MSI L2A, `sentinel-2-l2a` | Reflectancia BOA adimensional; clasificación SCL. No tiene térmico; L2A no incluye B10 | B02/B03/B04/B08: 10 m; red-edge, B8A y SWIR: 20 m; B01/B09: 60 m. Revisita nominal cercana a 5 días, limitada por nubes | Extensión del catálogo desde 2015; cobertura efectiva por escena. STAC público; activos con firma SAS cuando corresponda | **D: selección de escena.** Descargar bandas/QA, aplicar escala y offset correctos, enmascarar por píxel y armonizar resolución |
+| FIRMS VIIRS SNPP SP/NRT | Posición, hora, temperaturas de brillo K, FRP MW, confianza y huella | Píxel nominal 375 m, variable fuera del nadir. Pasadas discontinuas | Desde enero de 2012; disponibilidad por producto. MAP_KEY. Area API: 1–5 días por solicitud y 5.000 transacciones/10 min según documentación consultada | **D: adaptadores reales; imagen sintética.** Conservar observaciones, versión, sensor y calidad |
+| FIRMS MODIS SP | Detecciones térmicas, FRP MW, temperatura K y confianza | Píxel nominal 1 km, variable. Pasadas Terra/Aqua | Terra desde 2000, Aqua desde 2002. Archivo y disponibilidad consultables | **D: integrado parcialmente.** No equiparar confianza MODIS y VIIRS ni sumar pasadas distintas como potencia simultánea |
+| Open-Meteo Historical Weather | Actualmente Tmax/Tmin °C y P mm/día. Puede aportar otras variables según modelo | ERA5 0,25°; ERA5-Land 0,1°; IFS aproximadamente 9 km. Horario/agregados diarios | ERA5 desde 1940; ERA5-Land desde 1950; IFS desde 2017. API gratuita no comercial con cuotas y atribución | **D: ingesta parcial real.** Fijar modelo, unidades, zona horaria y revisión. Es reanálisis/análisis, no una estación |
+| Meteomatics | Producto y contrato de variables no identificados | No verificado para la cuenta | Credenciales y licencia según contrato | **D: respaldo configurado.** No intercambiar silenciosamente sus series con ERA5 |
+| Copernicus GLO-90 vía Open-Meteo Elevation | Altura superficial m | Grilla nominal 90 m. Producto esencialmente estático | Principalmente adquisiciones 2011–2015; API puntual | **D: configurado.** Para hidrología hace falta raster completo, datum y QA. Es DSM, puede incluir vegetación/construcciones |
+| SRTM 1 arc-second vía OpenTopoData | Altura m, datum EGM96 | Aproximadamente 30 m; febrero de 2000 | API puntual con límites; raster vía USGS/Earthdata | **D: respaldo.** Homogeneizar datum frente a Copernicus EGM2008 |
+
+Documentación: [GCOV](https://nisar-docs.asf.alaska.edu/gcov/), [especificación GCOV Rev F](https://cumulus.asf.earthdatacloud.nasa.gov/PUBLIC/DATA/NISAR/NISAR_D-102274_RevF_NASA_SDS_Product_Specification_L2_GCOV_w-esigs.pdf), [Sentinel-2](https://documentation.dataspace.copernicus.eu/Data/SentinelMissions/Sentinel2.html), [procesamiento S2](https://sentiwiki.copernicus.eu/web/s2-products), [FIRMS](https://firms.modaps.eosdis.nasa.gov/api/area/), [atributos VIIRS](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html), [Open-Meteo](https://open-meteo.com/en/docs/historical-weather-api), [condiciones de uso](https://open-meteo.com/en/terms), [Copernicus DEM](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM), [SRTM](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm-1).
+
+### 2.4. Fuentes adicionales propuestas
+
+Todas estas incorporaciones son **P**. Su disponibilidad general no confirma cobertura útil en cada parcela.
+
+| Producto | Variables y escala | Historia y acceso | Utilidad y limitación |
+|---|---|---|---|
+| CHIRPS v3 Final | P mm; 0,05°; pentadal/mensual y diarios derivados | Desde 1981 para productos base; descarga pública UCSB | Climatología de sequía. La variante diaria `rnl` usa ERA5 y `sat` usa IMERG: sus errores no son independientes de esas fuentes. [CHC](https://www.chc.ucsb.edu/data/chirps3) |
+| GPM IMERG V07 Early/Final | P mm/h; 0,1°; 30 min | Desde junio de 2000; NASA/Earthdata/PPS según ruta | Lluvia de eventos. Integrar tasas por duración; distinguir baja latencia de versión Final. [IMERG](https://gpm.nasa.gov/data/imerg) |
+| SMAP `SPL3SMP_E` v6 | Humedad superficial m³/m³; grilla 9 km, huella efectiva de decenas de km; compuesto diario | Desde marzo de 2015; NSIDC/Earthdata | Contexto regional y asimilación. No representa humedad independiente a 9 km ni a 20 m. [Producto](https://nsidc.org/data/spl3smp_e/versions/6) |
+| SMAP `SPL4SMGP` v8 | Humedad superficial/radicular modelada; 9 km, 3 h | Desde 2015; NSIDC/Earthdata | Estado del suelo mediante asimilación. No es una referencia independiente de todos sus insumos. [Producto](https://nsidc.org/data/spl4smgp/versions/8) |
+| NISAR SME2 provisional | Humedad m³/m³; grilla 200 m, con agregación mayor para ciertos modos | ASF/Earthdata; cobertura local pendiente | Alternativa a una inversión propia. Todavía no hay colección validada. [SME2](https://nisar-docs.asf.alaska.edu/sme2/) |
+| Sentinel-1 IW GRD HR/SLC | Retrodispersión o señal compleja. GRD HR: resolución aproximada 20×22 m, píxel 10 m | Desde 2014; ASF/CDSE. Cadencia dependiente de constelación y adquisiciones | Historia SAR y agua con nubes. Banda C no sustituye físicamente a L. [SentiWiki](https://sentiwiki.copernicus.eu/web/s1-products) |
+| Landsat C2 Level-2 SR/ST | Reflectancia 30 m; temperatura K en grilla 30 m, con resolución térmica nativa más gruesa | Desde 1982 según misión/producto; USGS y catálogos públicos | Historia óptica y calor. L8/L9 tienen térmico nativo de 100 m; remuestrear no crea detalle. [USGS ST](https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature) |
+| MOD13Q1.061 | NDVI/EVI; 250 m, 16 días | Desde 2000; Earthdata | Historia regional vegetal; QA y escala obligatorias. [Producto](https://doi.org/10.5067/MODIS/MOD13Q1.061) |
+| MOD11A1.061 | Temperatura superficial K; 1 km, diaria | Desde 2000; Earthdata | Calor superficial bajo condiciones despejadas. [Producto](https://doi.org/10.5067/MODIS/MOD11A1.061) |
+| MCD64A1.061 | Fecha de quema/QA; 500 m, mensual | Desde 2000 según archivo; Earthdata | Comparación regional de quemas; omite eventos pequeños. [Manual](https://www.earthdata.nasa.gov/s3fs-public/2025-04/MCD64_User_Guide_V61.pdf) |
+| JRC Global Surface Water v1.4 | Agua, ocurrencia y estacionalidad; 30 m, historia mensual | 1984–2021; descarga pública. Extensiones posteriores por versión | Agua permanente/estacional. “Sin observación” no significa seco. [JRC](https://global-surface-water.appspot.com/download) |
+| MapBiomas Argentina, colección 3 | Cobertura/uso, transiciones; 30 m anual | 1985–2025; descarga pública con atribución | Estratificación e historia. Es una clasificación, no verdad de campo. [Colección 3](https://argentina.mapbiomas.org/2026/10/05/argentina-tiene-mas-superficie-agropecuaria-que-bosques-los-nuevos-datos-de-mapbiomas-muestran-como-cambio-el-territorio-desde-1985/) |
+| SoilGrids 2.0 y cartas INTA | Textura, carbono, densidad y otras propiedades; SoilGrids 250 m y seis intervalos de profundidad | ISRIC/INTA; acceso y escala local por inventariar | Parámetros previos, no humedad o salinidad actual. Conservar incertidumbre. [ISRIC](https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_01.html) |
+| GEDI L2A/L4A v3 | Alturas m; biomasa Mg/ha y error; huellas de unos 25 m | Desde 2019, con interrupción 2023–2024; Earthdata/ORNL DAAC | Estructura y calibración forestal. Muestreo discontinuo; L4A ya es inferencia. [GEDI](https://daac.ornl.gov/GEDI/guides/GEDI_L4A_AGB_Density_V3.html) |
+| NISAR GUNW | Fase rad, coherencia, correcciones; fase a 80 m, otras capas a 20 m | ASF/Earthdata; pares y cobertura local pendientes | Deformación LOS. No se obtiene leyendo GCOV. [GUNW](https://nisar-docs.asf.alaska.edu/gunw/) |
+| SMN, INTA, autoridades hídricas y campo | P/T, viento, humedad, nivel m, caudal m³/s, suelos y manejo | Estaciones/campañas; acceso, historia y calidad por inventariar | Validación y forzantes locales. [SMN](https://www.datos.gob.ar/dataset/smn_2), [SEPA](https://www.argentina.gob.ar/noticias/el-inta-suma-mapas-de-excedentes-hidricos-la-plataforma-sepa-0), [INA](https://alerta.ina.gob.ar/a5/map-viewer) |
+| ECMWF IFS ENS | Meteorología futura por conjuntos; grillas distribuidas de 0,25°/0,1° según producto | Archivo operativo reciente; historia/reforecast por comprobar | Forzantes hasta 15 días para determinados ciclos. Conservar emisión y miembro. [Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data) |
+| CAMS global | Composición atmosférica modelada; escala regional | ADS/CAMS; colección y condiciones por fijar | Humo y PM2,5 regional. Pronósticos hasta cinco días; no detalle barrial. [CAMS](https://atmosphere.copernicus.eu/configuration-daily-global-analyses-and-forecasts) |
+
+SAOCOM merece una evaluación posterior por su banda L y pertinencia regional. No he verificado aquí un producto descargable concreto, con condiciones y cobertura suficientes para convertirlo en dependencia de la propuesta.
+
+### 2.5. Mapas de fondo
+
+GIBS true color, Blue Marble, EOX `s2cloudless-2025`, CARTO y OpenFreeMap son contexto visual en el estado documentado.
+
+Sus teselas coloreadas no conservan necesariamente reflectancias, máscaras, fechas o unidades analíticas. El zoom no equivale a resolución científica. Terrarium y Cesium aportan relieve visual; los geocodificadores localizan lugares.
+
+Las restricciones de EOX citadas en el handoff deben comprobarse antes de almacenar o redistribuir teselas. Ninguno de estos mapas demuestra humedad, sequía o contaminación.
+
+---
+
+## 3. Tabla comparativa de las características investigadas
+
+**A:** primera implementación científica. **B:** requiere calibración o historia adicional. **C:** investigación especializada. Estas prioridades no expresan precisión.
+
+| Ficha | Pregunta y usuarios | Resultado | Qué añade la combinación | Prioridad |
+|---|---|---|---|---|
+| F01 | ¿Dónde cambia la respuesta radar? Ambiente | γ⁰ y cambio dB | Óptico, lluvia y cobertura contextualizan el cambio | A |
+| F02 | ¿Hay déficit climático? Agro/agua | SPI/SPEI | Precipitación y demanda atmosférica | A |
+| F03 | ¿Hay estrés vegetal compatible con sequía? Productores | Índices/anomalías y diagnóstico calibrado | Clima, suelo y radar ayudan a distinguir causas y retrasos | A/B |
+| F04 | ¿Cuánta agua contiene el suelo superficial? Agro/hidrología | Humedad m³/m³ o índice relativo | Radar, vegetación, suelos y SMAP | B |
+| F05 | ¿Se aproxima el agotamiento radicular? Regantes | Agotamiento mm y escenarios de riego | Suelo, cultivo, lluvia, ET₀ y manejo | B |
+| F06 | ¿Dónde hay agua o inundación? Emergencias | Máscara/probabilidad, ha e hidroperíodo | Óptico/SAR, relieve y niveles | A/B |
+| F07 | ¿Hay anomalías térmicas compatibles con fuego? Emergencias | Detecciones y FRP MW | Meteorología, combustible y exposición | A |
+| F08 | ¿Qué se ha quemado y cómo evoluciona? Ambiente | NBR/dNBR, área y recuperación | Focos, óptico, radar y controles | A/B |
+| F09 | ¿Hay cambio de cobertura/desmonte? Bosques | Clases, probabilidades y áreas | Respuesta espectral, estructura y fenología | A/B |
+| F10 | ¿Cuándo crece y cuánto produce la vegetación? Agro | Fenología y rendimiento calibrado | Temperatura, agua, índices y manejo | A/B |
+| F11 | ¿Cuál es la biomasa leñosa? Bosques/carbono | Mg/ha y Mg C/ha | Banda L, GEDI y parcelas | B/C |
+| F12 | ¿Hay exposición a erosión o deterioro persistente? Conservación | Cobertura, tendencias y pérdida modelada | Vegetación, lluvia, suelo y relieve | B |
+| F13 | ¿Dónde muestrear salinidad? Regantes | Probabilidad; ECe solo calibrada | Reflectancia, humedad, drenaje y laboratorio | C |
+| F14 | ¿Dónde hay calor superficial anómalo? Agro/municipios | LST y anomalía térmica | Térmico, cobertura y humedad | B |
+| F15 | ¿Cambian turbidez y sedimentos? Agua | Turbidez calibrada | Óptico acuático, lluvia y caudal | C |
+| F16 | ¿Hay riesgo de humo? Municipios | Concentración regional modelada | Fuego, transporte y monitores | C |
+| F17 | ¿Se deforma el terreno? Infraestructura | Desplazamiento LOS | GUNW, GNSS e hidrogeología | C |
+
+También pueden derivarse fragmentación del hábitat, duración del anegamiento y exposición de caminos o población. Requieren cartografía adecuada y no equivalen a biodiversidad, daño o pérdidas económicas observadas.
+
+---
+
+## 4. Fichas técnicas con ecuaciones y métodos
+
+### 4.0. Reglas comunes
+
+Estas reglas se aplican a todas las fichas:
+
+1. Conservar originales, colección, versión, checksum, adquisición y publicación.
+2. Aplicar escala, offset, nodata y calidad antes de calcular índices.
+3. Usar una proyección métrica apropiada; UTM 20S es una opción para el AOI actual. Web Mercator queda para visualización.
+4. Recortar y reproyectar con geometría real; nunca sustituirla por los límites deseados.
+5. Trabajar a la resolución de la pregunta. Repetir ERA5 en píxeles de 20 m no crea información meteorológica fina.
+6. Promediar potencia radar en escala lineal; convertir después a dB. Remuestrear clases y máscaras con reglas categóricas.
+7. Registrar separación temporal y antigüedad. Dieciséis días pueden abarcar lluvia, cosecha o incendio.
+8. Mantener faltantes. No transformarlos en cero ni interpolar automáticamente a través de eventos.
+9. Separar órbitas, polarizaciones y versiones de procesamiento.
+
+La media de una variable intensiva sobre una unidad espacial se calcula como:
+
+\[
+\bar x_A=\frac{\sum_i a_i m_i x_i}{\sum_i a_i m_i},
+\qquad
+c_A=\frac{\sum_i a_i m_i}{\sum_i a_i}.
+\]
+
+\(a_i\) es área de intersección en m²; \(m_i\) indica validez; \(c_A\) es fracción válida. Si no hay área válida, no hay resultado. Una media sobre la parte despejada puede estar sesgada si las nubes ocultan sistemáticamente zonas distintas.
+
+Para combinar estimaciones comparables de **la misma magnitud**:
+
+\[
+\hat x=\mathbf w^T\mathbf x,\qquad
+\mathbf w=\frac{\Sigma^{-1}\mathbf1}{\mathbf1^T\Sigma^{-1}\mathbf1}.
+\]
+
+\(\Sigma\) es covarianza de errores. Esta combinación supone estimaciones sin sesgo y soporte compatible. No sirve para sumar lluvia, NDVI y radar.
+
+Para \(y=f(\mathbf x)\), una aproximación de incertidumbre es:
+
+\[
+\operatorname{Var}(y)\approx J\Sigma J^T,
+\qquad J=\frac{\partial f}{\partial\mathbf x}.
+\]
+
+En relaciones no lineales o umbrales conviene propagación Monte Carlo. No se supondrán errores independientes cuando los productos compartan insumos.
+
+### F01. Retrodispersión y cambio de superficie
+
+GCOV contiene términos como HHHH o HVHV cuando existen esos canales. El lector debe enumerarlos y verificar frecuencia, modo y flags. No puede presuponer HH/HV ni una matriz polarimétrica completa.
+
+Para una polarización disponible \(p\):
+
+\[
+B_{p,t}=10\log_{10}(\gamma^0_{p,t}),
+\qquad
+\Delta B_p=10\log_{10}
+\left(\frac{\gamma^0_{p,t_2}}{\gamma^0_{p,t_1}}\right).
+\]
+
+\(\gamma^0\) es potencia normalizada adimensional y positiva; \(B,\Delta B\) están en dB. Una diagonal GCOV ya es potencia: no debe elevarse nuevamente al cuadrado ni tratarse como amplitud.
+
+Usar fechas con trayectoria, frecuencia, polarización y procesamiento compatibles. La salida puede conservar la grilla nativa y agregarse por parcela para reducir ruido, documentando el soporte efectivo.
+
+La combinación con lluvia y óptico ayuda a interpretar cambios. Rugosidad, laboreo, humedad del suelo, agua del dosel, orientación y doble rebote pueden producir señales similares. No existe una correspondencia universal entre aumento de retrodispersión y aumento de humedad.
+
+Validar geometría/radiometría con referencias técnicas y zonas estables. Validar el diagnóstico ambiental con visitas o imágenes independientes próximas en fecha. Para alarmas, medir falsos positivos por cobertura, estación y trayectoria.
+
+Fuente primaria: [especificación GCOV Rev F](https://cumulus.asf.earthdatacloud.nasa.gov/PUBLIC/DATA/NISAR/NISAR_D-102274_RevF_NASA_SDS_Product_Specification_L2_GCOV_w-esigs.pdf).
+
+### F02. Sequía meteorológica y déficit climático
+
+SPI describe la rareza de la precipitación acumulada. SPEI incorpora demanda atmosférica estimada. Ninguno mide directamente agua radicular.
+
+Para precipitación mensual \(P_t\), en mm, y ventana \(k\) meses:
+
+\[
+X_{t,k}=\sum_{j=0}^{k-1}P_{t-j}.
+\]
+
+Una formulación habitual del SPI ajusta una distribución gamma:
+
+\[
+g(x)=\frac{x^{\alpha-1}e^{-x/\beta}}
+{\beta^\alpha\Gamma(\alpha)},\quad x>0,
+\]
+
+\[
+H(x)=q+(1-q)\int_0^xg(u)\,du,
+\qquad
+SPI_{t,k}=\Phi^{-1}[H(X_{t,k})].
+\]
+
+\(\alpha\) es forma adimensional; \(\beta\), escala en mm; \(q\), proporción de ceros; \(\Gamma\), función gamma; \(\Phi^{-1}\), cuantil normal estándar. Ajustar por mes de terminación y ventana. Verificar distribución, ceros, empates y extremos. [OMM: guía SPI](https://www.droughtmanagement.info/literature/WMO_standardized_precipitation_index_user_guide_en_2012.pdf).
+
+Para SPEI:
+
+\[
+D_t=P_t-ET_{0,t},\qquad
+D_{t,k}=\sum_{j=0}^{k-1}D_{t-j},
+\]
+
+\[
+F_D(x)=\left[1+
+\left(\frac{\alpha_D}{x-\xi_D}\right)^{\beta_D}
+\right]^{-1},\quad x>\xi_D,
+\]
+
+\[
+SPEI_{t,k}=\Phi^{-1}[F_D(D_{t,k})].
+\]
+
+\(ET_0\) es evapotranspiración de referencia mensual en mm; \(\alpha_D,\xi_D\) son escala y ubicación en mm; \(\beta_D>0\), forma. El ajuste log-logístico debe comprobarse. [Vicente-Serrano et al., 2010](https://journals.ametsoc.org/abstract/journals/clim/23/7/2009jcli2909.1.xml), [Beguería et al., 2014](https://onlinelibrary.wiley.com/doi/10.1002/joc.3887).
+
+La ET₀ diaria FAO-56 es:
+
+\[
+ET_0=
+\frac{0.408\Delta(R_n-G)+
+\gamma\frac{900}{T+273}u_2(e_s-e_a)}
+{\Delta+\gamma(1+0.34u_2)}.
+\]
+
+Unidades y símbolos:
+
+- \(ET_0\): mm/día.
+- \(R_n,G\): radiación neta y flujo de calor del suelo, MJ/m²/día.
+- \(T\): temperatura media a 2 m, °C.
+- \(u_2\): viento a 2 m, m/s.
+- \(e_s,e_a\): presiones de vapor de saturación y real, kPa.
+- \(\Delta,\gamma\): pendiente de saturación y constante psicrométrica, kPa/°C.
+
+Las constantes corresponden a esas unidades y al paso diario. Tmax, Tmin y precipitación no bastan para ejecutar directamente esta ecuación. [FAO-56](https://www.fao.org/4/X0490E/x0490e06.htm).
+
+Propuesta: ventanas 1, 3, 6 y 12 meses, a escala climática/cuenca, con base fija de al menos 30 años donde exista. Los aproximadamente nueve años de T022 no bastan para una climatología robusta de extremos.
+
+Validar precipitación y temperatura con estaciones independientes, comprobar homogeneidad y estudiar sensibilidad a ET₀ y fuente de lluvia. Relacionar los índices con impactos documentados, sin confundir concordancia con identidad entre sequía climática y agrícola.
+
+### F03. Estado vegetal y estrés compatible con sequía
+
+Con reflectancias de superficie adimensionales:
+
+\[
+NDVI=\frac{\rho_{\mathrm{NIR}}-\rho_{\mathrm{rojo}}}
+{\rho_{\mathrm{NIR}}+\rho_{\mathrm{rojo}}},
+\]
+
+\[
+NDMI=\frac{\rho_{\mathrm{NIR}}-\rho_{\mathrm{SWIR1}}}
+{\rho_{\mathrm{NIR}}+\rho_{\mathrm{SWIR1}}}.
+\]
+
+En S2, NDVI puede usar B08/B04 a 10 m. Para NDMI se propone B8A/B11 a 20 m; B08 agregado constituye otra variante que debe identificarse.
+
+NDMI es sensible al agua del dosel y a la cobertura. No expresa humedad volumétrica del suelo. El NDWI original de Gao utiliza otra región espectral y no debe equipararse exactamente a esta combinación S2. [USGS NDVI](https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index), [USGS NDMI](https://www.usgs.gov/landsat-missions/normalized-difference-moisture-index), [Gao, 1996](https://doi.org/10.1016/S0034-4257(96)00067-3).
+
+Una anomalía estacional:
+
+\[
+z_{v,t}=\frac{v_t-\mu_{v,d}}{s_{v,d}}.
+\]
+
+\(\mu_{v,d}\) y \(s_{v,d}>0\) son media y desviación para estación y cobertura comparables. No mezclar cultivos distintos en una climatología única.
+
+Para diagnóstico, una hipótesis empírica sería:
+
+\[
+\Pr(Y_t=1\mid\mathbf x_t)=
+\frac{1}{1+\exp[-(\beta_0+\sum_j\beta_jx_{j,t}
++\beta_{ab}x_{a,t}x_{b,t})]}.
+\]
+
+\(Y=1\) debe corresponder a estrés definido mediante referencia independiente de campo. Las entradas pueden incluir anomalías ópticas, SPEI, humedad, radar y fenología. La interacción es una hipótesis calibrable, no una ley física.
+
+Propuesta: índices a 20 m y diagnóstico por parcela, con 5–10 años ópticos como punto de partida cuando existan. Una parcela verde durante déficit climático puede tener riego o raíces profundas. Una parcela degradada con lluvia normal puede tener plagas, nutrición deficiente o salinidad.
+
+Validar con estado hídrico vegetal, humedad y manejo. Sin referencias, publicar “anomalía compatible con estrés”, no sequía agrícola confirmada.
+
+### F04. Humedad del suelo superficial
+
+La humedad volumétrica es:
+
+\[
+\theta=\frac{V_{\mathrm{agua}}}{V_{\mathrm{suelo}}},
+\]
+
+en m³/m³. Recuperarla desde radar es un problema inverso.
+
+Una estructura semiempírica de partida es el modelo de nube de agua:
+
+\[
+\sigma^0_{\mathrm{obs}}
+=A V_1\cos\iota(1-\tau^2)
++\tau^2\sigma^0_{\mathrm{suelo}},
+\]
+
+\[
+\tau^2=\exp\left(-\frac{2BV_2}{\cos\iota}\right).
+\]
+
+\(\sigma^0\) es retrodispersión lineal; \(\iota\), incidencia; \(V_1,V_2\), descriptores de vegetación; \(A,B\), parámetros calibrados. Si \(V_1,V_2\) son kg/m², los parámetros tienen unidades inversas compatibles. \(\tau^2\) es transmisividad de ida y vuelta.
+
+El componente de suelo exige una relación con humedad, rugosidad, longitud de correlación, incidencia y longitud de onda. Una observación no identifica todos esos factores sin restricciones o mediciones adicionales. El estudio original no demuestra precisión para NISAR o el Chaco. [Attema y Ulaby, 1978](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/RS013i002p00357).
+
+GCOV ofrece γ⁰. Si el modelo exige σ⁰, debe utilizarse el factor RTC del producto:
+
+\[
+\sigma^0\approx\eta\gamma^0.
+\]
+
+La conversión es aproximada después de geocodificar. No debe sustituirse arbitrariamente por un coseno.
+
+Una salida inicial más modesta sería:
+
+\[
+W_t=\frac{B_t-B_{\mathrm{seco}}}
+{B_{\mathrm{húmedo}}-B_{\mathrm{seco}}}.
+\]
+
+\(B\) está en dB y las referencias deben corresponder a geometría/cobertura comparables. \(W\) es relativo, no porcentaje de agua. La serie validada local comprobada todavía no permite establecer extremos estacionales robustos.
+
+Propuesta: calibración a 100–200 m o por parcela, sensores/muestreo superficial simultáneo a pasadas y al menos ciclos húmedos/secos completos. Validar con sitios y campañas excluidos, reportando sesgo, RMSE y error sin sesgo en m³/m³.
+
+SMAP se compara a su huella regional. La humedad radicular requiere un modelo de perfil. SME2 provisional puede evaluarse como alternativa, con sus flags y madurez.
+
+### F05. Balance radicular y riego
+
+Una formulación diaria de agotamiento radicular es:
+
+\[
+D_{r,t}=D_{r,t-1}-(P_t-RO_t)-I_t-CR_t+ET_{c,t}+DP_t.
+\]
+
+Todos los almacenamientos o flujos por paso se expresan en mm:
+
+- \(D_r\): agotamiento.
+- \(P\): precipitación.
+- \(RO\): escorrentía.
+- \(I\): riego neto infiltrado.
+- \(CR\): ascenso capilar.
+- \(ET_c\): evapotranspiración.
+- \(DP\): percolación profunda.
+
+\[
+TAW=1000(\theta_{FC}-\theta_{WP})Z_r,\qquad RAW=p\,TAW,
+\]
+
+\[
+K_s=
+\begin{cases}
+1,&D_r\le RAW,\\
+\dfrac{TAW-D_r}{TAW-RAW},&RAW<D_r\le TAW,
+\end{cases}
+\]
+
+\[
+ET_c=(K_sK_{cb}+K_e)ET_0.
+\]
+
+\(\theta_{FC},\theta_{WP}\): humedades a capacidad de campo y marchitez, m³/m³; \(Z_r\): raíces, m; \(p\): fracción tolerable; \(K_s,K_{cb},K_e\): coeficientes adimensionales. Mantener el balance mediante flujos físicamente consistentes, no mediante recortes que oculten pérdidas. [FAO-56, estrés hídrico](https://www.fao.org/4/X0490E/x0490e0e.htm).
+
+Meteorología aporta P/ET₀; óptico y calendario ayudan con desarrollo; suelo aporta capacidad de almacenamiento. Radar/SMAP pueden actualizar humedad superficial mediante un operador de observación.
+
+Propuesta: actualización diaria por parcela y varias campañas de evaluación. En el regadío, ignorar riego o napa puede atribuir al clima efectos del manejo.
+
+Validar con perfiles de humedad, riego medido y evapotranspiración independiente cuando exista. Sin manejo y parámetros suficientes, publicar escenarios de balance, no una prescripción automática.
+
+### F06. Agua superficial, inundación e hidroperíodo
+
+Para S2:
+
+\[
+MNDWI=\frac{\rho_{\mathrm{verde}}-\rho_{\mathrm{SWIR1}}}
+{\rho_{\mathrm{verde}}+\rho_{\mathrm{SWIR1}}}.
+\]
+
+B03 debe agregarse al soporte de B11, normalmente 20 m. El índice es adimensional y su umbral necesita calibración. [Xu, 2006](https://doi.org/10.1080/01431160600589179).
+
+Combinarlo con bandas, radar, cambios temporales, cobertura previa y relieve mediante un clasificador calibrado. El agua abierta puede producir retorno SAR bajo, pero viento, vegetación inundada y construcciones alteran esa relación.
+
+\[
+A_t=\sum_i a_iI_{i,t},\qquad
+O_i=\frac{\sum_tm_{i,t}I_{i,t}}{\sum_tm_{i,t}},
+\]
+
+\[
+HAND_i=z_i-z_{d(i)}.
+\]
+
+\(I\): agua/no agua; \(m\): validez; \(a_i\): m²; \(A_t\): superficie observada, convertible a ha dividiendo por 10.000. \(O_i\) es frecuencia entre observaciones válidas, no duración exacta entre pasadas.
+
+HAND es diferencia de elevación, en m, respecto del cauce conectado por drenaje. No es profundidad de inundación. [Nobre et al., 2011](https://www.sciencedirect.com/science/article/pii/S0022169411002599).
+
+Propuesta: mapas 20–30 m por fecha y referencia estacional histórica. Conservar intervalos entre última observación seca y primera húmeda. La profundidad requiere niveles o hidráulica, geometría de cauces y condiciones de borde.
+
+En llanuras, errores del DSM, canales, terraplenes y alcantarillas pueden dominar el resultado. Validar con perímetros fechados, drones, fotografías y niveles independientes. Reportar omisión/comisión, IoU y error de área.
+
+### F07. Fuego activo y riesgo
+
+FIRMS detecta anomalías térmicas durante una pasada. El punto no es un perímetro y FRP no es severidad.
+
+Si existiera una serie suficientemente densa y consistente de un incendio:
+
+\[
+FRE\approx\sum_{j=1}^{n-1}
+\frac{FRP_j+FRP_{j+1}}{2}(t_{j+1}-t_j).
+\]
+
+Con FRP en MW y tiempo en segundos, FRE queda en MJ. Los largos huecos entre pasadas impiden asumir que esta integración representa toda la energía. Convertirla en combustible consumido o emisiones exige factores validados.
+
+La combinación con viento, humedad, combustible y elementos expuestos permite formular riesgo. Una detección presente no es un pronóstico de ignición.
+
+La deduplicación documentada de 1 km/12 h puede borrar evolución o unir focos distintos. Conviene conservar observaciones y crear agrupaciones derivadas; resolver duplicados SP/NRT de la misma adquisición por versión.
+
+Para validar, usar registros de eventos y cobertura de pasadas. El CSV de focos no contiene todos los píxeles despejados sin fuego: no produce negativos fiables automáticamente. Medir detección por evento, demora y falsas alarmas.
+
+Fuentes: [FIRMS](https://firms.modaps.eosdis.nasa.gov/api/area/), [atributos VIIRS](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html).
+
+### F08. Quemado, severidad y recuperación
+
+\[
+NBR_t=\frac{\rho_{\mathrm{NIR},t}-\rho_{\mathrm{SWIR2},t}}
+{\rho_{\mathrm{NIR},t}+\rho_{\mathrm{SWIR2},t}},
+\qquad
+dNBR=NBR_{\mathrm{antes}}-NBR_{\mathrm{después}}.
+\]
+
+Ambos son adimensionales. En S2 puede usarse B8A/B12 a 20 m. Elegir fechas despejadas y comparables en fenología. Los umbrales de severidad de otros ecosistemas no se trasladan automáticamente al bosque chaqueño. [Key y Benson, FIREMON](https://research.fs.usda.gov/treesearch/24066).
+
+Para seguir recuperación frente a controles:
+
+\[
+\Delta_t=(v_{\mathrm{quemado},t}-v_{\mathrm{control},t})
+-(v_{\mathrm{quemado},pre}-v_{\mathrm{control},pre}).
+\]
+
+\(v\) puede ser un índice o una variable de campo. El contraste conserva sus unidades. Su interpretación causal exige tendencias previas comparables y ausencia de cambios diferenciales ajenos al fuego.
+
+Una hipótesis empírica de recuperación:
+
+\[
+\Delta_t=\Delta_\infty+
+(\Delta_0-\Delta_\infty)e^{-t/\tau}+\varepsilon_t.
+\]
+
+\(t,\tau\) tienen la misma unidad temporal. No es una ley universal.
+
+Propuesta: 20–30 m, una temporada previa completa y seguimiento multianual. FIRMS aporta fecha; óptico, efectos; radar, información estructural.
+
+Validar área con perímetros independientes; severidad con parcelas; recuperación con cobertura, mortalidad y regeneración. NDVI recuperado no demuestra recuperación de especies, biomasa o suelo.
+
+### F09. Cobertura, uso y desmonte
+
+Una clasificación multiclase puede formularse:
+
+\[
+p_{i,c}=
+\frac{\exp(\beta_{c0}+\boldsymbol\beta_c^T\mathbf x_i)}
+{\sum_{k=1}^{C}\exp(\beta_{k0}+\boldsymbol\beta_k^T\mathbf x_i)},
+\qquad
+\hat c_i=\arg\max_cp_{i,c}.
+\]
+
+\(\mathbf x\) contiene bandas, índices, estadísticas SAR y fenología; \(C\) es número de clases; los parámetros se estiman y las probabilidades se calibran.
+
+Para rupturas temporales, BFAST utiliza una estructura de tendencia, estacionalidad y residuo:
+
+\[
+y_t=T_t+S_t+\varepsilon_t,
+\]
+
+\[
+S_t=\sum_{k=1}^{K}
+[a_k\sin(2\pi kt/f)+b_k\cos(2\pi kt/f)].
+\]
+
+\(f\) es frecuencia anual de la serie regularizada. Las rupturas deben estimarse mediante un procedimiento definido, no escogiendo visualmente el salto mayor. [Verbesselt et al., 2010](https://www.sciencedirect.com/science/article/pii/S003442570900265X).
+
+Propuesta: 20–30 m, composiciones estacionales, mapas anuales y varios ciclos previos. SAR y óptico aportan información complementaria; cosecha, incendio e inundación pueden confundirse con desmonte.
+
+Validar con muestras probabilísticas e interpretación independiente. Reportar matriz de confusión por clase, áreas corregidas e intervalos. MapBiomas no debe usarse simultáneamente como entrenamiento y verdad independiente. [Olofsson et al., 2014](https://www.sciencedirect.com/science/article/pii/S0034425714000704).
+
+Una clasificación no demuestra intención del productor ni legalidad del cambio.
+
+### F10. Fenología y rendimiento
+
+Para una curva vegetal ajustada \(v(t)\), el inicio puede definirse mediante una fracción calibrada \(q\) de amplitud:
+
+\[
+t_{\mathrm{inicio}}=
+\min\{t:v(t)>v_{\min}+q(v_{\max}-v_{\min})
+\text{ durante el ascenso}\}.
+\]
+
+Los grados-día simples son:
+
+\[
+GDD_t=\max\left(0,\frac{T_{\max,t}+T_{\min,t}}2-T_b\right),
+\qquad GDD_{1:n}=\sum_tGDD_t.
+\]
+
+Las temperaturas están en °C y la suma en °C·día. \(T_b\) depende del cultivo. Este esquema no incluye techo térmico ni estrés por calor.
+
+Una hipótesis de rendimiento:
+
+\[
+\hat Y_{p,a}=\beta_0+\beta_1I_{v,p,a}
++\beta_2D_{p,a}+\beta_3H_{p,a}
++\boldsymbol\beta_m^T\mathbf m_{p,a},
+\]
+
+\[
+I_v=\int_{\mathrm{campaña}}\max(0,v(t)-v_0)\,dt.
+\]
+
+\(Y\): t/ha; \(I_v\): índice·día; \(D\): déficit hídrico mm; \(H\): días o grados-día sobre un umbral agronómico; \(\mathbf m\): manejo. Los coeficientes requieren calibración. No existe conversión universal de NDVI a toneladas.
+
+Usar S2 agregado por parcela, meteorología y registros de siembra, cultivar, riego y cosecha. Se necesitan varias campañas y rendimientos trazables. MODIS aporta historia regional, con menor detalle.
+
+Validar fechas con observación fenológica y rendimiento con pesaje o estadísticas al mismo soporte. No utilizar el máximo futuro de una campaña para predecir antes de que ocurra. La base temporal se apoya en [MOD13](https://doi.org/10.5067/MODIS/MOD13Q1.061) y [BFAST](https://www.sciencedirect.com/science/article/pii/S003442570900265X); la regresión propuesta exige evaluación propia.
+
+### F11. Biomasa leñosa y carbono
+
+La banda L aporta sensibilidad a estructura, con saturación y dependencia de humedad. GEDI y parcelas aportan referencias estructurales.
+
+Una ecuación alométrica publicada, que debe evaluarse antes de aplicarse al Chaco, es:
+
+\[
+AGB_j=0.0673(\rho_jD_j^2H_j)^{0.976},
+\]
+
+\[
+AGBD=\frac{\sum_jAGB_j}{1000A_{\mathrm{parcela}}}.
+\]
+
+\(AGB_j\): kg secos; \(\rho_j\): densidad de madera g/cm³; \(D_j\): diámetro cm; \(H_j\): altura m; área en ha; AGBD en Mg/ha. La constante depende de esas unidades. Árboles multicaules y especies locales pueden necesitar otras ecuaciones. [Chave et al., 2014](https://doi.org/10.1111/gcb.12629).
+
+Un mapa continuo necesita calibrar una relación entre AGBD y radar, óptico, estructura y cobertura. GEDI L4A ya es una estimación con error, no biomasa pesada. [GEDI](https://daac.ornl.gov/GEDI/guides/GEDI_L4A_AGB_Density_V3.html).
+
+\[
+C=f_C\,AGBD,
+\]
+
+donde \(f_C\) es una fracción de carbono justificada y \(C\) queda en Mg C/ha.
+
+Para cambios:
+
+\[
+\operatorname{Var}(\Delta AGBD)=
+\operatorname{Var}(AGBD_2)+\operatorname{Var}(AGBD_1)
+-2\operatorname{Cov}(AGBD_1,AGBD_2).
+\]
+
+Propuesta: unidades de aproximadamente 100 m a 1 ha según parcelas y heterogeneidad, con fechas compatibles. Reservar sitios completos y rangos de biomasa para validar. Una diferencia inferior a su incertidumbre no demuestra pérdida. Carbono almacenado no equivale a secuestro anual ni a créditos verificables.
+
+### F12. Degradación, erosión y carbono del suelo
+
+Conviene separar suelo desnudo, tendencia vegetal, riesgo de erosión y propiedades edáficas.
+
+Un residual exploratorio:
+
+\[
+r_t=v_t-\hat f(P_{t:t-k},ET_{0,t:t-k},
+\text{estación},\text{cobertura}).
+\]
+
+Una tendencia negativa persistente señala dónde investigar. No demuestra sobrepastoreo ni degradación irreversible.
+
+RUSLE estima pérdida media anual por erosión laminar y en surcos:
+
+\[
+A=R\,K\,L\,S\,C\,P_s.
+\]
+
+- \(A\): t/ha/año.
+- \(R\): MJ·mm/(ha·h·año).
+- \(K\): t·h/(MJ·mm).
+- \(L,S,C,P_s\): factores adimensionales de longitud, pendiente, cobertura y conservación.
+
+\(P_s\) no significa precipitación. Una suma diaria de lluvia no determina directamente erosividad e intensidad máxima de 30 minutos. RUSLE tampoco mide erosión eólica, cárcavas o sedimento exportado. [USDA, manual RUSLE](https://www.ars.usda.gov/ARSUserFiles/60600505/RUSLE/AH_703%20-%20Predicting%20Soil%20Erosion%20by%20Water%20-%20A%20Guide%20to%20Conservation%20Planning%20With%20the%20RUSLE%20%28RUSLE%29.pdf).
+
+Para carbono de una capa:
+
+\[
+SOC_{\mathrm{stock}}=10\,c\,\rho_b\,d(1-f_g).
+\]
+
+\(c\): g/kg; \(\rho_b\): Mg/m³ con convención compatible; \(d\): m; \(f_g\): fracción volumétrica gruesa. Resultado: Mg C/ha. Evitar descontar fragmentos dos veces.
+
+Óptico aporta cobertura, DEM relieve, suelos parámetros y lluvia forzantes. Publicar a soporte compatible con la fuente más limitante, no atribuir detalle de 20 m a parámetros de 250 m.
+
+Validar con mediciones del proceso: parcelas/trampas para erosión y núcleos/laboratorio para carbono. SoilGrids es un prior con incertidumbre, no una serie de cambio edáfico. [ISRIC](https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_01.html).
+
+### F13. Salinidad y sodicidad
+
+La variable cuantitativa propuesta es ECe, conductividad del extracto de pasta saturada, en dS/m, siguiendo un protocolo de laboratorio. No es igual a conductividad del agua de riego ni a conductividad aparente del suelo.
+
+Una hipótesis empírica local:
+
+\[
+\log\left(\frac{ECe_i}{EC_{\mathrm{ref}}}\right)
+=\beta_0+\boldsymbol\beta^T\mathbf x_i
++u_{\mathrm{zona}(i)}+\varepsilon_i,
+\]
+
+con \(EC_{\mathrm{ref}}=1\) dS/m. \(\mathbf x\) puede incluir reflectancias de suelo expuesto, humedad, vegetación, drenaje y manejo. La retransfomación debe tratar su sesgo.
+
+La combinación ayuda a contextualizar costras o estrés, pero arcillas, carbonatos, humedad y suelo desnudo producen señales parecidas. La sodicidad requiere determinaciones adicionales. [FAO, calidad de agua para agricultura](https://www.fao.org/4/t0234e/t0234e00.htm).
+
+Propuesta: parcelas/unidades de suelo, campañas húmedas y secas, perfiles a profundidades definidas y muestras próximas a pasadas. Validar en áreas excluidas, con error en dS/m y desempeño frente a umbrales agronómicos pertinentes.
+
+Sin calibración, publicar “prioridad de muestreo por indicios de salinidad”. Un índice de brillo no justifica una concentración.
+
+### F14. Temperatura superficial
+
+NISAR y Sentinel-2 no aportan una medición térmica de superficie. Se necesita Landsat ST, MODIS LST u otro producto térmico.
+
+Para Landsat Collection 2:
+
+\[
+T_s[\mathrm K]=0.00341802\,DN+149.0,
+\qquad
+T_s[^\circ\mathrm C]=T_s[\mathrm K]-273.15.
+\]
+
+La escala corresponde a ese producto después de excluir datos inválidos. [USGS ST](https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature).
+
+\[
+\Delta T_{s,t}=T_{s,t}-\mu_{s,d}.
+\]
+
+La anomalía se expresa en K o diferencia de °C. La referencia debe mantener sensor, horario, estación y cobertura comparables.
+
+Combinar LST con vegetación, humedad y agua superficial permite investigar superficies calientes o enfriamiento por evaporación. No atribuye automáticamente la causa al estrés hídrico. LST no es temperatura del aire a 2 m.
+
+Publicar al soporte térmico efectivo: por ejemplo, agregados cercanos a 100 m para L8/L9 o 1 km para MODIS. Evaluar el sesgo de observar solo días despejados.
+
+Validar con radiometría superficial. Los termómetros de aire permiten estudiar relaciones, pero no son verdad directa de LST.
+
+### F15. Turbidez y sedimentos
+
+Para agua suficientemente ancha y con reflectancia acuática adecuada, una familia publicada de algoritmos es:
+
+\[
+T=\frac{A_T\rho_w}{1-\rho_w/C_T}.
+\]
+
+\(T\): FNU; \(\rho_w\): reflectancia del agua adimensional; \(A_T\): FNU; \(C_T\): adimensional. Los coeficientes dependen de banda/sensor y régimen óptico. Si se usa \(R_{rs}\), en sr⁻¹, debe respetarse la conversión radiométrica del método. [Dogliotti et al., 2015](https://www.sciencedirect.com/science/article/pii/S0034425714003654).
+
+S2 L2A terrestre no garantiza corrección adecuada sobre agua. Puede requerirse procesamiento acuático desde L1C, máscaras de brillo solar, nubes y mezcla costera. Cerca de \(C_T\), el cociente es inestable.
+
+Propuesta: 10–20 m según banda, exclusión de orillas y campañas simultáneas bajo distintos caudales. Lluvia y caudal ayudan a interpretar pulsos de sedimento.
+
+Validar con turbidímetro. Para sólidos suspendidos en mg/L hace falta otra relación local y muestras. FNU y mg/L no son intercambiables. Esta metodología no detecta de forma general arsénico, pesticidas, bacterias ni metales disueltos.
+
+### F16. Humo y calidad del aire
+
+La capa “contaminación” debería reemplazarse por variables concretas.
+
+Para PM2,5, una corrección estadística local propuesta es:
+
+\[
+C_{\mathrm{obs},s,t}
+=a_s+bC_{\mathrm{CAMS},s,t}
++\boldsymbol\beta^T\mathbf w_{s,t}+\varepsilon_{s,t}.
+\]
+
+\(C\) está en µg/m³ después de convertir correctamente el producto; \(a_s\), sesgo por estación; \(b\), adimensional; \(\mathbf w\), meteorología y contexto de humo.
+
+FIRMS aporta fuego; meteorología, transporte; CAMS, composición modelada. No existe una conversión universal FRP→PM2,5 superficial. Las columnas satelitales de gases tampoco equivalen a concentración a nivel del suelo.
+
+Propuesta: soporte regional, varios años/episodios y monitores de referencia. Interpolar a 20 m no produce calidad del aire a esa escala.
+
+Validar concentración y episodios fuera de período y estación. Sin monitores suficientes puede mostrarse CAMS con su procedencia, pero no afirmar precisión barrial ni mejora local demostrada. [CAMS](https://atmosphere.copernicus.eu/configuration-daily-global-analyses-and-forecasts).
+
+### F17. Deformación del terreno
+
+Requiere GUNW o interferometría desde señal compleja.
+
+Si se define el interferograma como \(s_2s_1^\ast\) y la fase de propagación como \(-4\pi R/\lambda\):
+
+\[
+\Delta\phi_{\mathrm{corr}}
+=-\frac{4\pi}{\lambda}\Delta R,
+\qquad
+\Delta R=-\frac{\lambda}{4\pi}\Delta\phi_{\mathrm{corr}}.
+\]
+
+\(\lambda\): m, obtenida del producto; fase: rad; \(\Delta R\): m, positivo al alejarse. El signo debe verificarse contra la convención real. El resultado es LOS, no desplazamiento vertical completo.
+
+Hace falta desenrollado fiable, componentes conexas, referencia estable y control atmosférico, ionosférico y topográfico. Las correcciones auxiliares incluidas no necesariamente están aplicadas. [GUNW](https://nisar-docs.asf.alaska.edu/gunw/).
+
+Un modelo inicial de velocidad:
+
+\[
+d(t)=d_0+vt+\varepsilon_t,
+\]
+
+con \(d\) en mm, \(t\) en años y \(v\) en mm/año. Es una hipótesis lineal, no un pronóstico de hundimiento abrupto.
+
+Propuesta: fase nominal a 80 m, soporte ampliado según coherencia y una serie suficientemente conectada que cubra variación estacional. Validar con GNSS/nivelación. No atribuir deformación a extracción de agua sin evidencia hidrogeológica.
+
+---
+
+## 5. Propuestas de predicción y validación
+
+### 5.1. Estado actual, alerta y pronóstico
+
+- Una estimación actual infiere una condición presente.
+- Una alerta señala condiciones favorables o probabilidad de evento durante un período explícito.
+- Un pronóstico estima una variable posterior a su emisión.
+
+Formalmente:
+
+\[
+\hat F_{t,h}(y)=\Pr(Y_{t+h}\le y\mid\mathcal I_t),
+\]
+
+donde \(\mathcal I_t\) contiene solo información publicada y accesible en \(t\). La fecha de adquisición no basta: hay que considerar latencia.
+
+### 5.2. Casos defendibles para evaluación
+
+Los horizontes siguientes son propuestas de prueba, no capacidad demostrada.
+
+| Objetivo | Horizonte/soporte | Entradas e historia | Referencia y alternativas | Evaluación y límites |
+|---|---|---|---|---|
+| Lluvia acumulada y transición de SPI/SPEI | 7–15 días para lluvia; aproximadamente un mes para índice, por celda/cuenca | Acumulados, ET₀, conjuntos meteorológicos; climatología ≥30 años y archivo de pronósticos | Climatología/persistencia; recalcular índices por miembro, ARX | CRPS, Brier y error de acumulados. La parte sin forzantes fiables es escenario |
+| Humedad y agotamiento | 1–7 días, parcela calibrada o escala regional | Estado inicial, P/ET₀ futuras, suelo, riego; varias campañas | Persistencia; balance sin actualización; balance con asimilación | Error m³/m³ o mm, intervalos y cruce de umbral. No sustituir superficial por radicular |
+| Anomalía vegetal/estrés | 10–30 días, parcela | Índices causales, fenología, humedad y clima; varias campañas | Climatología fenológica/persistencia; ARX, modelos aditivos o árboles con cuantiles | Error del índice o Brier de estrés de campo, por cultivo y riego |
+| Nivel/caudal e inundación | Horas a 1–3 días, cuenca/tramos | Lluvia aguas arriba, niveles, humedad, embalses y operación; varios eventos | Persistencia/tránsito simple; lluvia-escorrentía, ruteo e hidráulica | Error de nivel/caudal, pico y tiempo al pico. Sin condiciones de borde no prometer profundidad |
+| Evento de fuego o detección | 1–3 días inicialmente, celdas 1–5 km | Viento, humedad, T/P, combustible, sequedad y cobertura observacional; varios años | Frecuencia estacional; logística regularizada o árboles calibrados | Brier, PR-AUC, fiabilidad y falsas alertas. FIRMS como etiqueta predice detección, no toda ignición |
+| Recuperación tras fuego | 1–12 meses, unidades quemadas | Severidad, controles, clima y manejo; cohortes multianuales | Persistencia/curva de eventos semejantes; modelo F08 jerárquico | Error por horizonte y evento excluido. Verdor no equivale a recuperación ecológica |
+| Rendimiento | 1–3 meses antes de cosecha, parcela/departamento | Información disponible a emisión, manejo y escenarios del resto de campaña | Media histórica/tendencia; regresión F10 o modelo de cultivo calibrado | MAE/RMSE t/ha y cobertura por campaña/zona |
+| PM2,5 regional | 1–3 días, grilla atmosférica/estación | Pronósticos CAMS archivados, meteorología, fuego y monitores | Persistencia/CAMS sin corrección; ajuste F16 por horizonte | Error µg/m³, episodios y Brier. Sin monitores no demostrar mejora local |
+
+El desmonte futuro, la salinización, la degradación prolongada y la deformación acelerada necesitan información adicional sobre decisiones humanas, manejo y procesos físicos. El estado documentado no justifica ofrecerlos como pronósticos confiables.
+
+### 5.3. Formulaciones mínimas
+
+Referencias:
+
+\[
+\hat y^{persist}_{t+h}=y_t,
+\]
+
+\[
+\hat y^{clim}_{t+h}=\mu_{d(t+h)},
+\]
+
+\[
+\hat y^{anom}_{t+h}
+=\mu_{d(t+h)}+[y_t-\mu_{d(t)}].
+\]
+
+La climatología \(\mu_d\) debe calcularse con historia permitida. Elegir la referencia antes de evaluar.
+
+Un ARX directo por horizonte:
+
+\[
+\hat y_{t+h}=c_h+
+\sum_{\ell=0}^{p-1}\phi_{h,\ell}y_{t-\ell}
++\boldsymbol\beta_h^T\mathbf x_{\le t}
++\boldsymbol\delta_h^T
+\hat{\mathbf u}_{t+1:t+h\mid t}.
+\]
+
+\(\mathbf x\) contiene predictores disponibles; \(\hat{\mathbf u}\), forzantes pronosticadas desde \(t\), no realizaciones futuras. Los coeficientes y sus unidades dependen del objetivo.
+
+Ajuste regularizado:
+
+\[
+\hat\theta=\arg\min_\theta
+\left[
+\frac1n\sum_i(y_i-f_\theta(\mathbf x_i))^2
++\lambda\|\theta_{\mathrm{pen}}\|_2^2
+\right].
+\]
+
+\(\lambda\) se selecciona en validación interna. Para eventos binarios, usar logística y entropía cruzada:
+
+\[
+-\frac1n\sum_i
+[y_i\log p_i+(1-y_i)\log(1-p_i)].
+\]
+
+Para cuantiles:
+
+\[
+L_\tau=\sum_i\rho_\tau(y_i-q_\tau(\mathbf x_i)),
+\qquad
+\rho_\tau(e)=e[\tau-\mathbf1(e<0)].
+\]
+
+Un intervalo producido por cuantiles necesita evaluación de cobertura.
+
+Para modelos físicos y observaciones:
+
+\[
+\mathbf s_{t+1}
+=f(\mathbf s_t,\mathbf u_{t+1},\psi)+\eta_t,
+\]
+
+\[
+\mathbf z_t=h(\mathbf s_t)+\nu_t.
+\]
+
+\(\mathbf s\): estado; \(\mathbf u\): forzantes; \(\psi\): parámetros; \(h\): operador que relaciona estado y observación; \(\eta,\nu\): errores.
+
+Ese operador debe respetar profundidad y escala. Una medición superficial no se inserta como si midiera toda la reserva radicular.
+
+Con \(M\) miembros:
+
+\[
+\hat p(Y>c)=\frac1M\sum_{m=1}^{M}\mathbf1(Y^{(m)}>c).
+\]
+
+El conjunto puede subestimar incertidumbre estructural y requiere calibración.
+
+En hidrología, al menos debe conservarse:
+
+\[
+\frac{dS}{dt}
+=P_A-ET_A+Q_{\mathrm{entrada}}
+-Q_{\mathrm{salida}}-W.
+\]
+
+\(S\): m³; todos los términos del lado derecho: m³/s. La identidad necesita relaciones de infiltración, almacenamiento y ruteo calibradas. Por sí sola no produce una crecida.
+
+### 5.4. Construcción de muestras y prevención de fuga
+
+La muestra debe ser una unidad espacial y una emisión: parcela-semana, estación-horizonte o cuenca-evento. Miles de píxeles vecinos no son miles de casos independientes.
+
+El procedimiento recomendado es:
+
+1. Definir objetivo, referencia, horizonte, métrica y costo del error antes del ajuste.
+2. Reservar un período final continuo y sitios/regiones fuera de selección.
+3. Usar evaluación temporal progresiva: entrenar en pasado y probar después.
+4. Separar ventanas para evitar que acumulados u objetivos superpuestos crucen particiones.
+5. Bloquear parcelas, subcuencas o zonas; elegir márgenes según dependencia espacial.
+6. Ajustar imputación, escalado, selección, climatologías aprendidas y calibración dentro del entrenamiento.
+7. Reconstruir lo disponible en cada emisión. Excluir composiciones futuras, reanálisis revisados tratados como instantáneos y pronósticos emitidos después.
+8. Evaluar por cobertura, cultivo, riego, estación, extremos, calidad y antigüedad de datos.
+9. Congelar el modelo y realizar una evaluación prospectiva de operación.
+
+La partición aleatoria puede sobreestimar desempeño con datos correlacionados. [Roberts et al., 2017](https://nsojournals.onlinelibrary.wiley.com/doi/10.1111/ecog.02881).
+
+Las tres adquisiciones NISAR validadas encontradas localmente no permiten aprender una relación estacional robusta. Se pueden iniciar modelos ópticos/climáticos con historia larga y evaluar después el aporte incremental de NISAR. No debe rellenarse el pasado con datos sintéticos ni reemplazar L por C como si fuera el mismo predictor.
+
+### 5.5. Métricas e incertidumbre
+
+Con \(e_i=\hat y_i-y_i\):
+
+\[
+MAE=\frac1n\sum_i|e_i|,
+\quad
+RMSE=\sqrt{\frac1n\sum_ie_i^2},
+\quad
+bias=\frac1n\sum_ie_i,
+\]
+
+\[
+ubRMSE=\sqrt{\frac1n\sum_i(e_i-bias)^2}.
+\]
+
+Estas métricas conservan unidades del objetivo.
+
+Para eventos:
+
+\[
+Brier=\frac1n\sum_i(p_i-y_i)^2.
+\]
+
+Añadir fiabilidad, precisión, exhaustividad y PR-AUC con prevalencia. ROC-AUC sola puede ocultar muchas falsas alertas.
+
+Para mapas:
+
+\[
+IoU=\frac{TP}{TP+FP+FN}.
+\]
+
+Para distribuciones:
+
+\[
+CRPS(F,y)=\int_{-\infty}^{\infty}
+[F(z)-\mathbf1(y\le z)]^2\,dz.
+\]
+
+CRPS conserva las unidades del objetivo. Publicar cobertura y anchura de intervalos, además de error medio. [Gneiting y Raftery, 2007](https://doi.org/10.1198/016214506000001437).
+
+Comparación con referencia:
+
+\[
+Skill=1-\frac{L_{\mathrm{modelo}}}{L_{\mathrm{referencia}}}.
+\]
+
+Usar la misma pérdida, muestras y soporte, con denominador positivo.
+
+Para comprobar la fusión, comparar:
+
+- Referencia sencilla.
+- Meteorología.
+- Óptico.
+- Radar.
+- Meteorología + óptico.
+- Combinación completa.
+
+Primero evaluar sobre el subconjunto común para aislar información. Después medir operación real, disponibilidad y latencia. Obtener intervalos mediante remuestreo de sitios, eventos o bloques temporales, no píxeles independientes ficticios.
+
+La salida debe pasar a “experimental”, “escenario” o “sin predicción” cuando falten insumos, cambie el producto, se exceda el dominio de entrenamiento o no exista evaluación suficiente.
+
+---
+
+## 6. Arquitectura y hoja de ruta para TermalWave
+
+### 6.1. Pipeline propuesto
+
+```mermaid
+flowchart TD
+    A[CMR, STAC, APIs y campo] --> B[Manifiestos y originales inmutables]
+    B --> C[Lectores por producto y controles de calidad]
+    C --> D[Rasters numéricos, máscaras y series]
+    D --> E[Indicadores]
+    D --> F[Muestras, entrenamiento y validación]
+    F --> G[Modelos versionados]
+    G --> H[Pronósticos por fecha de emisión]
+    E --> I[Catálogo de resultados y procedencia]
+    H --> I
+    I --> J[COG, tablas, vectores y teselas]
+    J --> K[dataset.json, app-config.json e interfaz]
+```
+
+La adquisición debe alimentar el procesamiento antes de producir capas. Un fallo no debe sustituirse silenciosamente por un fixture.
+
+### 6.2. Cambios principales
+
+| Componente documentado | Cambio propuesto |
+|---|---|
+| Proveedor NISAR | Colecciones exactas, paginación, manifiestos y descarga |
+| Lector HDF5 | Despacho por producto/versión; lectura explícita de grilla, canales, unidades y QA |
+| Búsqueda genérica de arrays | Eliminarla del camino científico; fallar ante esquemas inesperados |
+| Georreferencia | Recortar/reproyectar, sin sobrescribir límites |
+| Timeline | Construir fechas desde activos disponibles; separar demostración |
+| `merge.py` | Selección por adquisición/versión; conservar observaciones distintas |
+| Caché por `kind` | Incorporar producto, versión, AOI, período y parámetros |
+| Exportadores | Contrato versionado con unidades, tiempo, cobertura, procedencia y estados |
+| Series/hotspots | Calcular desde datos numéricos; no desde colores |
+| Frontend/presets | Exportar categorías/core y representar ausencia correctamente |
+
+Guardar originales fuera de Git, con checksum y versión. Diferenciar colección inexistente, cero resultados, credencial faltante, cuota, error y procesamiento pendiente.
+
+Para procesamiento geoespacial, se propone un entorno separado con GDAL/rasterio, pyproj, xarray/rioxarray, h5py y clientes STAC/CMR. SciPy, statsmodels y scikit-learn bastan para muchos modelos iniciales.
+
+El navegador puede seguir consumiendo JSON y teselas pequeños. El paquete offline de visualización no necesita cargar toda la cadena científica.
+
+### 6.3. Formatos y metadatos
+
+- COG para rasters numéricos.
+- Zarr/NetCDF para cubos temporales.
+- Parquet/GeoParquet para observaciones y muestras.
+- GeoJSON/teselas vectoriales para presentación.
+- PNG únicamente como representación visual.
+
+Cada capa debería incluir:
+
+| Grupo | Información mínima |
+|---|---|
+| Identidad | Variable, producto, colección, activo y versión del método |
+| Naturaleza | Observación, indicador derivado, recuperación/inferencia o pronóstico; real/sintético |
+| Tiempo | Adquisición, composición, publicación y generación; emisión/objetivo/horizonte para pronóstico |
+| Espacio | CRS, grilla, tamaño de píxel, resolución efectiva, footprint y unidad de agregación |
+| Valores | Unidades, escala/offset, nodata, rango físico y límites de color separados |
+| Calidad | Máscaras, definición de flags, cobertura válida, antigüedad y número de observaciones |
+| Incertidumbre | Tipo, unidades, método, nivel nominal y cobertura evaluada |
+| Procedencia | Gránulos, CRID, checksums, parámetros, licencias y referencias |
+| Modelo | Objetivo, dominio, entrenamiento, particiones y desempeño frente a referencia |
+| Presentación | `core`, estado y razón de ausencia |
+
+Un producto externo real puede ser una inferencia, como SMAP o GEDI L4A. Un NDVI es derivado. Un fixture sigue siendo sintético aunque la categoría de interfaz diga `data`.
+
+### 6.4. NISAR activo y ausencia de datos
+
+La regla de producto puede cumplirse sin fabricar cobertura:
+
+- Mantener `core=true` y NISAR activo en todos los presets.
+- Si no hay observación válida, conservar su leyenda y panel con “Sin observación disponible para esta fecha”.
+- Dejar el área sin datos transparente.
+- Para fechas anteriores a la misión, indicarlo expresamente.
+- Mostrar otros sensores con sus nombres.
+- Reservar fixtures para un modo de demostración identificable y excluido de estadísticas científicas.
+
+Distinguir: sin adquisición, fuera de cobertura, excluido por calidad, pendiente, error, credencial requerida, dato antiguo y demostración.
+
+En incendios, “sin detecciones recibidas” no significa “sin incendios”. Un cero numérico válido tampoco debe volverse transparente por una condición `value > 0`.
+
+La comparación temporal debe conservar unidades y escalas de color compatibles. Recalcular percentiles 2–98 por imagen puede ocultar diferencias reales de magnitud.
+
+### 6.5. Secuencia de implementación
+
+| Etapa | Entrega | Condición para avanzar |
+|---|---|---|
+| 0 | Separación real/sintético, estados, categorías y core | Ningún fixture aparece como medición |
+| 1 | GCOV real descargado, leído y publicado como raster numérico | Geometría, unidades, canales y QA contrastados |
+| 2 | S2, meteorología y FIRMS con series reales | Valores reproducibles desde datos analíticos |
+| 3 | Radar, SPI/SPEI, vegetación, agua y quemas | Validación inicial y limitaciones publicadas |
+| 4 | Campañas locales de suelo, manejo y cobertura | Referencias suficientes e independientes |
+| 5 | Pronósticos sencillos y archivo por emisión | Mejora frente a referencia y evaluación prospectiva |
+| 6 | Expansión provincial | Evaluación fuera del AOI inicial |
+| 7 | Biomasa, salinidad, turbidez, aire e interferometría | Calibración específica de cada magnitud |
+
+Este orden responde a dependencias científicas. El archivo climático y óptico puede construirse mientras se resuelve NISAR.
+
+---
+
+## 7. Vacíos de información, decisiones pendientes y referencias
+
+Falta confirmar dentro de los HDF5 encontrados las polarizaciones efectivas, dimensiones, cobertura válida, máscaras y problemas de cada CRID. Se ha verificado el catálogo y consultado la especificación, no la calidad local de esos píxeles.
+
+Falta inspeccionar el repositorio y el despliegue actuales. Los adjuntos describen una fotografía del disco, con cambios sin commit. No permiten atribuir capacidades posteriores.
+
+También faltan:
+
+- Geometría definitiva de la beta y ambientes de evaluación.
+- Inventario de estaciones, niveles, caudales y operación de embalses.
+- Referencias de humedad, rendimiento, manejo y cobertura.
+- Parcelas forestales y muestras de salinidad/turbidez.
+- Monitores para evaluar calidad del aire.
+- Definiciones de eventos, umbrales de acción y costos del error.
+- Archivo histórico de pronósticos tal como se han emitido.
+
+Las decisiones iniciales que recomiendo son:
+
+1. Usar el AOI actual como piloto de procesamiento y declarar separadamente la expansión provincial.
+2. Priorizar γ⁰, cambios SAR, NDVI/NDMI, SPI/SPEI, agua y fuego.
+3. Comparar NISAR dentro de una misma madurez y procesamiento compatible.
+4. Fijar productos meteorológicos, grillas y climatología.
+5. Archivar pronósticos por emisión desde el principio.
+6. Sustituir etiquetas genéricas por variables concretas cuando exista respaldo.
+
+Las referencias enlazadas junto a cada método distinguen artículos científicos primarios de manuales oficiales y catálogos. Ninguna publicación demuestra por sí sola el desempeño de TermalWave en Santiago del Estero. Esa evidencia tendrá que producirse mediante mediciones independientes y evaluaciones que respeten tiempo, espacio y disponibilidad real de datos.

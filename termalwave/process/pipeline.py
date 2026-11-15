@@ -20,6 +20,7 @@ from termalwave.process.georef import (
 )
 from termalwave.process.ingest import run_ingest
 from termalwave.process.timeline import build_timeline_frames
+from termalwave.science.radar import power_to_db, sample_to_power
 
 
 def _find_dataset(
@@ -48,24 +49,8 @@ def _find_dataset(
     return None
 
 
-def to_power(raw: np.ndarray, dataset_name: str, power_names: Sequence[str]) -> np.ndarray:
-    """Linear radar power from whatever the granule stores."""
-    data = np.asarray(raw)
-    if np.iscomplexobj(data):
-        return np.abs(data).astype(np.float64) ** 2
-    data = data.astype(np.float64)
-    leaf = dataset_name.rsplit("/", 1)[-1].lower()
-    if leaf in {n.lower() for n in power_names}:
-        return data
-    return data**2
-
-
-def power_to_db(power: np.ndarray) -> np.ndarray:
-    """10*log10 of linear power; nodata, zero and negative samples become nan."""
-    out = np.full(power.shape, np.nan, dtype=np.float64)
-    valid = np.isfinite(power) & (power > 0)
-    out[valid] = 10.0 * np.log10(power[valid])
-    return out
+# re-export for tests and callers that import from pipeline
+to_power = sample_to_power
 
 
 def colour_window(db: np.ndarray, colormap: dict[str, Any]) -> tuple[float, float]:

@@ -1,0 +1,24 @@
+# Machine-readable science defaults for TermalWave (F01–F17).
+# UI copy must not treat MNDWI or RVI_dual as soil moisture or [0,1] vegetation cover.
+
+[constants]
+nisar_l_band_hz = 1.257e9
+nisar_l_wavelength_m = 238.5
+dnbr_key_benson_scale = 1000.0
+fre_biomass_kg_per_mj = 0.368
+
+[indices]
+# F06: MNDWI = open water (optical); not F04 soil moisture
+mndwi_purpose = "open_water"
+# F03/F04: NDMI and W_t are canopy/soil proxies respectively; do not conflate
+ndmi_purpose = "canopy_water_stress"
+soil_moisture_metric = "W_t_or_wcm_inversion"
+
+[radar]
+# F01: aggregate in linear γ⁰ before dB
+aggregate_domain = "linear_power"
+colormap_scale = "db_fixed"
+
+[vegetation]
+# F03 dual HH/HV; valid range (0, 4), not [0, 1]
+rvi_dual_bounded_unit_interval = false
