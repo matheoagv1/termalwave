@@ -60,6 +60,8 @@ export type AppState = {
   basemap: string;
   helpText: string;
   extras: string[];
+  // focos de calor globales (FIRMS): estado de la consulta, no del mapa
+  firms: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
 };
 
 export type AppProps = {

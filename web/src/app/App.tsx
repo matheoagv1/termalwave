@@ -1,6 +1,8 @@
 import React from "react";
 import { T } from "../tw/catalog.es-AR.js";
 import { PRESETS } from "../data/layer-defaults";
+
+const GLOBAL_IDS = ["clouds", "firms"];
 import { longHelp } from "../ui/tip-help";
 import type {
   BasemapOption,
@@ -67,6 +69,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     moniOpen: false,
     helpText: "",
     extras: [],
+    firms: { status: "idle", count: 0, msg: "" },
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -144,7 +147,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       const eff = this.effectiveExtras();
       if (eff.join() !== this.extKey) {
         this.extKey = eff.join();
-        this.scene.setExtras?.(eff);
+        this.scene.setExtras?.(eff.filter((id) => !GLOBAL_IDS.includes(id)));
+        this.applyGlobals();
       }
     }
     const el = this.tlRef.current;
@@ -628,6 +632,44 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const ds = this.state.ds;
     const core = ds ? ds.layers.filter((l) => l.core).map((l) => l.id) : [];
     return [...new Set([...core, ...this.state.extras])];
+  }
+
+  // capas globales (nubes, focos de calor): viven en extras pero no son rasters del dataset
+  private firmsOn = false;
+  private firmsSeq = 0;
+
+  applyGlobals(): void {
+    const on = this.state.extras;
+    this.scene?.setSpaceLayer?.("clouds", on.includes("clouds"));
+    // la escena monta el espacio de forma asincrona: se reaplica una vez
+    window.setTimeout(() => this.scene?.setSpaceLayer?.("clouds", this.state.extras.includes("clouds")), 3500);
+    const f = on.includes("firms");
+    if (f === this.firmsOn) return;
+    this.firmsOn = f;
+    const seq = ++this.firmsSeq;
+    if (!f) {
+      this.scene?.setEntities?.("firms", null);
+      this.setState({ firms: { status: "idle", count: 0, msg: "" } });
+      return;
+    }
+    this.setState({ firms: { status: "loading", count: 0, msg: "" } });
+    fetch("/api/firms", { credentials: "same-origin" })
+      .then(async (r) => {
+        if (r.status === 503) throw new Error("Los focos de calor todavía no están habilitados en este entorno.");
+        if (r.status === 401) throw new Error("Iniciá sesión para ver los focos de calor.");
+        if (!r.ok) throw new Error("No pudimos consultar los focos de calor. Probá de nuevo en unos minutos.");
+        return r.json() as Promise<{ features?: unknown[] }>;
+      })
+      .then((fc) => {
+        if (seq !== this.firmsSeq) return;
+        const n = fc.features?.length ?? 0;
+        this.scene?.setEntities?.("firms", n ? fc : null);
+        this.setState({ firms: { status: n ? "ok" : "empty", count: n, msg: "" } });
+      })
+      .catch((e: Error) => {
+        if (seq !== this.firmsSeq) return;
+        this.setState({ firms: { status: "error", count: 0, msg: e.message || "No pudimos consultar los focos de calor." } });
+      });
   }
 
   toggleExtra = (id: string): void => {

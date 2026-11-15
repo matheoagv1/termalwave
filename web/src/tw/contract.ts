@@ -193,5 +193,7 @@ export interface SceneApi {
   refreshStyle(): void;                        // relee variables css al cambiar de tema
   // opcional: prende o apaga cielo, satelites, nubes, cuerpos
   setSpaceLayer?(id: string, on: boolean): void;
+  // opcional: marcadores globales (p. ej. "firms") como GeoJSON; null los quita
+  setEntities?(id: string, data: unknown | null): void;
   destroy(): void;
 }

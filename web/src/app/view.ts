@@ -151,6 +151,38 @@ export function buildView(m: Model) {
       go: () => m.scene?.set({ layer: l.id }),
     };
   });
+  // capas globales (GEV): un interruptor cada una, dentro de su tema
+  const GLOBALS = [
+    { id: "clouds", theme: "clima", label: "Nubes", note: "Mosaico infrarrojo casi en tiempo real sobre el globo." },
+    { id: "firms", theme: "fuego", label: "Focos de calor", note: "Detecciones térmicas satelitales (NASA FIRMS). Un foco no confirma tamaño ni daño." },
+  ];
+  const fm = S.firms;
+  const globalInfo = (id: string): { text: string; tone: "" | "warn" } => {
+    if (id !== "firms" || !S.extras.includes("firms")) return { text: "", tone: "" };
+    if (fm.status === "loading") return { text: "Consultando focos…", tone: "" };
+    if (fm.status === "empty") return { text: "Sin detecciones", tone: "" };
+    if (fm.status === "error") return { text: fm.msg, tone: "warn" };
+    if (fm.status === "ok") return { text: `${fm.count} detecciones`, tone: "" };
+    return { text: "", tone: "" };
+  };
+  type PanelRow =
+    | { kind: "head"; key: string; label: string }
+    | { kind: "layer"; key: string; item: (typeof layerItems)[number] }
+    | { kind: "global"; key: string; id: string; label: string; note: string; on: boolean; info: string; warn: boolean; go: () => void };
+  const knownThemes = new Set(themeOrder);
+  const panelRows: PanelRow[] = [];
+  const themeIds = [...themeOrder, ...new Set([...layers.map(themeOf), ...GLOBALS.map((g) => g.theme)].filter((t) => !knownThemes.has(t)))];
+  for (const th of themeIds) {
+    const ls = layerItems.filter((_, i) => themeOf(sortedLayers[i]) === th);
+    const gs = GLOBALS.filter((g) => g.theme === th);
+    if (!ls.length && !gs.length) continue;
+    panelRows.push({ kind: "head", key: `h-${th}`, label: themeLabels[th] ?? th });
+    ls.forEach((item) => panelRows.push({ kind: "layer", key: item.id, item }));
+    gs.forEach((g) => {
+      const info = globalInfo(g.id);
+      panelRows.push({ kind: "global", key: `g-${g.id}`, id: g.id, label: g.label, note: g.note, on: S.extras.includes(g.id), info: info.text, warn: info.tone === "warn", go: () => m.toggleExtra(g.id) });
+    });
+  }
   const activeLayer = L;
 
   // ficha y valor
@@ -647,7 +679,7 @@ export function buildView(m: Model) {
     showExplore: cam === "orbit" && S.explore && !err,
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
-    dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems,
+    dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems, panelRows,
     dockMaxH: Math.max(140, S.H - 64 - S.tlH - 16) + "px",
     overlayItems: sortedLayers
       .filter((l) => l.id !== sc.layer)

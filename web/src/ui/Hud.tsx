@@ -173,13 +173,40 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               )}
             </div>
           )}
-          {v.dockOpen && v.layerItems.map((l) => (
+          {v.dockOpen && v.panelRows.map((row) => {
+            if (row.kind === "head") {
+              return (
+                <div key={row.key} role="presentation" style={s("padding:6px 12px 4px;border-top:1px solid var(--line);font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>
+                  {row.label}
+                </div>
+              );
+            }
+            if (row.kind === "global") {
+              return (
+                <button
+                  key={row.key}
+                  type="button"
+                  className="tw-hov"
+                  role="switch"
+                  aria-checked={row.on}
+                  data-layer-id={row.id}
+                  title={row.note}
+                  onClick={row.go}
+                  style={s(`display:flex;gap:10px;align-items:flex-start;width:100%;min-height:${lay.hit};padding:8px 12px;border:0;border-top:1px solid var(--line);background:${row.on ? "var(--sel)" : "transparent"};text-align:left;cursor:pointer`)}
+                >
+                  <span aria-hidden="true" style={s(`flex:none;margin-top:2px;width:14px;height:14px;border:1px solid ${row.on ? "var(--acc-fg)" : "var(--line2)"};background:${row.on ? "var(--acc-fg)" : "transparent"}`)} />
+                  <span style={s("flex:1;min-width:0;display:flex;flex-direction:column;gap:2px")}>
+                    <span style={s("font:13px/1.25 var(--sans);color:var(--fg)")}>{row.label}</span>
+                    {row.on && row.info ? (
+                      <span role={row.warn ? "alert" : "status"} style={s(`font:11px/1.35 var(--sans);color:${row.warn ? "var(--warn, #e0a050)" : "var(--fg2)"};white-space:normal;text-wrap:pretty`)}>{row.info}</span>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            }
+            const l = row.item;
+            return (
             <React.Fragment key={l.id}>
-            {l.head && (
-              <div role="presentation" style={s("padding:6px 12px 4px;border-top:1px solid var(--line);font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>
-                {l.head}
-              </div>
-            )}
             <button
               className="tw-hov"
               role="radio"
@@ -219,7 +246,8 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               <span style={s("flex:none;font:11px var(--mono);color:var(--fg2)")}>{l.unit}</span>
             </button>
             </React.Fragment>
-          ))}
+            );
+          })}
           {v.dockOpen && v.overlayItems.length > 0 && (
             <div role="group" aria-label="Superponer capas" style={s("border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-direction:column;gap:6px")}>
               <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>Superponer</span>
