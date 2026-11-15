@@ -48,22 +48,43 @@ def _find_dataset(
     return None
 
 
-def _normalize_to_uint8(arr: np.ndarray, colormap: dict[str, Any]) -> np.ndarray:
-    data = np.asarray(arr, dtype=np.float64)
-    data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
-    finite = data[np.isfinite(data)]
-    if finite.size == 0:
-        return np.zeros((*data.shape, 4), dtype=np.uint8)
+def to_power(raw: np.ndarray, dataset_name: str, power_names: Sequence[str]) -> np.ndarray:
+    """Linear radar power from whatever the granule stores."""
+    data = np.asarray(raw)
+    if np.iscomplexobj(data):
+        return np.abs(data).astype(np.float64) ** 2
+    data = data.astype(np.float64)
+    leaf = dataset_name.rsplit("/", 1)[-1].lower()
+    if leaf in {n.lower() for n in power_names}:
+        return data
+    return data**2
 
-    lo_p = float(colormap["percentile_low"])
-    hi_p = float(colormap["percentile_high"])
-    lo, hi = np.percentile(finite, (lo_p, hi_p))
-    if hi <= lo:
-        lo, hi = float(finite.min()), float(finite.max())
-    if hi <= lo:
-        return np.zeros((*data.shape, 4), dtype=np.uint8)
 
-    scaled = np.clip((data - lo) / (hi - lo), 0.0, 1.0)
+def power_to_db(power: np.ndarray) -> np.ndarray:
+    """10*log10 of linear power; nodata, zero and negative samples become nan."""
+    out = np.full(power.shape, np.nan, dtype=np.float64)
+    valid = np.isfinite(power) & (power > 0)
+    out[valid] = 10.0 * np.log10(power[valid])
+    return out
+
+
+def colour_window(db: np.ndarray, colormap: dict[str, Any]) -> tuple[float, float]:
+    scale = str(colormap.get("scale", "db_fixed"))
+    if scale == "db_fixed":
+        return float(colormap["db_min"]), float(colormap["db_max"])
+    if scale == "percentile":
+        finite = db[np.isfinite(db)]
+        if finite.size == 0:
+            return 0.0, 1.0
+        lo, hi = np.percentile(finite, (float(colormap["percentile_low"]), float(colormap["percentile_high"])))
+        return float(lo), float(hi) if hi > lo else float(lo) + 1.0
+    raise ValueError(f"unknown colormap.scale {scale!r}")
+
+
+def _normalize_to_uint8(db: np.ndarray, colormap: dict[str, Any]) -> np.ndarray:
+    lo, hi = colour_window(db, colormap)
+    valid = np.isfinite(db)
+    scaled = np.clip((np.nan_to_num(db, nan=lo) - lo) / (hi - lo), 0.0, 1.0)
     r = np.clip(
         float(colormap["r_scale"]) * scaled + float(colormap["r_offset"]), 0, 1
     )
@@ -82,7 +103,7 @@ def _normalize_to_uint8(arr: np.ndarray, colormap: dict[str, Any]) -> np.ndarray
             (r * 255).astype(np.uint8),
             (g * 255).astype(np.uint8),
             (b * 255).astype(np.uint8),
-            np.where(data > 0, alpha, 0).astype(np.uint8),
+            np.where(valid, alpha, 0).astype(np.uint8),
         ]
     )
 
@@ -134,6 +155,7 @@ def extract_raster_and_bounds(
         raster = np.asarray(dataset[...])
         if raster.ndim > 2:
             raster = raster[0]
+        raster = power_to_db(to_power(raster, dataset.name, hdf5_cfg.get("power_names", ())))
 
         bounds: dict[str, float] | None = None
         gt = read_geotransform(dataset.attrs, gt_keys) or read_geotransform(
@@ -170,12 +192,15 @@ def write_overlay(
     out_png.parent.mkdir(parents=True, exist_ok=True)
     rgba = _normalize_to_uint8(raster, colormap)
     Image.fromarray(rgba, mode="RGBA").save(out_png)
+    lo, hi = colour_window(raster, colormap)
 
     sidecar = {
         "type": product["sidecar_type"],
         "source": str(source.name),
         "png": out_png.name,
         "bounds": bounds,
+        "units": "dB",
+        "scale": {"kind": str(colormap.get("scale", "db_fixed")), "min_db": lo, "max_db": hi},
         "width": int(rgba.shape[1]),
         "height": int(rgba.shape[0]),
     }

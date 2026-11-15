@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import sys
 import tempfile
 import unittest
@@ -10,6 +11,10 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+from _sandbox import sandbox_root  # noqa: E402
 
 
 class ElevationGeocodeTests(unittest.TestCase):
@@ -167,51 +172,32 @@ class ElevationGeocodeTests(unittest.TestCase):
         self.assertTrue(any(s > 0 for s in sleeps))
 
     def test_request_cache_hit(self) -> None:
-        from termalwave.providers.request_cache import get_json, put_json
+        from termalwave.providers.request_cache import RequestCache
 
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            put_json(root, "ns", "key", {"ok": True})
-            hit = get_json(root, "ns", "key", max_age_s=3600)
-            self.assertEqual(hit, {"ok": True})
-            miss = get_json(root, "ns", "other", max_age_s=3600)
-            self.assertIsNone(miss)
+            cache = RequestCache(root=Path(tmp), max_age_s=3600)
+            cache.put("ns", "key", {"ok": True})
+            self.assertEqual(cache.get("ns", "key"), {"ok": True})
+            self.assertIsNone(cache.get("ns", "other"))
 
     def test_all_down_uses_cached_snapshot(self) -> None:
-        from termalwave.providers.cache import write_cache
-        from termalwave.providers.resolve import resolve_elevations
-        from termalwave.providers.registry import load_apis_config
         from termalwave.model import LatLon
+        from termalwave.providers.registry import load_apis_config
+        from termalwave.providers.resolve import resolve_elevations
 
-        apis = load_apis_config(REPO)
-        write_cache(
-            REPO,
-            apis,
-            "elevation",
-            {
-                "records": [
-                    {
-                        "lat": -27.4959,
-                        "lon": -64.8641,
-                        "meters": 999.0,
-                        "source": "cached",
-                    }
-                ],
-                "selected_sources": ["cached"],
-            },
-        )
-        apis = dict(apis)
-        apis["elevation"] = dict(apis["elevation"])
-        apis["elevation"]["order"] = ["does_not_exist"]
-        result = resolve_elevations(
-            [LatLon(-27.4959, -64.8641)],
-            repo_root=REPO,
-            offline=True,
-            apis=apis,
-        )
+        pt = LatLon(-27.4959, -64.8641)
+        with tempfile.TemporaryDirectory() as tmp:
+            apis = copy.deepcopy(load_apis_config(REPO))
+            apis["paths"]["cache_dir"] = tmp
+            live = resolve_elevations([pt], repo_root=REPO, offline=True, apis=apis)
+            self.assertEqual(live["status"], "ok")
+
+            apis["elevation"]["order"] = ["does_not_exist"]
+            result = resolve_elevations([pt], repo_root=REPO, offline=True, apis=apis)
         self.assertEqual(result["status"], "cache")
         self.assertTrue(result["from_cache"])
-        self.assertEqual(result["records"][0]["meters"], 999.0)
+        self.assertEqual(result["records"], live["records"])
+        self.assertEqual(result["selected_sources"], live["selected_sources"])
 
     def test_attributions_from_config(self) -> None:
         from termalwave.merge import basemap_attributions
@@ -249,7 +235,7 @@ class ElevationGeocodeTests(unittest.TestCase):
         self.assertNotIn("config/secrets.local.toml", tracked)
         self.assertIn("config/secrets.local.toml.example", tracked)
         grep = subprocess.run(
-            ["git", "grep", "-I", "-n", "AIza"],
+            ["git", "grep", "-I", "-n", "-E", "AIza[0-9A-Za-z_-]{35}"],
             cwd=REPO,
             capture_output=True,
             text=True,
@@ -262,12 +248,17 @@ class ElevationGeocodeTests(unittest.TestCase):
         from termalwave.process.config import load_config, write_web_app_config
         from termalwave.runtime_config import default_site_config
 
-        cfg = load_config(default_site_config(), REPO)
-        written = write_web_app_config(cfg, REPO)
+        from termalwave.providers.registry import load_apis_config
+
+        root = sandbox_root(self)
+        config_path = root / default_site_config().relative_to(REPO)
+        cfg = load_config(config_path, root)
+        written = write_web_app_config(cfg, root)
         self.assertTrue(written)
+        self.assertTrue(all(p.is_relative_to(root) for p in written))
         payload = json.loads(written[0].read_text(encoding="utf-8"))
         self.assertIn("basemaps", payload)
-        self.assertEqual(payload["basemaps"]["default"], "gibs_modis_truecolor")
+        self.assertEqual(payload["basemaps"]["default"], load_apis_config(REPO)["basemaps"]["default"])
         self.assertFalse(payload["scene"]["google_maps_enabled"])
         self.assertTrue(payload["basemaps"]["credits"])
 

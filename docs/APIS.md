@@ -117,7 +117,7 @@ Ver `docs/api/*.md`. Google Maps: **rechazado** (`docs/api/REJECTED.md`).
 
 ## Kind: basemap (frontend config → app-config)
 
-GIBS MODIS/VIIRS · OpenFreeMap · EOX s2cloudless · Cesium World Terrain (`CESIUM_ION_TOKEN`). Detalle: `docs/api/basemaps.md`.
+GIBS MODIS/VIIRS · CARTO (`CARTO_BASEMAPS_API_KEY` en origen) · OpenFreeMap · EOX s2cloudless · Cesium World Terrain (`CESIUM_ION_TOKEN`). Detalle: `docs/api/basemaps.md`. Cache de teselas en dos niveles y archivo: [`docs/CACHE.md`](CACHE.md).
 
 ---
 
@@ -134,6 +134,7 @@ GIBS MODIS/VIIRS · OpenFreeMap · EOX s2cloudless · Cesium World Terrain (`CES
 | `TOMTOM_API_KEY` | traffic |
 | `GOOGLE_MAPS_*` | **disabled** — see docs/api/REJECTED.md |
 | `CESIUM_ION_TOKEN` | terrain / 3D |
+| `CARTO_BASEMAPS_API_KEY` | basemaps CARTO (origen nginx) |
 
 Nunca pegar valores en `comms/`, UI, board ni este archivo.
 

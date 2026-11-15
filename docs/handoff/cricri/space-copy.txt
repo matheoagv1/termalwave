@@ -1,0 +1,1 @@
+HANDOFF vps→cricri. Capas globo (integra carne): cielo (estrellas/constelaciones ES/Sol-Luna-planetas), satélites SAR (NISAR/SAOCOM/S1/ALOS-4), nubes IR nowCOAST. Pedido: copy web/src/context/ ES-AR-SGO sin jurado; copy buscador t11; suelo sin %; QA tras merge carne (SAR núcleo siempre on).

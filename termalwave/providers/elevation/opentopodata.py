@@ -9,8 +9,7 @@ from termalwave.model import ElevationSample, LatLon, utc_now
 from termalwave.providers._fixture import load_json_fixture
 from termalwave.providers.http import build_url, http_get_json
 from termalwave.providers.rate_limit import wait_from_meta
-from termalwave.providers.request_cache import get_json, put_json
-from termalwave.runtime_config import REPO_ROOT
+from termalwave.providers.request_cache import RequestCache
 
 
 _BATCH = 100
@@ -28,6 +27,7 @@ class OpenTopoDataSrtm30m:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.kind_cfg = kind_cfg
@@ -35,7 +35,7 @@ class OpenTopoDataSrtm30m:
         self.offline = offline
         self.fixtures_dir = fixtures_dir
         self.endpoints = endpoints
-        self.cache_root = REPO_ROOT / "data" / "cache"
+        self.cache = cache
 
     def elevations(self, points: list[LatLon]) -> list[ElevationSample]:
         product = str(self.meta.get("product", "srtm30m"))
@@ -64,17 +64,17 @@ class OpenTopoDataSrtm30m:
         for i in range(0, len(points), _BATCH):
             chunk = points[i : i + _BATCH]
             cache_key = "|".join(f"{p.lat:.5f},{p.lon:.5f}" for p in chunk)
-            cached = get_json(self.cache_root, self.name, cache_key, max_age_s=7 * 86400)
-            if cached is None:
+
+            def load() -> Any:
                 wait_from_meta(self.name, self.meta, self.kind_cfg)
                 locations = "|".join(f"{p.lat},{p.lon}" for p in chunk)
-                url = build_url(base, {"locations": locations})
-                cached = http_get_json(url)
-                put_json(self.cache_root, self.name, cache_key, cached)
+                return http_get_json(build_url(base, {"locations": locations}))
+
+            data = self.cache.fetch(self.name, cache_key, load)
             out.extend(
                 _samples_from_payload(
                     chunk,
-                    cached,
+                    data,
                     source=self.name,
                     product=product,
                     license_name=license_name,

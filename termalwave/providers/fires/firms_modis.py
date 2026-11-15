@@ -8,6 +8,7 @@ from typing import Any
 from termalwave.model import AOI, Hotspot, Period
 from termalwave.providers._fixture import load_csv_fixture
 from termalwave.providers.fires._common import fetch_firms_area_csv, quality_for, rows_to_hotspots
+from termalwave.providers.request_cache import RequestCache
 from termalwave.providers.secrets import require_credential
 
 
@@ -23,6 +24,7 @@ class FirmsModis:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.kind_cfg = kind_cfg

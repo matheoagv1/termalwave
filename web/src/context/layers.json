@@ -1,16 +1,16 @@
 {
   "capas": {
     "radar": "El radar NISAR registra la señal que vuelve de la superficie, llamada retrodispersión o backscatter. Comparar fechas ayuda a observar cambios. La humedad, la vegetación, la rugosidad y la geometría de observación pueden influir en la señal; hace falta contrastar otras fuentes para interpretar la causa.",
-    "suelo": "Esta capa puede mostrar un indicador derivado del radar y datos de contexto. Revisá la fuente, la unidad y el método antes de interpretarla. No mide directamente el agua en las raíces ni reemplaza una medición de campo.",
+    "suelo": "La imagen de ejemplo no es una medición de humedad del suelo. Para estimar humedad se necesitan datos procesados, un método definido y validación con mediciones de campo. No muestra el agua disponible para las raíces.",
     "contaminacion": "Es un índice de apoyo, no un análisis de laboratorio. Revisá la fuente y el método. NISAR no mide la concentración de contaminantes ni confirma por sí solo contaminación del agua o del suelo.",
     "incendios": "Los focos térmicos indican señales de calor detectadas por satélite. No todos son incendios, y la ausencia de un foco no demuestra que no haya fuego. Compará la fecha y la cobertura con información del lugar y avisos oficiales."
   },
   "fuentes": {
-    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisa la fecha, la colección y si esa observación ya está validada.",
+    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisá la fecha, la colección y si esa observación ya está validada.",
     "planetary_computer_s2": "Sentinel-2 suma imagen óptica para comparar cobertura. Nubes y sombras pueden dejar huecos cerca de la pasada de radar.",
     "open_meteo_archive": "Open-Meteo aporta clima de archivo para contextualizar las pasadas. La escala depende de la variable que mires.",
-    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisa qué variable llega y con qué cobertura.",
-    "firms_viirs_sp": "FIRMS VIIRS procesado: focos térmicos ya revisados. Son detecciones puntuales, no el perímetro completo del fuego.",
+    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisá qué variable llega y con qué cobertura.",
+    "firms_viirs_sp": "FIRMS VIIRS procesado: detecciones térmicas de la versión procesada. Son focos identificados por satélite, no el perímetro completo del fuego ni una confirmación en terreno.",
     "firms_viirs_nrt": "FIRMS VIIRS de disponibilidad rápida. Puede corregirse o filtrarse en un procesamiento posterior.",
     "firms_modis": "FIRMS MODIS: focos térmicos a otra escala. Si no aparece un foco, no asumas que no hubo actividad."
   },

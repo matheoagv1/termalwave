@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -14,11 +14,8 @@ from termalwave.merge import (
     prefer_validated_granules,
 )
 from termalwave.model import AOI, Period, record_to_dict
-from termalwave.providers.cache import read_cache, write_cache
-from termalwave.providers.registry import load_apis_config, providers_for_kind
-from termalwave.providers.secrets import load_credentials
-
-log = logging.getLogger("termalwave.ingest")
+from termalwave.providers.chain import ProviderEnv, run_chain
+from termalwave.providers.snapshot import fallback_payload, resolved_payload
 
 
 def _aoi_from_cfg(cfg: dict[str, Any]) -> AOI:
@@ -44,103 +41,79 @@ def _period_from_cfg(cfg: dict[str, Any]) -> Period:
     return Period(start=start, end=end)
 
 
+def _request_key(aoi: AOI, period: Period) -> dict[str, Any]:
+    return {
+        "bounds": [f"{v:.5f}" for v in (aoi.west, aoi.south, aoi.east, aoi.north)],
+        "period": [period.start.isoformat(), period.end.isoformat()],
+    }
+
+
+def _merge_kind(
+    kind: str,
+    batches: list[list[Any]],
+    *,
+    section: dict[str, Any],
+    period: Period,
+) -> list[Any]:
+    if kind == "fires":
+        return merge_fires_union_dedupe(
+            batches,
+            distance_km=float(section.get("dedupe_distance_km", 1.0)),
+            time_hours=float(section.get("dedupe_time_hours", 12.0)),
+        )
+    if kind == "weather":
+        return merge_weather_first_available(batches)
+    flat = [item for batch in batches for item in batch]
+    if kind == "optical":
+        # Use radar-less fallback: sample midpoints of timeline years as targets.
+        targets = [
+            datetime(period.start.year, 6, 15, tzinfo=timezone.utc),
+            datetime(period.end.year, 6, 15, tzinfo=timezone.utc),
+        ]
+        return pick_optical_near_nisar(
+            flat,
+            targets,
+            max_cloud_pct=float(section.get("max_cloud_pct", 40.0)),
+            max_day_delta=int(section.get("max_day_delta", 16)),
+        )
+    if kind == "radar":
+        return prefer_validated_granules(flat)
+    return flat
+
+
 def _run_kind(
     kind: str,
     *,
-    apis: dict[str, Any],
+    env: ProviderEnv,
     aoi: AOI,
     period: Period,
-    credentials: dict[str, str],
-    offline: bool,
-    fixtures_dir: Path,
-    repo_root: Path,
 ) -> dict[str, Any]:
-    section = apis.get(kind) or {}
+    section = env.apis.get(kind) or {}
     strategy = str(section.get("strategy") or "first_available")
-    tried: list[dict[str, Any]] = []
-    batches: list[Any] = []
-    providers = providers_for_kind(
-        kind,
-        apis,
-        credentials=credentials,
-        offline=offline,
-        fixtures_dir=fixtures_dir,
+    key = _request_key(aoi, period)
+    batches, tried = run_chain(
+        env.providers(kind),
+        lambda provider: provider.fetch(aoi, period),
+        label=kind,
     )
-    for provider in providers:
-        name = getattr(provider, "name", provider.__class__.__name__)
-        entry: dict[str, Any] = {"provider": name, "ok": False}
-        try:
-            batch = provider.fetch(aoi, period)
-            entry["ok"] = True
-            entry["count"] = len(batch)
-            batches.append(batch)
-            tried.append(entry)
-        except Exception as exc:  # noqa: BLE001 — skip failed providers
-            entry["error"] = str(exc)
-            tried.append(entry)
-            log.warning("%s provider %s skipped: %s", kind, name, exc)
-
-    records: list[Any] = []
-    unavailable = False
-    from_cache = False
-
-    if not any(t.get("ok") for t in tried):
-        cached = read_cache(repo_root, apis, kind)
-        if cached and cached.get("records") is not None:
-            from_cache = True
-            return {
-                "kind": kind,
-                "strategy": strategy,
-                "status": "cache",
-                "tried": tried,
-                "from_cache": True,
-                "records": cached.get("records") or [],
-                "selected_sources": cached.get("selected_sources") or [],
-            }
-        unavailable = True
+    if not batches:
+        payload = fallback_payload(env.cache.root, kind, key, tried=tried)
     else:
-        if kind == "fires":
-            records = merge_fires_union_dedupe(
-                batches,
-                distance_km=float(section.get("dedupe_distance_km", 1.0)),
-                time_hours=float(section.get("dedupe_time_hours", 12.0)),
-            )
-        elif kind == "weather":
-            records = merge_weather_first_available(batches)
-        elif kind == "optical":
-            flat = [item for batch in batches for item in batch]
-            # Use radar-less fallback: sample midpoints of timeline years as targets.
-            targets = [
-                datetime(period.start.year, 6, 15, tzinfo=timezone.utc),
-                datetime(period.end.year, 6, 15, tzinfo=timezone.utc),
-            ]
-            records = pick_optical_near_nisar(
-                flat,
-                targets,
-                max_cloud_pct=float(section.get("max_cloud_pct", 40.0)),
-                max_day_delta=int(section.get("max_day_delta", 16)),
-            )
-        elif kind == "radar":
-            flat = [item for batch in batches for item in batch]
-            records = prefer_validated_granules(flat)
-        else:
-            records = [item for batch in batches for item in batch]
-
-    record_dicts = [record_to_dict(r) for r in records]
-    sources = sorted({str(r.get("source", "")) for r in record_dicts if r.get("source")})
-    payload = {
-        "kind": kind,
-        "strategy": strategy,
-        "status": "unavailable" if unavailable else "ok",
-        "tried": tried,
-        "from_cache": from_cache,
-        "records": record_dicts,
-        "selected_sources": sources,
-        "count": len(record_dicts),
-    }
-    if not unavailable and record_dicts:
-        write_cache(repo_root, apis, kind, payload)
-    return payload
+        record_dicts = [
+            record_to_dict(r)
+            for r in _merge_kind(kind, batches, section=section, period=period)
+        ]
+        payload = resolved_payload(
+            env.cache.root,
+            kind,
+            key,
+            tried=tried,
+            records=record_dicts,
+            selected_sources=sorted(
+                {str(r.get("source", "")) for r in record_dicts if r.get("source")}
+            ),
+        )
+    return {**payload, "strategy": strategy, "count": len(payload["records"])}
 
 
 def run_ingest(
@@ -149,12 +122,8 @@ def run_ingest(
     repo_root: Path,
     offline: bool,
 ) -> dict[str, Any]:
-    apis = load_apis_config(repo_root)
-    credentials = load_credentials(repo_root, apis)
-    fixtures_rel = apis.get("paths", {}).get("fixtures_dir", "tests/fixtures/providers")
-    fixtures_dir = Path(fixtures_rel)
-    if not fixtures_dir.is_absolute():
-        fixtures_dir = (repo_root / fixtures_dir).resolve()
+    env = ProviderEnv.load(repo_root, offline=offline)
+    apis = env.apis
 
     aoi = _aoi_from_cfg(cfg)
     period = _period_from_cfg(cfg)
@@ -164,16 +133,7 @@ def run_ingest(
     kinds = ("fires", "weather", "optical", "radar", "vessels", "aviation", "traffic")
     layers: dict[str, Any] = {}
     for kind in kinds:
-        layers[kind] = _run_kind(
-            kind,
-            apis=apis,
-            aoi=aoi,
-            period=period,
-            credentials=credentials,
-            offline=offline,
-            fixtures_dir=fixtures_dir,
-            repo_root=repo_root,
-        )
+        layers[kind] = _run_kind(kind, env=env, aoi=aoi, period=period)
 
     # Optical refine using actual radar acquisition times when available.
     radar_times: list[datetime] = []
@@ -232,8 +192,6 @@ def run_ingest(
     if not stats_path.is_absolute():
         stats_path = (repo_root / stats_path).resolve()
     stats_path.parent.mkdir(parents=True, exist_ok=True)
-    import json
-
     stats_path.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
 
     # Persist per-kind record sidecars for debugging / web optional use.

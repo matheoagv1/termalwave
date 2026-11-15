@@ -4,6 +4,7 @@ import { App } from "./app/App";
 import { hashParams } from "./app/hash";
 import { ConfigProvider } from "./data/config-provider";
 import { MapLibreScene, type BasemapTiles } from "./scene/maplibre-scene";
+import type { SpaceConfig } from "./scene/space";
 import { MockProvider } from "./tw/mock-provider.js";
 import { MockScene } from "./tw/mock-scene.js";
 import type { BasemapOption, DataProvider, SceneApi, SceneOptions } from "./tw/contract";
@@ -25,6 +26,8 @@ type BmEntry = {
   id?: string;
   kind?: string;
   url_template?: string;
+  proxy_template?: string;
+  underlay?: string;
   resolved_url?: string;
   resolved_date?: string;
   date_lag_days?: number;
@@ -52,38 +55,73 @@ function gibsDate(lagDays = 4): string {
   return new Date(Date.now() - lagDays * 86400000).toISOString().slice(0, 10);
 }
 
-function entryUrl(e: BmEntry): string {
-  if (e.resolved_url) return e.resolved_url;
-  const tmpl = String(e.url_template ?? "");
+function entryUrl(e: BmEntry, proxied: boolean): string {
   const lag = e.date_lag_days ?? 4;
-  return tmpl.replace("{date}", gibsDate(lag));
+  const day = e.resolved_date ?? gibsDate(lag);
+  if (proxied && e.proxy_template) return absolute(e.proxy_template.replace("{date}", day));
+  if (e.resolved_url) return e.resolved_url;
+  return String(e.url_template ?? "").replace("{date}", day);
+}
+
+// maplibre resolves tile urls against the worker, not the page
+function absolute(path: string): string {
+  return new URL(path, window.location.href).href;
+}
+
+// the tile cache lives in the edge worker; vite dev and offline copies go direct
+async function tileProxyUp(entries: BmEntry[]): Promise<boolean> {
+  const probe = entries.find((e) => e.proxy_template);
+  if (!probe?.proxy_template) return false;
+  const day = probe.resolved_date ?? gibsDate(probe.date_lag_days ?? 4);
+  const url = probe.proxy_template.replace("{date}", day).replace("{z}", "0").replace("{x}", "0").replace("{y}", "0");
+  try {
+    const res = await fetch(url, { method: "GET", credentials: "same-origin" });
+    return res.ok && (res.headers.get("content-type") ?? "").startsWith("image/");
+  } catch {
+    return false;
+  }
 }
 
 // Rasters only here; OpenFreeMap vector needs a full style swap (see board T036).
-function basemapOptions(cfg: BmCfg | undefined): BasemapOption[] {
+function bmEntries(cfg: BmCfg | undefined): BmEntry[] {
   const raw = cfg?.entries;
-  const values = Array.isArray(raw) ? raw : Object.values(raw ?? {});
+  return Array.isArray(raw) ? raw : Object.values(raw ?? {});
+}
+
+function basemapOptions(cfg: BmCfg | undefined, proxied: boolean): BasemapOption[] {
+  const values = bmEntries(cfg);
+  const byId = new Map(values.map((e) => [String(e.id), e]));
+  const tiles = (e: BmEntry) => ({
+    url: entryUrl(e, proxied),
+    tileSize: e.tile_size ?? 256,
+    maxzoom: e.max_zoom ?? 8,
+    attribution: e.attribution ?? "",
+  });
   const list = values
     .filter((e) => e.kind === "raster" && (e.resolved_url || e.url_template))
-    .map((e) => ({
-      id: String(e.id),
-      label: e.label ?? BM_LABELS[String(e.id)] ?? String(e.id),
-      url: entryUrl(e),
-      tileSize: e.tile_size ?? 256,
-      maxzoom: e.max_zoom ?? 8,
-      attribution: e.attribution ?? "",
-    }));
+    .map((e) => {
+      const under = e.underlay ? byId.get(e.underlay) : undefined;
+      return {
+        id: String(e.id),
+        label: e.label ?? BM_LABELS[String(e.id)] ?? String(e.id),
+        ...tiles(e),
+        ...(under ? { underlay: tiles(under) } : {}),
+      };
+    });
   const first = list.findIndex((o) => o.id === cfg?.default);
   if (first > 0) list.unshift(...list.splice(first, 1));
   return list;
 }
 
-async function appConfig(): Promise<{ web: WebCfg; basemaps?: BmCfg }> {
+type AoiCfg = { west: number; east: number; south: number; north: number };
+type AppCfg = { web: WebCfg; basemaps?: BmCfg; aoi?: AoiCfg; space?: SpaceConfig };
+
+async function appConfig(): Promise<AppCfg> {
   try {
     const res = await fetch("./app-config.json");
     if (!res.ok) return { web: {} };
-    const c = (await res.json()) as { web?: WebCfg; basemaps?: BmCfg };
-    return { web: c.web ?? {}, basemaps: c.basemaps };
+    const c = (await res.json()) as Partial<AppCfg>;
+    return { web: c.web ?? {}, basemaps: c.basemaps, aoi: c.aoi, space: c.space };
   } catch {
     return { web: {} };
   }
@@ -104,9 +142,9 @@ const DEFAULT_DEM = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}
 async function start(): Promise<void> {
   const cfg = await appConfig();
   const web = cfg.web;
-  const bmOpts = basemapOptions(cfg.basemaps);
+  const bmOpts = basemapOptions(cfg.basemaps, await tileProxyUp(bmEntries(cfg.basemaps)));
   const basemapTiles: BasemapTiles | undefined = bmOpts[0]
-    ? { url: bmOpts[0].url, tileSize: bmOpts[0].tileSize, maxzoom: bmOpts[0].maxzoom, attribution: bmOpts[0].attribution }
+    ? bmOpts[0]
     : web.gibs_url_template
     ? {
         url: web.gibs_url_template,
@@ -122,7 +160,14 @@ async function start(): Promise<void> {
 
   const makeScene = (opts: SceneOptions): SceneApi => {
     if (useDom) return new MockScene(opts) as unknown as SceneApi;
-    return new MapLibreScene({ ...opts, basemapTiles, demTiles: web.dem_url_template ?? DEFAULT_DEM });
+    return new MapLibreScene({
+      ...opts,
+      basemapTiles,
+      demTiles: web.dem_url_template ?? DEFAULT_DEM,
+      home: cfg.aoi ? [(cfg.aoi.west + cfg.aoi.east) / 2, (cfg.aoi.south + cfg.aoi.north) / 2] : undefined,
+      aoi: cfg.aoi,
+      space: cfg.space,
+    });
   };
 
   const el = document.getElementById("root");

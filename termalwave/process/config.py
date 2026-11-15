@@ -7,6 +7,14 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from termalwave.merge import basemap_attributions
+from termalwave.providers.registry import (
+    basemap_defs,
+    load_apis_config,
+    search_web_config,
+    space_web_config,
+)
+
 
 def load_layers_taxonomy(repo_root: Path) -> dict[str, Any]:
     """category/core/presets from config/layers.toml (challenge taxonomy)."""
@@ -128,11 +136,7 @@ def write_web_app_config(
         payload["data_sources"] = provenance.get("layers", {})
 
     if apis is None:
-        from termalwave.providers.registry import load_apis_config
-
         apis = load_apis_config(repo_root)
-    from termalwave.merge import basemap_attributions
-    from termalwave.providers.registry import basemap_defs
 
     basemaps_section = apis.get("basemaps") or {}
     if basemaps_section:
@@ -151,6 +155,13 @@ def write_web_app_config(
             "cesium_ion_asset_world_terrain"
         ),
     }
+
+    search = search_web_config(apis)
+    if search:
+        payload["search"] = search
+    space = space_web_config(apis)
+    if space:
+        payload["space"] = space
 
     tax = cfg.get("layers_taxonomy") or {}
     # Enrich timeline.layers[] with category/core so UI doesn't need a join.

@@ -2,7 +2,13 @@
   "name": "termalwave-preview",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-14",
+  "routes": [
+    { "pattern": "termalwave.space/*", "zone_name": "termalwave.space" },
+    { "pattern": "www.termalwave.space/*", "zone_name": "termalwave.space" },
+    { "pattern": "c.termalwave.space/*", "zone_name": "termalwave.space" }
+  ],
   "workers_dev": true,
+
   "preview_urls": true,
   "assets": {
     "directory": "../web/dist",
@@ -18,6 +24,9 @@
     }
   ],
   "vars": {
-    "APP_NAME": "TermalWave Preview"
+    "APP_NAME": "TermalWave Preview",
+    // must match config/apis.toml [tiles] origin_host / key_header; key is the TILE_ORIGIN_KEY secret
+    "TILE_ORIGIN": "https://origin.termalwave.space",
+    "TILE_ORIGIN_HEADER": "X-TW-Origin-Key"
   }
 }

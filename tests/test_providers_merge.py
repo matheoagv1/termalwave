@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
+import tempfile
 import unittest
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+from _sandbox import sandbox_root  # noqa: E402
 
 
 class MergePolicyTests(unittest.TestCase):
@@ -131,51 +137,53 @@ class MergePolicyTests(unittest.TestCase):
         self.assertEqual(by_day["2024-06-16"].source, "meteomatics")
 
     def test_offline_ingest_and_cache_fallback(self) -> None:
+        from termalwave.model import AOI
+        from termalwave.process import ingest as ingest_mod
         from termalwave.process.config import load_config
-        from termalwave.process.ingest import run_ingest
-        from termalwave.providers.cache import kind_cache_path, write_cache
+        from termalwave.providers.chain import ProviderEnv
         from termalwave.providers.registry import load_apis_config
+        from termalwave.providers.snapshot import snapshot_path
         from termalwave.runtime_config import default_site_config
 
-        cfg = load_config(default_site_config(), REPO)
-        result = run_ingest(cfg, repo_root=REPO, offline=True)
+        root = sandbox_root(self)
+        cfg = load_config(root / default_site_config().relative_to(REPO), root)
+        result = ingest_mod.run_ingest(cfg, repo_root=root, offline=True)
         self.assertEqual(result["provenance"]["layers"]["fires"]["status"], "ok")
         self.assertGreater(result["provenance"]["layers"]["fires"]["count"], 0)
         self.assertEqual(result["provenance"]["layers"]["radar"]["status"], "ok")
 
-        # Simulate all providers down → cache.
-        apis = load_apis_config(REPO)
-        write_cache(
-            REPO,
-            apis,
-            "weather",
-            {
-                "records": [{"day": "2024-01-01", "source": "cached"}],
-                "selected_sources": ["cached"],
-            },
-        )
-        # Point order to a fake provider name so registry builds nothing.
-        apis["weather"]["order"] = ["does_not_exist"]
-        from termalwave.process import ingest as ingest_mod
-
         aoi = ingest_mod._aoi_from_cfg(cfg)
         period = ingest_mod._period_from_cfg(cfg)
-        payload = ingest_mod._run_kind(
-            "weather",
-            apis=apis,
-            aoi=aoi,
-            period=period,
-            credentials={},
-            offline=True,
-            fixtures_dir=REPO / "tests" / "fixtures" / "providers",
-            repo_root=REPO,
-        )
-        self.assertEqual(payload["status"], "cache")
-        self.assertTrue(payload["from_cache"])
-        self.assertTrue(kind_cache_path(REPO, apis, "weather").is_file())
+        with tempfile.TemporaryDirectory() as tmp:
+            apis = copy.deepcopy(load_apis_config(REPO))
+            apis["paths"]["cache_dir"] = tmp
+            live = ingest_mod._run_kind(
+                "weather", env=ProviderEnv.load(REPO, offline=True, apis=apis), aoi=aoi, period=period
+            )
+            self.assertEqual(live["status"], "ok")
+            self.assertGreater(live["count"], 0)
+            key = ingest_mod._request_key(aoi, period)
+            self.assertTrue(snapshot_path(Path(tmp), "weather", key).is_file())
+
+            # Point order to a fake provider name so registry builds nothing.
+            apis["weather"]["order"] = ["does_not_exist"]
+            down = ProviderEnv.load(REPO, offline=True, apis=apis)
+            payload = ingest_mod._run_kind("weather", env=down, aoi=aoi, period=period)
+            self.assertEqual(payload["status"], "cache")
+            self.assertTrue(payload["from_cache"])
+            self.assertEqual(payload["strategy"], live["strategy"])
+            self.assertEqual(payload["records"], live["records"])
+            self.assertEqual(payload["count"], live["count"])
+
+            other = AOI(west=aoi.west + 5, east=aoi.east + 5, south=aoi.south, north=aoi.north)
+            elsewhere = ingest_mod._run_kind("weather", env=down, aoi=other, period=period)
+            self.assertEqual(elsewhere["status"], "unavailable")
+            self.assertEqual(elsewhere["records"], [])
+            self.assertEqual(elsewhere["count"], 0)
 
     def test_registry_order_from_config_only(self) -> None:
         from termalwave.providers.registry import load_apis_config, providers_for_kind
+        from termalwave.providers.request_cache import RequestCache
 
         apis = load_apis_config(REPO)
         fixtures = REPO / "tests" / "fixtures" / "providers"
@@ -185,6 +193,7 @@ class MergePolicyTests(unittest.TestCase):
             credentials={},
             offline=True,
             fixtures_dir=fixtures,
+            cache=RequestCache.from_config(REPO, apis),
         )
         names = [p.name for p in providers]
         self.assertEqual(names, apis["fires"]["order"])
@@ -200,13 +209,16 @@ class PipelineProvenanceSmoke(unittest.TestCase):
         from termalwave.runtime_config import default_site_config
 
         ensure_vendored(verify=False)
-        cfg = load_config(default_site_config(), REPO)
-        run_pipeline(config_path=default_site_config(), offline=True, repo_root=REPO)
+        root = sandbox_root(self)
+        config_path = root / default_site_config().relative_to(REPO)
+        cfg = load_config(config_path, root)
+        run_pipeline(config_path=config_path, offline=True, repo_root=root)
         web_cfg = Path(cfg["paths"]["web_config_out"])
+        self.assertTrue(web_cfg.is_relative_to(root))
         app = json.loads(web_cfg.read_text(encoding="utf-8"))
         self.assertIn("provenance", app)
         self.assertIn("fires", app["provenance"]["layers"])
-        stats = Path(REPO / "data" / "processed" / "stats.json")
+        stats = root / "data" / "processed" / "stats.json"
         self.assertTrue(stats.is_file())
 
 
