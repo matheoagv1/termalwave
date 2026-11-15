@@ -18,6 +18,7 @@ export interface Model {
   basemaps: Array<{ id: string; label: string }>;
   setBasemap(id: string): void;
   toggleExtra(id: string): void;
+  setLayer(id: string): void;
   retry(): void;
   closePick(): void;
   togglePlay(): void;
@@ -148,7 +149,7 @@ export function buildView(m: Model) {
       grad: grad(l),
       bg: on ? "var(--sel)" : "transparent",
       chipBg: on ? "var(--sel)" : panel,
-      go: () => m.scene?.set({ layer: l.id }),
+      go: () => m.setLayer(l.id),
     };
   });
   // capas globales (GEV): un interruptor cada una, dentro de su tema

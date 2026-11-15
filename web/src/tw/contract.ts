@@ -195,5 +195,7 @@ export interface SceneApi {
   setSpaceLayer?(id: string, on: boolean): void;
   // opcional: marcadores globales (p. ej. "firms") como GeoJSON; null los quita
   setEntities?(id: string, data: unknown | null): void;
+  // opcional: zona activa (busqueda); sin eso no hay chrome AOI
+  setActivePlace?(on: boolean): void;
   destroy(): void;
 }

@@ -49,6 +49,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     results: [],
     searched: false,
     searchOpen: false,
+    activePlace: null,
     toast: "",
     help: false,
     ficha: false,
@@ -68,7 +69,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     soundOn: intro0.sound,
     moniOpen: false,
     helpText: "",
-    extras: [],
+    // nubes + focos encendidos al abrir: el globo no arranca vacio en el AOI
+    extras: ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
   };
 
@@ -261,8 +263,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       help: hp.ayuda === "1",
       sheet: hp.ficha === "1",
       tab: hp.tab === "lectura" ? "read" : hp.tab === "fuentes" ? "sources" : "area",
+      activePlace: null,
       scene: INITIAL_SCENE,
     });
+    this.scene.setActivePlace?.(false);
     this.padKey = null;
     this.scene.setPadding(this.padding());
     let start = hp.c ?? (sc !== "normal" && sc !== "error-config" ? "territory" : "orbit");
@@ -280,7 +284,15 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     }
     if (my !== this.bootId || !this.scene) return;
     this.derive(ds);
-    await new Promise<void>((r) => this.setState({ ds }, r));
+    // deep link / escenario demo: territorio pide zona activa (AOI del dataset)
+    const deepTerritory = start !== "orbit";
+    if (deepTerritory) {
+      const place = { label: ds.area.name, lonlat: ds.area.center, bounds: ds.area.bounds };
+      await new Promise<void>((r) => this.setState({ ds, activePlace: place }, r));
+      this.scene.setActivePlace?.(true);
+    } else {
+      await new Promise<void>((r) => this.setState({ ds }, r));
+    }
     this.scene.setDataset(ds);
     const lastSeg = ds.segments[ds.segments.length - 1];
     const lastTick = lastSeg?.ticks[lastSeg.ticks.length - 1];
@@ -620,7 +632,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   enter = (): void => {
     if (!this.state.ds || !this.scene) return;
-    this.setState({ explore: false, ficha: this.state.W >= 760 });
+    const a = this.state.ds.area;
+    const place = this.state.activePlace ?? { label: a.name, lonlat: a.center, bounds: a.bounds };
+    this.setState({ explore: false, ficha: this.state.W >= 760, activePlace: place });
+    this.scene.setActivePlace?.(true);
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory");
   };
@@ -673,8 +688,20 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   }
 
   toggleExtra = (id: string): void => {
+    if (!GLOBAL_IDS.includes(id) && !this.state.activePlace) {
+      this.showToast(T.search.needPlace);
+      return;
+    }
     const cur = this.state.extras;
     this.setState({ extras: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
+  };
+
+  setLayer = (id: string): void => {
+    if (!this.state.activePlace) {
+      this.showToast(T.search.needPlace);
+      return;
+    }
+    this.scene?.set({ layer: id });
   };
 
   get basemaps(): BasemapOption[] {
@@ -730,20 +757,29 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   };
 
   goResult = (r: SearchResult): void => {
+    if (!this.scene) return;
     const ds = this.state.ds;
-    if (!ds || !this.scene) return;
-    const b = ds.area.bounds;
-    const [lon, lat] = r.lonlat;
-    const inside = lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north;
-    this.setState({ q: "", results: [], searched: false, searchOpen: false });
-    if (r.kind === "area" || inside) {
-      if (this.state.scene.camera === "orbit") this.enter();
+    const place = {
+      label: r.label,
+      lonlat: r.lonlat as [number, number],
+      bounds: r.kind === "area" && ds ? ds.area.bounds : undefined,
+    };
+    this.setState({ q: "", results: [], searched: false, searchOpen: false, activePlace: place, explore: true });
+    this.scene.setActivePlace?.(true);
+    // preset del area de demo: entra a territorio; no fuerza radar
+    if (r.kind === "area") {
+      this.setState({ explore: false, ficha: this.state.W >= 760 });
+      this.scene.set({ focus: null });
+      void this.scene.flyTo("territory");
       return;
     }
     this.showToast(T.search.going(r.label));
-    if (this.state.scene.camera !== "orbit") void this.scene.resetToOrbit();
-    this.scene.set({ focus: { lonlat: r.lonlat, zoom: 1 } });
-    this.setState({ explore: true });
+    const focus = { lonlat: r.lonlat, zoom: 1 };
+    const armFocus = (): void => {
+      this.scene?.set({ focus });
+    };
+    if (this.state.scene.camera !== "orbit") void this.scene.resetToOrbit().then(armFocus);
+    else armFocus();
   };
 
   // teclado

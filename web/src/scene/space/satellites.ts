@@ -111,6 +111,29 @@ function kindColor(k: SensorKind): string {
   }
 }
 
+// NISAR: color propio, no el kindColor SAR compartido
+const NISAR_COLOR = "#ff6b1a";
+const NISAR_PULSE_MS = 1500;
+
+function isNisar(name: string): boolean {
+  return name === "NISAR";
+}
+
+function satColor(name: string, kind: SensorKind): string {
+  return isNisar(name) ? NISAR_COLOR : kindColor(kind);
+}
+
+function reducedMotionOn(): boolean {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** 0.55..1 over ~1.5s; static 1 when reduced motion */
+function nisarPulse(tMs: number, reduced: boolean): number {
+  if (reduced) return 1;
+  const p = (Math.sin((tMs / NISAR_PULSE_MS) * Math.PI * 2) + 1) / 2;
+  return 0.55 + 0.45 * p;
+}
+
 function utcDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
@@ -471,22 +494,31 @@ export class SatellitesLayer implements SpaceLayer {
     ctx.clearRect(0, 0, view.width, view.height);
     if (this.opts.tracks) this.drawRings(view, t);
     if (this.opts.swath) this.drawBeams(view);
-    this.drawPoints(view);
+    this.drawPoints(view, t);
+    this.pulseGroundTrack(t);
   }
 
   private drawRings(view: SpaceView, t: number): void {
     const ctx = this.ctx;
     const xy = this.xy;
     const gmst = gstime(new Date(t));
+    const reduced = reducedMotionOn();
+    const lowZ = this.host.map.getZoom() < 6;
+    const pulse = nisarPulse(t, reduced);
     for (const [i, ring] of this.rings) {
       // the ring was frozen at ring.gmst; turn it with the earth since then
       const rot = ring.gmst - gmst;
       const c = Math.cos(rot);
       const s = Math.sin(rot);
-      ctx.strokeStyle = kindColor(this.sats[i].kind);
-      ctx.lineWidth = i === this.selected ? 1.6 : 1.1;
+      const sat = this.sats[i];
+      const nisar = isNisar(sat.name);
+      ctx.strokeStyle = satColor(sat.name, sat.kind);
+      // NISAR late en orbita/poco zoom; el resto de highlights queda mas quieto
+      const baseW = nisar ? (lowZ ? 1.4 + 0.8 * pulse : 1.5) : i === this.selected ? 1.35 : 0.9;
+      ctx.lineWidth = baseW;
       for (const pass of [true, false]) {
-        ctx.globalAlpha = pass ? 0.75 : 0.14;
+        const bright = nisar ? (lowZ ? 0.55 + 0.4 * pulse : 0.85) : 0.45;
+        ctx.globalAlpha = pass ? bright : bright * 0.18;
         ctx.beginPath();
         let open = false;
         for (let k = 0; k <= RING_SAMPLES; k++) {
@@ -520,8 +552,9 @@ export class SatellitesLayer implements SpaceLayer {
       const z = this.cur[o + 2];
       if (Number.isNaN(x) || this.hidden(view, x, y, z) || !this.project(view, x, y, z, xy, 0)) continue;
       if (!this.project(view, ...edges[0], xy, 2) || !this.project(view, ...edges[1], xy, 4)) continue;
-      ctx.fillStyle = kindColor(this.sats[i].kind);
-      ctx.globalAlpha = 0.16;
+      const sat = this.sats[i];
+      ctx.fillStyle = satColor(sat.name, sat.kind);
+      ctx.globalAlpha = isNisar(sat.name) ? 0.22 : 0.1;
       ctx.beginPath();
       ctx.moveTo(xy[0], xy[1]);
       ctx.lineTo(xy[2], xy[3]);
@@ -532,10 +565,13 @@ export class SatellitesLayer implements SpaceLayer {
     ctx.globalAlpha = 1;
   }
 
-  private drawPoints(view: SpaceView): void {
+  private drawPoints(view: SpaceView, t: number): void {
     const ctx = this.ctx;
     const scr = this.screen;
     const labels: number[] = [];
+    const reduced = reducedMotionOn();
+    const lowZ = this.host.map.getZoom() < 6;
+    const pulse = nisarPulse(t, reduced);
     let color = "";
     for (let i = 0; i < this.sats.length; i++) {
       const o = i * 3;
@@ -547,18 +583,33 @@ export class SatellitesLayer implements SpaceLayer {
       scr[o + 2] = 1;
       const s = this.sats[i];
       const big = this.featured(i);
-      const c = kindColor(s.kind);
+      const nisar = isNisar(s.name);
+      const c = satColor(s.name, s.kind);
       if (c !== color) ctx.fillStyle = color = c;
       if (big) {
+        const r = nisar
+          ? (lowZ ? 3.2 + 1.6 * pulse : 4)
+          : i === this.selected
+            ? 3.8
+            : 2.8;
+        if (nisar && lowZ && !reduced) {
+          ctx.globalAlpha = 0.25 + 0.35 * pulse;
+          ctx.beginPath();
+          ctx.arc(scr[o], scr[o + 1], r + 3.5 * pulse, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = color;
+        }
         ctx.beginPath();
-        ctx.arc(scr[o], scr[o + 1], i === this.selected ? 4.5 : 3.5, 0, 2 * Math.PI);
+        ctx.arc(scr[o], scr[o + 1], r, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.9)";
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = nisar ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)";
+        ctx.lineWidth = nisar ? 1.4 : 1;
         ctx.stroke();
         labels.push(i);
       } else ctx.fillRect(scr[o] - 1.25, scr[o + 1] - 1.25, 2.5, 2.5);
     }
+    ctx.globalAlpha = 1;
     if (!this.opts.labels) return;
     ctx.font = "600 11px system-ui, sans-serif";
     ctx.textBaseline = "middle";
@@ -611,7 +662,11 @@ export class SatellitesLayer implements SpaceLayer {
       type: "line",
       source: SRC.track,
       layout: { visibility: vis, "line-join": "round" },
-      paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "next"], 1.6, 1], "line-opacity": ["case", ["get", "next"], 0.9, 0.35] },
+      paint: {
+        "line-color": ["get", "color"],
+        "line-width": ["case", ["get", "nisar"], 2.2, ["case", ["get", "next"], 1.35, 0.85]],
+        "line-opacity": ["case", ["get", "nisar"], 0.92, ["case", ["get", "next"], 0.55, 0.22]],
+      },
     });
     this.groundDirty = true;
   }
@@ -641,13 +696,20 @@ export class SatellitesLayer implements SpaceLayer {
 
   private groundFor(i: number, t: number, track: GeoJSON.FeatureCollection, swath: GeoJSON.FeatureCollection): void {
     const s = this.sats[i];
-    const color = kindColor(s.kind);
+    const color = satColor(s.name, s.kind);
+    const nisar = isNisar(s.name);
     const samples = sampleTrack(s.rec, t - s.period, t + s.period, TRACK_STEP_MS);
     if (this.opts.tracks) {
       for (const next of [false, true]) {
         const part = samples.filter((p) => (next ? p.t >= t - TRACK_STEP_MS : p.t <= t));
         const lines = splitLine(part.map((p) => toLonLat(p.s)));
-        if (lines.length) track.features.push({ type: "Feature", properties: { color, next }, geometry: { type: "MultiLineString", coordinates: lines } });
+        if (lines.length) {
+          track.features.push({
+            type: "Feature",
+            properties: { color, next, nisar },
+            geometry: { type: "MultiLineString", coordinates: lines },
+          });
+        }
       }
     }
     const edges = this.opts.swath && s.sensor ? swathEdges(s.sensor, samples[0]?.h ?? 0) : null;
@@ -669,6 +731,34 @@ export class SatellitesLayer implements SpaceLayer {
     const g = subpoint(this.sats[i].rec, t);
     if (!g) return;
     const ring = footprintRing(g.lon, g.lat, footprintAngle(g.h, this.cfg.min_elevation_deg));
-    foot.features.push({ type: "Feature", properties: { color: kindColor(this.sats[i].kind) }, geometry: { type: "Polygon", coordinates: [ring] } });
+    const s = this.sats[i];
+    foot.features.push({
+      type: "Feature",
+      properties: { color: satColor(s.name, s.kind) },
+      geometry: { type: "Polygon", coordinates: [ring] },
+    });
+  }
+
+  /** pulso de ancho/opacidad del ground track NISAR en orbita / poco zoom */
+  private pulseGroundTrack(t: number): void {
+    const map = this.host.map;
+    if (!map.getLayer("tw-sat-track")) return;
+    const reduced = reducedMotionOn();
+    const lowZ = map.getZoom() < 6;
+    const pulse = nisarPulse(t, reduced);
+    const nisarW = lowZ && !reduced ? 1.4 + 1.2 * pulse : 2.2;
+    const nisarA = lowZ && !reduced ? 0.5 + 0.45 * pulse : 0.92;
+    map.setPaintProperty("tw-sat-track", "line-width", [
+      "case",
+      ["get", "nisar"],
+      nisarW,
+      ["case", ["get", "next"], 1.35, 0.85],
+    ]);
+    map.setPaintProperty("tw-sat-track", "line-opacity", [
+      "case",
+      ["get", "nisar"],
+      nisarA,
+      ["case", ["get", "next"], 0.55, 0.22],
+    ]);
   }
 }

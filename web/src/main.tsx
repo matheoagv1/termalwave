@@ -164,7 +164,7 @@ async function start(): Promise<void> {
       ...opts,
       basemapTiles,
       demTiles: web.dem_url_template ?? DEFAULT_DEM,
-      home: cfg.aoi ? [(cfg.aoi.west + cfg.aoi.east) / 2, (cfg.aoi.south + cfg.aoi.north) / 2] : undefined,
+      // globo libre al abrir: sin home en el AOI (Santiago u otro)
       aoi: cfg.aoi,
       space: cfg.space,
     });

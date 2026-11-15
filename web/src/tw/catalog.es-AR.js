@@ -27,6 +27,7 @@ export const T = {
   search: {
     none: (q) => `Sin resultados para "${q}". Prueba con el nombre del área o con latitud y longitud.`,
     going: (label) => `Yendo a ${label}`,
+    needPlace: "Buscá un lugar primero para ver capas locales.",
   },
 
   status: {
