@@ -171,3 +171,29 @@ status = "done"
 title = "Replace Google Maps with free elevation/geocode/basemap providers"
 notes = "Free elevation/geocode/basemaps; Google disabled; offline tests OK"
 updated = "2026-11-14"
+
+[[task]]
+id = "t9.vps"
+owner = "vps"
+status = "in_progress"
+title = "Auditar/corregir ecuaciones científicas F01–F17 (pipeline + science lib)"
+notes = "b59e248 batch1; c5ef3ea batch2 F02/F05/F09-15 stubs+tests. Rem: SME2 θ_F ATBD, SPEI calib, ΔB sidecar, pipeline/UI. SME2 β grouping NOT coded."
+paths = ["termalwave/", "config/science.toml", "docs/science/", "tests/"]
+updated = "2026-11-15"
+
+[[task]]
+id = "T035"
+owner = "vps"
+status = "done"
+title = "Auditar ecuaciones F01-F17 (science lib)"
+notes = "t9.vps batch: F01,F03-04,F06-08,F16-17 code+tests commit b59e248. Rem: F02,F05,F09-15,ΔB sidecar. cricri: MNDWI≠suelo, RVI_dual≠[0,1]."
+updated = "2026-11-15"
+
+[[task]]
+id = "T036"
+owner = "vps"
+status = "cancelled"
+title = "GET /api/nisar/coverage?bbox for globe-first radar on demand"
+notes = "dup of tw t29.vps; use tw board"
+paths = ["preview/", "config/apis.toml", "termalwave/"]
+updated = "2026-11-15"
