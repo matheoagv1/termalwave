@@ -1,0 +1,508 @@
+diff --git a/web/src/app/App.tsx b/web/src/app/App.tsx
+index 1f2e73a..9960fba 100644
+--- a/web/src/app/App.tsx
++++ b/web/src/app/App.tsx
+@@ -17,6 +17,7 @@ import type {
+   ViewScale,
+ } from "../tw/contract";
+ import { hashParams } from "./hash";
++import { cityBounds } from "../scene/maplibre-scene";
+ import { Hud } from "../ui/Hud";
+ import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
+ import { Sfx } from "../ui/sfx";
+@@ -268,7 +269,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
+       activePlace: null,
+       scene: INITIAL_SCENE,
+     });
+-    this.scene.setActivePlace?.(false);
++    this.scene.setActivePlace?.(null);
+     this.padKey = null;
+     this.scene.setPadding(this.padding());
+     let start = hp.c ?? (sc !== "normal" && sc !== "error-config" ? "territory" : "orbit");
+@@ -291,7 +292,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
+     if (deepTerritory) {
+       const place = { label: ds.area.name, lonlat: ds.area.center, bounds: ds.area.bounds };
+       await new Promise<void>((r) => this.setState({ ds, activePlace: place }, r));
+-      this.scene.setActivePlace?.(true);
++      this.scene.setActivePlace?.(ds.area.bounds);
+     } else {
+       await new Promise<void>((r) => this.setState({ ds }, r));
+     }
+@@ -634,10 +635,13 @@ export class App extends React.Component<AppProps, AppState> implements Model {
+ 
+   enter = (): void => {
+     if (!this.state.ds || !this.scene) return;
+-    const a = this.state.ds.area;
+-    const place = this.state.activePlace ?? { label: a.name, lonlat: a.center, bounds: a.bounds };
+-    this.setState({ explore: false, ficha: this.state.W >= 760, activePlace: place });
+-    this.scene.setActivePlace?.(true);
++    const place = this.state.activePlace;
++    if (!place?.bounds) {
++      this.showToast(T.search.needPlace);
++      return;
++    }
++    this.setState({ explore: false, ficha: this.state.W >= 760, dockOpen: true });
++    this.scene.setActivePlace?.(place.bounds);
+     this.scene.set({ focus: null });
+     void this.scene.flyTo("territory");
+   };
+@@ -800,27 +804,31 @@ export class App extends React.Component<AppProps, AppState> implements Model {
+   goResult = (r: SearchResult): void => {
+     if (!this.scene) return;
+     const ds = this.state.ds;
+-    const place = {
+-      label: r.label,
+-      lonlat: r.lonlat as [number, number],
+-      bounds: r.kind === "area" && ds ? ds.area.bounds : undefined,
+-    };
+-    this.setState({ q: "", results: [], searched: false, searchOpen: false, activePlace: place, explore: true });
+-    this.scene.setActivePlace?.(true);
+-    // preset del area de demo: entra a territorio; no fuerza radar
+-    if (r.kind === "area") {
+-      this.setState({ explore: false, ficha: this.state.W >= 760 });
+-      this.scene.set({ focus: null });
+-      void this.scene.flyTo("territory");
+-      return;
+-    }
++    const lonlat = r.lonlat as [number, number];
++    const bounds =
++      r.kind === "area" && ds ? ds.area.bounds : cityBounds(lonlat[0], lonlat[1]);
++    const place = { label: r.label, lonlat, bounds };
++    this.setState({
++      q: "",
++      results: [],
++      searched: false,
++      searchOpen: false,
++      activePlace: place,
++      explore: true,
++    });
++    this.scene.setActivePlace?.(bounds);
+     this.showToast(T.search.going(r.label));
+-    const focus = { lonlat: r.lonlat, zoom: 1 };
+-    const armFocus = (): void => {
+-      this.scene?.set({ focus });
+-    };
+-    if (this.state.scene.camera !== "orbit") void this.scene.resetToOrbit().then(armFocus);
+-    else armFocus();
++    this.scene.set({ focus: null });
++    void this.scene.flyTo("territory").then(() => {
++      this.setState({
++        moniOpen: true,
++        helpText: T.search.whatSee(r.label),
++        ficha: this.state.W >= 760,
++        dockOpen: true,
++        explore: false,
++      });
++      if (this.state.soundOn) Sfx.tip();
++    });
+   };
+ 
+   // teclado
+diff --git a/web/src/scene/maplibre-scene.ts b/web/src/scene/maplibre-scene.ts
+index 368c7aa..8880954 100644
+--- a/web/src/scene/maplibre-scene.ts
++++ b/web/src/scene/maplibre-scene.ts
+@@ -24,6 +24,7 @@ import { SpaceScene, type SpaceConfig } from "./space";
+ import { SatellitesLayer } from "./space/satellites";
+ import { SkyLayer } from "./space/sky";
+ import type { Bounds } from "./space/satellites-geometry";
++import { installTileCache, tileCacheTransformRequest } from "./tile-cache";
+ 
+ export type { BasemapTiles } from "../tw/contract";
+ export type BasemapLayers = BasemapTiles & { underlay?: BasemapTiles };
+@@ -50,11 +51,52 @@ const URBAN_DETAIL = 1.35;
+ const URBAN_PITCH = 6;
+ // busqueda de lugar desde orbita; duracion y zoom tipo gev
+ const PLACE_FLY_MS = 3000;
++const PLACE_FLY_MS_MIN = 2800;
++const PLACE_FLY_MS_MAX = 7500;
++const PLACE_FLY_KM = 0.45;
+ const PLACE_ZOOM = 10;
+-const PLACE_FLY_CURVE = 1.15;
++const PLACE_FLY_CURVE = 1.12;
++const CITY_HALF_DEG = 0.75;
+ // AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
+ const AOI_VIEWPORT_FRAC = 0.12;
+ 
++function haversineKm(a: [number, number], b: [number, number]): number {
++  const R = 6371;
++  const toR = (d: number) => (d * Math.PI) / 180;
++  const dLat = toR(b[1] - a[1]);
++  const dLon = toR(b[0] - a[0]);
++  const lat1 = toR(a[1]);
++  const lat2 = toR(b[1]);
++  const h =
++    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
++  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
++}
++
++function placeFlyMs(from: [number, number], to: [number, number]): number {
++  const km = haversineKm(from, to);
++  return Math.round(clamp(PLACE_FLY_MS_MIN + km * PLACE_FLY_KM, PLACE_FLY_MS_MIN, PLACE_FLY_MS_MAX));
++}
++
++function cityBounds(lon: number, lat: number, half = CITY_HALF_DEG): Bounds {
++  return {
++    west: lon - half,
++    east: lon + half,
++    south: Math.max(-85, lat - half),
++    north: Math.min(85, lat + half),
++  };
++}
++
++function boundsNear(a: Bounds, b: Bounds, eps = 0.08): boolean {
++  return (
++    Math.abs(a.west - b.west) < eps &&
++    Math.abs(a.east - b.east) < eps &&
++    Math.abs(a.south - b.south) < eps &&
++    Math.abs(a.north - b.north) < eps
++  );
++}
++
++export { cityBounds, placeFlyMs };
++
+ function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
+   return [
+     [b.west, b.north],
+@@ -117,6 +159,7 @@ export class MapLibreScene implements SceneApi {
+   private dragCurtain = false;
+   // zona activa desde busqueda; sin eso no hay outline ni PNG del AOI
+   private placeOn = false;
++  private placeBounds: Bounds | null = null;
+ 
+   constructor(o: Partial<MapSceneOptions> = {}) {
+     this.o = {
+@@ -138,6 +181,7 @@ export class MapLibreScene implements SceneApi {
+     this.mapEl.style.cssText = "position:absolute;inset:0;background:#000";
+     el.appendChild(this.mapEl);
+ 
++    installTileCache();
+     this.map = new maplibregl.Map({
+       container: this.mapEl,
+       style: this.baseStyle(),
+@@ -149,6 +193,7 @@ export class MapLibreScene implements SceneApi {
+       attributionControl: false,
+       dragRotate: false,
+       pitchWithRotate: false,
++      transformRequest: tileCacheTransformRequest,
+     });
+     this.map.touchZoomRotate.disableRotation();
+     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+@@ -229,11 +274,14 @@ export class MapLibreScene implements SceneApi {
+       projection: { type: "globe" },
+       sources,
+       layers,
++      // space: soft limb like gev orbit; fades out as you enter study zoom
+       sky: this.o.space
+         ? {
+-            "sky-color": "#000000",
+-            "horizon-color": "#000000",
+-            "atmosphere-blend": 0.15,
++            "sky-color": "#02060f",
++            "horizon-color": "#1a3a6e",
++            "fog-color": "#6ec8ff",
++            "fog-ground-blend": 0.65,
++            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 4, 0.55, 7, 0.08, 9, 0],
+           }
+         : {
+             "sky-color": this.css("--scene-sphere", "#082460"),
+@@ -377,9 +425,35 @@ export class MapLibreScene implements SceneApi {
+     this.whenReady(() => this.applyEntities(id, data));
+   }
+ 
+-  setActivePlace(on: boolean): void {
+-    this.placeOn = on;
+-    this.whenReady(() => this.updateAreaChrome());
++  setActivePlace(bounds: Bounds | null): void {
++    this.placeOn = !!bounds;
++    this.placeBounds = bounds;
++    this.whenReady(() => {
++      this.syncPlaceChrome();
++      this.refreshAoiMinZoom();
++      this.updateAreaChrome();
++    });
++  }
++
++  private syncPlaceChrome(): void {
++    if (!this.ready || !this.map.getSource("tw-area")) return;
++    const b = this.placeBounds ?? this.ds?.area.bounds;
++    if (!b) return;
++    const ring = [
++      [b.west, b.north],
++      [b.east, b.north],
++      [b.east, b.south],
++      [b.west, b.south],
++      [b.west, b.north],
++    ];
++    (this.map.getSource("tw-area") as GeoJSONSource).setData({
++      type: "Feature",
++      properties: {},
++      geometry: { type: "Polygon", coordinates: [ring] },
++    });
++    if (this.ring) {
++      this.ring.setLngLat([(b.west + b.east) / 2, (b.south + b.north) / 2]);
++    }
+   }
+ 
+   private radarOn(): boolean {
+@@ -503,9 +577,10 @@ export class MapLibreScene implements SceneApi {
+     return Math.min(maxX - minX, maxY - minY);
+   }
+ 
+-  /** PNG SAR/fenomeno: zona activa + radar + territorio/detalle con encuadre suficiente. */
++  // PNG SAR/fenomeno: solo si la zona activa es el AOI del dataset (demo)
+   private aoiOverlaysVisible(): boolean {
+-    if (!this.placeOn || !this.radarOn()) return false;
++    if (!this.placeOn || !this.radarOn() || !this.ds || !this.placeBounds) return false;
++    if (!boundsNear(this.placeBounds, this.ds.area.bounds)) return false;
+     const c = this.s.camera;
+     if (c !== "territory" && c !== "detail") return false;
+     const vmin = Math.min(this.mapEl.clientWidth, this.mapEl.clientHeight);
+@@ -784,8 +859,8 @@ export class MapLibreScene implements SceneApi {
+   }
+ 
+   private territoryCam(): { center: [number, number]; zoom: number; pitch: number; bearing: number } | null {
+-    if (!this.ds) return null;
+-    const b = this.ds.area.bounds;
++    if (!this.ds && !this.placeBounds) return null;
++    const b = this.placeBounds ?? this.ds!.area.bounds;
+     const pitch = clamp(this.s.tilt + (this.urban() ? URBAN_PITCH : 0), 0, 70);
+     const bearing = this.s.northUp ? 0 : -18;
+     const box: [[number, number], [number, number]] = [[b.west, b.south], [b.east, b.north]];
+@@ -887,12 +962,26 @@ export class MapLibreScene implements SceneApi {
+     else map.easeTo(opts);
+   }
+ 
++  private flightMsTo(center: [number, number]): number {
++    if (!this.ready) return PLACE_FLY_MS;
++    const c = this.map.getCenter();
++    return placeFlyMs([c.lng, c.lat], center);
++  }
++
+   flyTo(camera: CameraMode): Promise<void> {
+     return new Promise((resolve) => {
+       this.flyId += 1;
+       const id = this.flyId;
+       const from = this.s.camera;
+-      const dur = camera === "orbit" ? 1800 : 2600;
++      let dur = camera === "orbit" ? 1800 : PLACE_FLY_MS;
++      if (camera === "territory" || camera === "detail") {
++        const cam = this.territoryCam();
++        const to =
++          camera === "detail" && this.s.focus
++            ? (this.s.focus.lonlat as [number, number])
++            : cam?.center;
++        if (to) dur = this.flightMsTo(to);
++      }
+       this.s.camera = camera === "territory" || camera === "orbit" ? "approach" : camera;
+       this.emit();
+       const finish = (): void => {
+@@ -904,7 +993,7 @@ export class MapLibreScene implements SceneApi {
+       if (!this.ready) return finish();
+       this.map.once("moveend", finish);
+       this.go(camera, { fly: from === "orbit" || camera === "orbit", ms: dur });
+-      // Sin animación (movimiento reducido o cámara que no se pudo calcular) no habrá moveend.
++      // sin moveend si reducedMotion o camara no calculable
+       window.setTimeout(() => {
+         if (id === this.flyId && !this.map.isMoving()) {
+           this.map.off("moveend", finish);
+@@ -971,7 +1060,14 @@ export class MapLibreScene implements SceneApi {
+       this.whenReady(() => this.go("detail", { fly: false, ms: 700 }));
+     } else if ("focus" in n && s.camera === "orbit") {
+       const place = Boolean(s.focus);
+-      this.whenReady(() => this.go("orbit", { fly: place, ms: place ? PLACE_FLY_MS : 900 }));
++      this.whenReady(() => {
++        let ms = 900;
++        if (place && s.focus) {
++          const c = this.map.getCenter();
++          ms = placeFlyMs([c.lng, c.lat], s.focus.lonlat as [number, number]);
++        }
++        this.go("orbit", { fly: place, ms });
++      });
+     }
+     this.whenReady(() => {
+       this.applyFrame();
+diff --git a/web/src/scene/space/clouds.ts b/web/src/scene/space/clouds.ts
+index 6751178..e0702fc 100644
+--- a/web/src/scene/space/clouds.ts
++++ b/web/src/scene/space/clouds.ts
+@@ -578,10 +578,37 @@ export class CloudsLayer implements SpaceLayer {
+         }
+       }
+       this.shown = time;
++      // fade clouds at study zoom so terrain/layers stay readable
++      const cloudOp: unknown = [
++        "interpolate",
++        ["linear"],
++        ["zoom"],
++        2,
++        this.opacity,
++        6,
++        this.opacity * 0.55,
++        9,
++        this.opacity * 0.12,
++        11,
++        0,
++      ];
++      const shadowOp: unknown = [
++        "interpolate",
++        ["linear"],
++        ["zoom"],
++        1,
++        0.22 * this.opacity,
++        5,
++        0.45 * this.opacity,
++        8,
++        0.08 * this.opacity,
++        10,
++        0,
++      ];
+       if (this.painted !== this.opacity) {
+         this.painted = this.opacity;
+-        map.setPaintProperty(LAYER, "raster-opacity", this.opacity);
+-        map.setPaintProperty(SHADOW, "raster-opacity", ["interpolate", ["linear"], ["zoom"], 1, 0.22 * this.opacity, 5, 0.5 * this.opacity]);
++        map.setPaintProperty(LAYER, "raster-opacity", cloudOp);
++        map.setPaintProperty(SHADOW, "raster-opacity", shadowOp);
+       }
+       // stay over the basemap and sar overlays, even those added after us
+       const order = map.getLayersOrder();
+diff --git a/web/src/tw/catalog.es-AR.js b/web/src/tw/catalog.es-AR.js
+index 29ac5a6..7b65b13 100644
+--- a/web/src/tw/catalog.es-AR.js
++++ b/web/src/tw/catalog.es-AR.js
+@@ -27,7 +27,8 @@ export const T = {
+   search: {
+     none: (q) => `Sin resultados para "${q}". Prueba con el nombre del área o con latitud y longitud.`,
+     going: (label) => `Yendo a ${label}`,
+-    needPlace: "Buscá un lugar primero para ver capas locales.",
++    needPlace: "Buscá un lugar primero para entrar a una zona.",
++    whatSee: (label) => `Llegaste a ${label}. ¿Qué querés ver? Activá capas en el panel.`,
+   },
+ 
+   status: {
+@@ -67,11 +68,11 @@ export const T = {
+   },
+ 
+   entry: {
+-    kicker: "Área de estudio",
+-    lead: "Mira cómo ha cambiado la superficie de este territorio a lo largo del tiempo, con radar satelital NISAR (NASA e ISRO).",
+-    enter: "Entrar al área",
++    kicker: "Zona activa",
++    lead: "Elegí un lugar en el globo y pedí las capas que quieras ver. El radar NISAR es opcional para esa zona.",
++    enter: "Entrar a la zona",
+     explore: "Explorar el mundo",
+-    backToArea: "Ir al área de estudio",
++    backToArea: "Encuadrar esta zona",
+     dragHint: "Arrastra para girar la Tierra.",
+     coords: (lat, lon) => `${lat} · ${lon}`,
+     range: (a, b) => `${a} a ${b}`,
+diff --git a/web/src/tw/contract.ts b/web/src/tw/contract.ts
+index 9793892..3776049 100644
+--- a/web/src/tw/contract.ts
++++ b/web/src/tw/contract.ts
+@@ -195,7 +195,7 @@ export interface SceneApi {
+   setSpaceLayer?(id: string, on: boolean): void;
+   // opcional: marcadores globales (p. ej. "firms") como GeoJSON; null los quita
+   setEntities?(id: string, data: unknown | null): void;
+-  // opcional: zona activa (busqueda); sin eso no hay chrome AOI
+-  setActivePlace?(on: boolean): void;
++  // zona activa (busqueda): bounds del estudio; null apaga chrome AOI
++  setActivePlace?(bounds: Bounds | null): void;
+   destroy(): void;
+ }
+diff --git a/web/src/scene/tile-cache.ts b/web/src/scene/tile-cache.ts
+new file mode 100644
+index 0000000..0b6565d
+--- /dev/null
++++ b/web/src/scene/tile-cache.ts
+@@ -0,0 +1,90 @@
++import maplibregl from "maplibre-gl";
++
++// light client tile cache (Cache API + LRU). edge cache stays on the Worker.
++// only caches GET image/tile responses; skips auth-sensitive paths
++
++const CACHE_NAME = "tw-tiles-v1";
++const TTL_MS = 45 * 60 * 1000;
++const MAX_ENTRIES = 360;
++const PROTO = "twtile";
++const META = "x-tw-cached-at";
++
++let installed = false;
++const order: string[] = [];
++
++function touch(key: string): void {
++  const i = order.indexOf(key);
++  if (i >= 0) order.splice(i, 1);
++  order.push(key);
++}
++
++async function trim(cache: Cache): Promise<void> {
++  while (order.length > MAX_ENTRIES) {
++    const key = order.shift();
++    if (!key) break;
++    await cache.delete(key);
++  }
++}
++
++function cacheable(url: string): boolean {
++  if (!/^https?:\/\//i.test(url)) return false;
++  if (/\/api\/(auth|session|login)/i.test(url)) return false;
++  return (
++    /\/(tiles|clouds|basemap|terrarium|assets)\b/i.test(url) ||
++    /\.(png|jpe?g|webp|pbf)(\?|$)/i.test(url)
++  );
++}
++
++async function load(url: string, signal?: AbortSignal): Promise<{ data: ArrayBuffer }> {
++  const cache = await caches.open(CACHE_NAME);
++  const hit = await cache.match(url);
++  if (hit) {
++    const at = Number(hit.headers.get(META) || 0);
++    if (at && Date.now() - at < TTL_MS) {
++      touch(url);
++      return { data: await hit.arrayBuffer() };
++    }
++    await cache.delete(url);
++  }
++  const res = await fetch(url, { signal, credentials: "same-origin" });
++  if (!res.ok) throw new Error(`tile ${res.status}`);
++  const data = await res.arrayBuffer();
++  const headers = new Headers(res.headers);
++  headers.set(META, String(Date.now()));
++  headers.set("content-type", res.headers.get("content-type") || "image/png");
++  await cache.put(url, new Response(data.slice(0), { status: 200, headers }));
++  touch(url);
++  await trim(cache);
++  return { data };
++}
++
++/** Register once. Call before Map construction. */
++export function installTileCache(): void {
++  if (installed || typeof window === "undefined") return;
++  if (!("caches" in window)) return;
++  installed = true;
++  maplibregl.addProtocol(PROTO, async (req) => {
++    const raw = req.url.replace(new RegExp(`^${PROTO}://`), "https://");
++    // twtile://host/path → https://host/path
++    const real = raw.startsWith("http://") || raw.startsWith("https://")
++      ? raw
++      : `https://${raw}`;
++    return load(real);
++  });
++}
++
++/** Rewrite cacheable http(s) tile urls to the twtile protocol. */
++export function cachedTileUrl(url: string): string {
++  if (!installed || !cacheable(url)) return url;
++  return `${PROTO}://${url.replace(/^https?:\/\//i, "")}`;
++}
++
++export function tileCacheTransformRequest(
++  url: string,
++  resourceType?: string,
++): { url: string } {
++  if (resourceType === "Tile" || resourceType === "Image") {
++    return { url: cachedTileUrl(url) };
++  }
++  return { url };
++}
