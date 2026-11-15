@@ -7,10 +7,13 @@ import type {
   Hotspot,
   LayerDef,
   LayerId,
+  LayerTheme,
   SearchResult,
   SeriesPoint,
   TimeTick,
 } from "../tw/contract";
+import bundledThemes from "../context/themes.json";
+import bundledTopics from "../context/topics.json";
 import { layerDef } from "./layer-defaults";
 import {
   createPlaceSearch,
@@ -19,6 +22,10 @@ import {
 } from "./search";
 
 // Formato actual del backend (app-config.json): una lista plana de años.
+type DatasetFile = Dataset & {
+  layers_taxonomy?: LegacyConfig["layers_taxonomy"];
+};
+
 type LegacyConfig = {
   aoi: Bounds & { name?: string };
   timeline: {
@@ -28,8 +35,10 @@ type LegacyConfig = {
     synthetic?: boolean;
   };
   presets?: Record<string, string[]>;
+  preset_labels?: Record<string, string>;
   layers_taxonomy?: {
-    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string }>;
+    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string; theme?: string }>;
+    themes?: LayerTheme[];
   };
   provenance?: { generated_at?: string };
   search?: {
@@ -59,6 +68,47 @@ const tradeFiles = import.meta.glob<ContextEntry[]>("../context/trades.json", {
   import: "default",
 });
 const bundledTrades: ContextEntry[] = Object.values(tradeFiles)[0] ?? [];
+
+type TopicJson = { id: string; label: string; text: string };
+
+function topicsToContext(rows: TopicJson[]): ContextEntry[] {
+  return rows.map((t) => ({ id: t.id, label: t.label, trade: t.label, text: t.text }));
+}
+
+function resolveContext(remote: ContextEntry[] | undefined): ContextEntry[] {
+  const topics = bundledTopics as TopicJson[];
+  if (Array.isArray(topics) && topics.length > 0) return topicsToContext(topics);
+  if (Array.isArray(remote) && remote.length > 0) return remote;
+  return bundledTrades;
+}
+
+function resolveThemes(cfg: LegacyConfig | null | undefined): LayerTheme[] {
+  const fromCfg = cfg?.layers_taxonomy?.themes;
+  if (fromCfg?.length) return fromCfg;
+  const bundled = bundledThemes as LayerTheme[];
+  return Array.isArray(bundled) ? bundled : [];
+}
+
+type TaxonomySource = Pick<LegacyConfig, "layers_taxonomy"> | null | undefined;
+
+function mergeLayerTaxonomy(layers: LayerDef[], cfg: TaxonomySource): LayerDef[] {
+  const taxRows = cfg?.layers_taxonomy?.layers ?? [];
+  const taxById = Object.fromEntries(taxRows.map((r) => [r.id, r]));
+  return layers.map((l) => {
+    const tax = taxById[l.id];
+    return {
+      ...l,
+      theme: l.theme ?? tax?.theme,
+      category: l.category ?? (tax?.category as LayerDef["category"]),
+      core: l.core ?? tax?.core,
+    };
+  });
+}
+
+function attachMeta(ds: Dataset, cfg: LegacyConfig | null | undefined): void {
+  ds.themes = ds.themes?.length ? ds.themes : resolveThemes(cfg);
+  if (!ds.preset_labels && cfg?.preset_labels) ds.preset_labels = cfg.preset_labels;
+}
 
 export class ConfigError extends Error {
   code: string;
@@ -101,36 +151,36 @@ export class ConfigProvider implements DataProvider {
 
   async load(): Promise<Dataset> {
     // Contrato nuevo: el backend publica dataset.json con tramos.
-    const direct = await tryJson<Dataset>(this.base + "dataset.json");
+    const direct = await tryJson<DatasetFile>(this.base + "dataset.json");
     if (direct && Array.isArray(direct.segments) && direct.layers?.length) {
-      // same fallback as legacy: empty/missing context gets trades.json
-      if (!Array.isArray(direct.context) || direct.context.length === 0) {
-        direct.context =
-          (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
+      const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
+      const remoteCtx = await tryJson<ContextEntry[]>(this.base + "context.json");
+      direct.context = resolveContext(
+        Array.isArray(direct.context) && direct.context.length > 0 ? direct.context : remoteCtx ?? undefined,
+      );
+      // merge visual defaults with emitted taxonomy (category/core/theme)
+      direct.layers = mergeLayerTaxonomy(
+        direct.layers.map((l) => {
+          const base = layerDef(l.id, l.label);
+          return {
+            ...base,
+            ...l,
+            category: l.category ?? base.category,
+            core: l.core ?? base.core,
+            note: l.note || base.note,
+            ramp: l.ramp?.length ? l.ramp : base.ramp,
+            unit: l.unit || base.unit,
+            range: l.range ?? base.range,
+          };
+        }),
+        cfg ?? (direct.layers_taxonomy ? { layers_taxonomy: direct.layers_taxonomy } : null),
+      );
+      if (!direct.themes?.length && direct.layers_taxonomy?.themes?.length) {
+        direct.themes = direct.layers_taxonomy.themes;
       }
-      // merge visual defaults with emitted taxonomy (category/core)
-      direct.layers = direct.layers.map((l) => {
-        const base = layerDef(l.id, l.label);
-        return {
-          ...base,
-          ...l,
-          category: l.category ?? base.category,
-          core: l.core ?? base.core,
-          note: l.note || base.note,
-          ramp: l.ramp?.length ? l.ramp : base.ramp,
-          unit: l.unit || base.unit,
-          range: l.range ?? base.range,
-        };
-      });
-      // presets from dataset or companion app-config
-      if (!direct.presets) {
-        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
-        if (cfg?.presets) direct.presets = cfg.presets;
-        this.setSearchFromConfig(cfg);
-      } else {
-        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
-        this.setSearchFromConfig(cfg);
-      }
+      if (!direct.presets && cfg?.presets) direct.presets = cfg.presets;
+      attachMeta(direct, cfg);
+      this.setSearchFromConfig(cfg);
       this.check(direct);
       this.ds = direct;
       return direct;
@@ -141,7 +191,10 @@ export class ConfigProvider implements DataProvider {
     if (!cfg) throw new ConfigError("config", "No se pudo leer app-config.json");
     this.setSearchFromConfig(cfg);
     const ds = this.fromLegacy(cfg);
-    ds.context = (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
+    const remoteCtx = await tryJson<ContextEntry[]>(this.base + "context.json");
+    ds.context = resolveContext(remoteCtx ?? undefined);
+    ds.layers = mergeLayerTaxonomy(ds.layers, cfg);
+    attachMeta(ds, cfg);
     this.check(ds);
     this.ds = ds;
     return ds;
@@ -182,9 +235,12 @@ export class ConfigProvider implements DataProvider {
           ...base,
           category: (l.category as LayerDef["category"]) ?? tax?.category as LayerDef["category"] ?? base.category,
           core: l.core ?? tax?.core ?? base.core,
+          theme: tax?.theme,
         };
       }),
       presets: cfg.presets,
+      preset_labels: cfg.preset_labels,
+      themes: resolveThemes(cfg),
       segments: [
         {
           id: "anual",

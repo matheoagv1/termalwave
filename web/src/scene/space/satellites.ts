@@ -182,7 +182,8 @@ export class SatellitesLayer implements SpaceLayer {
     this.cfg = host.config.satellites;
     if (!this.opts.groups.length) this.opts.groups = [this.cfg.default_group];
     this.canvas = document.createElement("canvas");
-    this.canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%";
+    // pick goes through the map click; this canvas must not steal HUD/map drags
+    this.canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
     host.front.appendChild(this.canvas);
     this.ctx = this.canvas.getContext("2d")!;
     host.map.on("click", this.onClick);
@@ -318,6 +319,8 @@ export class SatellitesLayer implements SpaceLayer {
     const sats: Sat[] = [];
     for (const doc of docs) {
       for (const d of doc.satellites) {
+        // only the constellation we care about (config highlight); skip the rest of the catalog
+        if (!highlight.has(d.name)) continue;
         if (seen.has(d.norad)) continue;
         let rec: SatRec;
         try {
@@ -329,11 +332,9 @@ export class SatellitesLayer implements SpaceLayer {
         seen.add(d.norad);
         const sensor = this.matchSensor(d.norad, d.name);
         const kind = sensor?.kind ?? this.sensors?.group_kind[doc.group] ?? "comm";
-        sats.push({ name: d.name, norad: d.norad, group: doc.group, rec, sensor, kind, highlight: highlight.has(d.name), period: periodMs(rec) });
+        sats.push({ name: d.name, norad: d.norad, group: doc.group, rec, sensor, kind, highlight: true, period: periodMs(rec) });
       }
     }
-    // highlighted last so they draw on top
-    sats.sort((x, y) => Number(x.highlight) - Number(y.highlight));
     this.sats = sats;
     this.byName = new Map(sats.map((s, i) => [s.name, i]));
     this.selected = keepSelected ? (this.byName.get(keepSelected) ?? null) : null;

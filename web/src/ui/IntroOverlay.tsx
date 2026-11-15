@@ -1,7 +1,7 @@
 import React from "react";
 import { s } from "../app/css";
 import { intro } from "./intro-copy";
-import { tradeChoices, writeIntroPrefs } from "./intro-prefs";
+import { themeChoices, writeIntroPrefs } from "./intro-prefs";
 import { Sfx } from "./sfx";
 
 const MONI = "./brand/monigote.png";
@@ -21,14 +21,15 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
   const [name, setName] = React.useState("");
   const [trade, setTrade] = React.useState("");
   const [typed, setTyped] = React.useState("");
-  const trades = [...tradeChoices(), OTHER];
+  const themes = [...themeChoices()];
+  const choices = [...themes.map((t) => ({ id: t.id, label: t.label })), { id: OTHER, label: OTHER }];
   const line =
     step === "hola"
       ? intro.hola
       : step === "nombre"
         ? intro.askName
         : step === "rubro"
-          ? intro.askTrade
+          ? intro.askTheme
           : intro.ready(name.trim() || intro.guest);
 
   React.useEffect(() => {
@@ -119,14 +120,14 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
         {step === "rubro" && (
           <div
             role="radiogroup"
-            aria-label={intro.askTrade}
+            aria-label={intro.askTheme}
             style={s("display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto")}
           >
-            {trades.map((tr) => {
-              const on = tr === trade;
+            {choices.map((ch) => {
+              const on = ch.id === trade;
               return (
                 <label
-                  key={tr}
+                  key={ch.id}
                   style={s(
                     `display:flex;align-items:center;gap:7px;white-space:normal;text-align:left;min-height:44px;padding:6px 10px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--sans)`,
                   )}
@@ -134,12 +135,12 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
                   <input
                     type="radio"
                     name="trade"
-                    value={tr}
+                    value={ch.id}
                     checked={on}
-                    onChange={() => { setTrade(tr); ping(); }}
+                    onChange={() => { setTrade(ch.id); ping(); }}
                     style={s("accent-color:var(--acc)")}
                   />
-                  {tr}
+                  {ch.label}
                 </label>
               );
             })}

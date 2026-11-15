@@ -136,8 +136,9 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if (this.scenario() !== this.scnKey) void this.boot();
       if (S.pick !== ps.pick) this.trackPos();
       if ((S.trade !== ps.trade || S.ds !== ps.ds) && S.ds) {
-        const tr = S.ds.context[S.trade]?.trade ?? "";
-        const ids = (S.ds.presets ?? PRESETS)[tr] ?? [];
+        const entry = S.ds.context[S.trade];
+        const presetId = entry?.id ?? entry?.trade ?? "";
+        const ids = (S.ds.presets ?? PRESETS)[presetId] ?? [];
         if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
       }
       const eff = this.effectiveExtras();
@@ -314,7 +315,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   applyUserTrade(): void {
     const ds = this.state.ds;
     if (!ds || !this.state.userTrade) return;
-    const i = ds.context.findIndex((c) => c.trade === this.state.userTrade);
+    const ut = this.state.userTrade;
+    const i = ds.context.findIndex((c) => c.id === ut || c.trade === ut || c.label === ut);
     if (i >= 0 && i !== this.state.trade) this.setState({ trade: i });
   }
 

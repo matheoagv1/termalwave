@@ -23,6 +23,8 @@ export interface LayerDef {
   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
   category?: "data" | "prediction" | "inference";
   core?: boolean;
+  /** Agrupa el panel Capas (GEV-style headings) */
+  theme?: string;
 }
 
 export type Granularity = "year" | "quarter" | "month" | "week" | "day";
@@ -72,7 +74,19 @@ export interface Hotspot {
 }
 
 export interface SeriesPoint { tickId: string; date: Iso; value: number | null }
-export interface ContextEntry { trade: string; text: string }
+export interface ContextEntry {
+  /** Preset id (cambio, ambiente, …) cuando viene de topics.json */
+  id?: string;
+  /** Etiqueta corta para chips; si falta, se usa trade */
+  label?: string;
+  trade: string;
+  text: string;
+}
+
+export interface LayerTheme {
+  id: string;
+  label: string;
+}
 
 export interface SearchResult {
   kind: "area" | "coords";
@@ -96,8 +110,10 @@ export interface Dataset {
   sourcesAt?: Iso;
   area: Area;
   layers: LayerDef[];
-  // rubro -> ids de capas que prende (el nucleo core no se lista: siempre esta); lo publica el backend
+  // preset id -> ids de capas que prende (el nucleo core no se lista: siempre esta); lo publica el backend
   presets?: Record<string, string[]>;
+  preset_labels?: Record<string, string>;
+  themes?: LayerTheme[];
   segments: TimeSegment[];
   events: EventMark[];
   context: ContextEntry[];

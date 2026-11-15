@@ -89,14 +89,14 @@ const TAXONOMY: Record<string, Pick<LayerDef, "category" | "core">> = {
 
 // Fallback si dataset.json aun no trae presets. Radar core no se lista: siempre on.
 export const PRESETS: Record<string, string[]> = {
-  "Gestión de emergencias": ["incendios"],
-  Agricultura: ["suelo"],
-  "Ambiente y conservación": ["suelo", "incendios"],
-  "Ganadería y pasturas": ["suelo"],
-  "Gestión del agua": ["suelo"],
-  "Ordenamiento territorial": [],
-  Infraestructura: [],
-  "Ciencia y educación": [],
+  cambio: [],
+  clima: ["clouds"],
+  optico: ["optico"],
+  fuego: ["incendios", "firms"],
+  vegetacion: ["vegetacion"],
+  agua: ["agua"],
+  relieve: ["relieve"],
+  ambiente: ["suelo", "contaminacion"],
 };
 
 export function layerDef(id: string, label: string): LayerDef {

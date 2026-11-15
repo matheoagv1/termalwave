@@ -1,6 +1,7 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
+import bundledThemes from "../context/themes.json";
 import { F, T } from "../tw/catalog.es-AR.js";
-import type { LayerDef, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
+import type { LayerDef, LayerTheme, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
 import type { AppState, Flat } from "./types";
 
 // Todo lo que la interfaz necesita saber del modelo. App lo implementa.
@@ -112,21 +113,36 @@ export function buildView(m: Model) {
   const results = S.results.map((r) => ({ label: r.label, go: () => m.goResult(r) }));
   const st = S.status;
 
-  // capas
+  // capas — headings por tema (GEV); badge de categoría como secundario
   const CAT_ORDER = ["data", "prediction", "inference"];
   const CAT_LABEL: Record<string, string> = { data: "Datos", prediction: "Predicciones", inference: "Inferencias" };
   const catOf = (l: LayerDef): string => l.category ?? "data";
-  const sortedLayers = [...layers].sort((a, b) => CAT_ORDER.indexOf(catOf(a)) - CAT_ORDER.indexOf(catOf(b)));
+  const themeRows: LayerTheme[] =
+    ds?.themes?.length ? ds.themes : (bundledThemes as LayerTheme[]);
+  const themeOrder = themeRows.map((t) => t.id);
+  const themeLabels = Object.fromEntries(themeRows.map((t) => [t.id, t.label]));
+  const themeOf = (l: LayerDef): string => l.theme ?? "radar";
+  const sortedLayers = [...layers].sort((a, b) => {
+    const ta = themeOrder.indexOf(themeOf(a));
+    const tb = themeOrder.indexOf(themeOf(b));
+    const ia = ta < 0 ? themeOrder.length : ta;
+    const ib = tb < 0 ? themeOrder.length : tb;
+    if (ia !== ib) return ia - ib;
+    return CAT_ORDER.indexOf(catOf(a)) - CAT_ORDER.indexOf(catOf(b));
+  });
   const layerItems = sortedLayers.map((l, i) => {
     const on = l.id === sc.layer;
     const gap = !!(fa && !fa.tick.frames[l.id]);
+    const th = themeOf(l);
+    const prevTh = i > 0 ? themeOf(sortedLayers[i - 1]) : "";
     return {
       id: l.id,
       label: l.label,
       unit: l.unit,
       note: l.note,
       core: !!l.core,
-      head: i === 0 || catOf(sortedLayers[i - 1]) !== catOf(l) ? (CAT_LABEL[catOf(l)] ?? "") : "",
+      head: i === 0 || prevTh !== th ? (themeLabels[th] ?? "") : "",
+      catBadge: CAT_LABEL[catOf(l)] ?? "",
       on,
       gap,
       grad: grad(l),
@@ -249,7 +265,8 @@ export function buildView(m: Model) {
   const b = ds ? ds.area.bounds : null;
   const trades = ds
     ? ds.context.map((c, i) => ({
-        trade: c.trade,
+        id: c.id ?? String(i),
+        trade: c.label ?? c.trade,
         on: i === S.trade,
         line: i === S.trade ? "var(--acc-fg)" : "var(--line2)",
         bg: i === S.trade ? "var(--sel)" : "transparent",
@@ -544,15 +561,17 @@ export function buildView(m: Model) {
   const lookup = (table: object, key: string): string => (table as Record<string, string>)[key] ?? key;
   const provName = (id: string): string =>
     id.split("+").map((p) => lookup(T.sources.provider, p)).join(" + ");
-  const sourceUnused = (g: { selected: string[]; count: number; status: string }): boolean =>
-    g.status === "ok" && (g.selected ?? []).length === 0 && g.count === 0;
+  const sourceEmpty = (g: { selected: string[]; count: number; status: string }): boolean =>
+    g.status === "empty" || (g.status === "ok" && (g.selected ?? []).length === 0 && g.count === 0);
   const sources = (ds?.sources ?? []).map((g) => {
-    const unused = sourceUnused(g);
+    const empty = sourceEmpty(g);
     return {
       key: g.kind,
       label: lookup(T.sources.kind, g.kind),
-      statusText: unused ? T.sources.status.unused : lookup(T.sources.status, g.status),
-      statusColor: unused
+      statusText: empty
+        ? lookup(T.sources.status, "empty") || T.sources.status.unused
+        : lookup(T.sources.status, g.status),
+      statusColor: empty
         ? "var(--warn)"
         : g.status === "ok"
           ? "var(--ok)"
@@ -572,7 +591,7 @@ export function buildView(m: Model) {
         note: !x.ok ? T.sources.failed : x.count == null ? "Cantidad no informada" : x.count === 0 ? "Sin registros" : T.sources.records(x.count),
         hint: sourceNote(x.provider) ?? "",
       })),
-      count: g.count == null ? "Cantidad no informada" : g.count === 0 ? "Sin registros" : T.sources.records(g.count),
+      count: g.count == null ? "Cantidad no informada" : g.count === 0 ? "Sin detecciones en el área y periodo" : T.sources.records(g.count),
       fromCache: g.fromCache,
     };
   });

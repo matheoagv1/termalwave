@@ -16,7 +16,7 @@ const SECONDARY = "border:1px solid var(--line2);background:transparent;cursor:p
 export function Hud({ v, a, tlRef }: P): React.ReactElement {
   const { t, lay } = v;
   return (
-    <div style={s("position:absolute;inset:0;pointer-events:none")}>
+    <div style={s("position:absolute;inset:0;pointer-events:none;z-index:20")}>
       <TopBar v={v} a={a} />
 
       {v.immersive && v.hudToggleOn && (
@@ -51,7 +51,11 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           type="button"
           className="tw-hov tw-pixbtn"
           onClick={a.enter}
-          style={s(`position:absolute;left:50%;transform:translateX(-50%);bottom:${lay.entB};max-width:calc(100% - 24px);pointer-events:auto;height:${lay.hit};padding:0 18px;${PRIMARY}`)}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          style={s(
+            `position:absolute;left:50%;transform:translateX(-50%);bottom:${lay.entB};max-width:calc(100% - 24px);pointer-events:auto;z-index:21;height:${lay.hit};padding:0 18px;touch-action:manipulation;${PRIMARY}`,
+          )}
         >
           {t.entry.backToArea}
         </button>
@@ -191,8 +195,11 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             >
               <span style={s(`flex:none;width:14px;height:14px;background:${l.grad};border:1px solid var(--line2)`)} />
               <span style={s("flex:1;min-width:0;display:flex;flex-direction:column;gap:2px")}>
-                <span style={s("font:13px/1.25 var(--sans);color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>
+                <span style={s("font:13px/1.25 var(--sans);color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px")}>
                   {l.label}
+                  {l.catBadge ? (
+                    <span style={s("font:9px var(--mono);letter-spacing:.04em;color:var(--fg3);font-weight:400")}>{l.catBadge}</span>
+                  ) : null}
                 </span>
                 {l.on && l.note ? (
                   <span style={s("font:11px/1.35 var(--sans);color:var(--fg2);white-space:normal;text-wrap:pretty")}>{l.note}</span>
@@ -406,7 +413,13 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
 function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t, lay } = v;
   return (
-    <div style={s(`position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};display:flex;gap:8px;align-items:flex-start`)}>
+    <div
+      style={s(
+        `position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};display:flex;gap:8px;align-items:flex-start;pointer-events:auto;z-index:21`,
+      )}
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
       {v.searchField && (
         <div style={s("pointer-events:auto;flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative")}>
           <input
@@ -416,7 +429,9 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
             placeholder={t.top.search}
             aria-label={t.top.search}
             autoComplete="off"
-            style={s(`width:100%;height:40px;padding:0 12px;border:1px solid var(--line);${"background:var(--panel);backdrop-filter:blur(8px)"};color:var(--fg);font:13px var(--sans);border-radius:0`)}
+            style={s(
+              `width:100%;height:40px;padding:0 12px;border:1px solid var(--line);background:var(--panel-solid);color:var(--fg);font:13px var(--sans);border-radius:0;touch-action:manipulation`,
+            )}
           />
           {v.showResults && (
             <div role="listbox" style={s("position:absolute;left:0;right:0;top:44px;background:var(--panel-solid);border:1px solid var(--line2)")}>
@@ -814,7 +829,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                     <div style={s("display:flex;gap:6px;flex-wrap:wrap")}>
                       {v.trades.map((tr) => (
                         <button
-                          key={tr.trade}
+                          key={tr.id}
                           aria-pressed={tr.on}
                           onClick={tr.go}
                           style={s(`white-space:normal;min-height:${lay.hit};padding:4px 10px;border:1px solid ${tr.line};background:${tr.bg};cursor:pointer;text-align:left`)}
