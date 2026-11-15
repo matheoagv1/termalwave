@@ -72,6 +72,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     // nubes + focos encendidos al abrir: el globo no arranca vacio en el AOI
     extras: ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
+    nisar: { status: "idle", count: 0, msg: "" },
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -153,6 +154,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
         this.applyGlobals();
       }
     }
+    this.syncNisar();
     const el = this.tlRef.current;
     if (el && this.tlEl !== el) {
       this.tlEl = el;
@@ -647,6 +649,45 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const ds = this.state.ds;
     const core = ds ? ds.layers.filter((l) => l.core).map((l) => l.id) : [];
     return [...new Set([...core, ...this.state.extras])];
+  }
+
+  // cobertura NISAR del bbox del lugar activo (o del AOI demo); solo con radar (nucleo) activo
+  private nisarKey = "";
+  private nisarSeq = 0;
+
+  syncNisar(): void {
+    const ds = this.state.ds;
+    const radarOn = !!ds && ds.layers.some((l) => l.core);
+    const b = this.state.activePlace?.bounds ?? ds?.area.bounds;
+    const key = radarOn && b ? [b.west, b.south, b.east, b.north].map((n) => n.toFixed(3)).join(",") : "";
+    if (key === this.nisarKey) return;
+    this.nisarKey = key;
+    const seq = ++this.nisarSeq;
+    if (!key) {
+      this.setState({ nisar: { status: "idle", count: 0, msg: "" } });
+      return;
+    }
+    this.setState({ nisar: { status: "loading", count: 0, msg: "" } });
+    fetch(`/api/nisar/coverage?bbox=${key}`, { credentials: "same-origin" })
+      .then(async (r) => {
+        if (r.status === 503) throw new Error("La cobertura NISAR todavía no está habilitada en este entorno.");
+        if (r.status === 401) throw new Error("Iniciá sesión para consultar la cobertura NISAR.");
+        if (!r.ok) throw new Error("No pudimos consultar la cobertura NISAR. Probá de nuevo en unos minutos.");
+        return r.json() as Promise<Record<string, unknown>>;
+      })
+      .then((j) => {
+        if (seq !== this.nisarSeq) return;
+        const arr = (v: unknown): unknown[] | null => (Array.isArray(v) ? v : null);
+        const list = arr(j.frames) ?? arr(j.scenes) ?? arr(j.features) ?? arr(j.items) ?? [];
+        const n = typeof j.count === "number" ? j.count : list.length;
+        this.setState({ nisar: { status: n ? "ok" : "empty", count: n, msg: "" } });
+      })
+      .catch((e: Error) => {
+        if (seq !== this.nisarSeq) return;
+        this.nisarKey = "";
+        const net = e instanceof TypeError;
+        this.setState({ nisar: { status: "error", count: 0, msg: net ? "Sin conexión: no pudimos consultar la cobertura NISAR." : e.message } });
+      });
   }
 
   // capas globales (nubes, focos de calor): viven en extras pero no son rasters del dataset
