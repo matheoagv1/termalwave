@@ -31,7 +31,7 @@ from termalwave.science.indices import (  # noqa: E402
     ndmi,
 )
 from termalwave.science.phenology import gdd_daily_simple  # noqa: E402
-from termalwave.science.radar import delta_b_db, mean_power_linear  # noqa: E402
+from termalwave.science.radar import common_valid_mask, delta_b_db, mean_power_linear  # noqa: E402
 from termalwave.science.salinity import duan_smearing_ece  # noqa: E402
 from termalwave.science.soil import relative_wetness_wt, topp_permittivity, wetness_ratio_unclipped  # noqa: E402
 from termalwave.science.surface_temp import landsat_c2_st_kelvin  # noqa: E402
@@ -164,6 +164,13 @@ class ScienceFormulaTests(unittest.TestCase):
         f = np.array([1.5, 1.5])
         s = gamma_to_sigma(g, f)
         self.assertAlmostEqual(float(s[0]), 0.15)
+
+    def test_common_valid_mask_f01(self) -> None:
+        a = np.array([0.1, np.nan, 0.2, 0.0])
+        b = np.array([0.2, 0.3, 0.4, 0.5])
+        m = common_valid_mask(a, b)
+        self.assertEqual(m.tolist(), [True, False, True, False])
+        self.assertAlmostEqual(mean_power_linear(a, mask=m), 0.15)
 
     def test_science_toml_lists_all_f_ids(self) -> None:
         text = (REPO / "config" / "science.toml").read_text(encoding="utf-8")

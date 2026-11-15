@@ -70,6 +70,19 @@ def delta_b_db(gamma_after: float, gamma_before: float) -> float:
     return float(10.0 * np.log10(gamma_after / gamma_before))
 
 
+def common_valid_mask(*arrays: np.ndarray) -> np.ndarray:
+    """Intersection mask for multi-date means (F01): finite and >0 in every array."""
+    if not arrays:
+        raise ValueError("common_valid_mask needs at least one array")
+    out = np.ones(np.asarray(arrays[0]).shape, dtype=bool)
+    for a in arrays:
+        g = np.asarray(a, dtype=np.float64)
+        if g.shape != out.shape:
+            raise ValueError("common_valid_mask: shape mismatch")
+        out &= np.isfinite(g) & (g > 0)
+    return out
+
+
 def gamma_to_sigma(gamma: np.ndarray, rtc_factor: np.ndarray) -> np.ndarray:
     """σ⁰ = γ⁰ · rtcGammaToSigmaFactor per pixel (F04); shapes must broadcast."""
     g = np.asarray(gamma, dtype=np.float64)
