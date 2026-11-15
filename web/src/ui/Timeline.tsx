@@ -264,7 +264,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                             aria-current={tk.cur ? "true" : undefined}
                             style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px solid var(--line2);cursor:pointer;background:${tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
                           >
-                            {tk.title.split(" · ")[0]}
+                            {tk.title.split(" · ")[0].replace(/^Compuesto /, "")}
                           </button>
                           {tk.pips.map((pp) => (
                             <div

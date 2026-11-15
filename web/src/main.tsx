@@ -125,3 +125,10 @@ async function start(): Promise<void> {
 }
 
 void start();
+
+// PWA: registro del service worker (solo en la version publicada)
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
