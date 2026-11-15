@@ -1,0 +1,127 @@
+HANDOFF — GrokBot on TermalWave VPS (root SSH)
+Updated: 2026-11-15 UTC. From: Master/vps. Audience: GrokBot (root on this host).
+Secrets: you already have them. Do NOT paste tokens/keys into tw notify, board, or chat.
+
+================================================================================
+1. WHAT THIS MACHINE IS
+================================================================================
+Product: TermalWave — NISAR SAR surface-change globe (NASA Space Apps).
+Repo (master / VPS role): /srv/sites/nasaspaceappchallenge
+Worktrees:
+  carne  → /srv/sites/nasaspaceappchallenge-carne   (branch work/carne)
+  cricri → /srv/sites/nasaspaceappchallenge-cricri  (branch work/cricri)
+Hub data + MC: /srv/sites/tw-hub   (systemd: tw-hub.service)
+CLI binary: /usr/local/bin/tw
+Preview Worker sources: /srv/sites/nasaspaceappchallenge/preview
+
+Live tips (check again with commands below):
+  git HEAD ≈ 57419f7 (wind fix)
+  Worker Version ID ≈ 6ad4fc2a (redeploy may change this)
+  Preview: https://termalwave-preview.vroms.workers.dev
+  Also: termalwave.space / www / c.termalwave.space (CF Worker routes)
+  Hub TLS: https://127.0.0.1:7443  (and public IP:7443)
+  Mission Control web: port 7421 on hub
+
+================================================================================
+2. ROLES (TW BOARD = SOURCE OF TRUTH)
+================================================================================
+  vps    — pipeline, config, preview Worker, deploy, web/ (while carne offline)
+  cricri — web/src/context + brand/monigote (copy / science wording)
+  carne  — OFFLINE (Claude quota). Role revoked earlier then re-cred’d; treat as dormant.
+             VPS roots include web/. Do not expect LAND from PC Carne.
+
+OS users for agent PCs:
+  agente-cricri → worktree -cricri ; .tw/cred.json mode 600 owner agente-cricri
+  agente-carne  → worktree -carne  ; same pattern
+Never point them at master’s .tw (that is vps/root).
+
+Board: tw only (not comms/board.toml). Pins + pulse, not long MD archives.
+
+================================================================================
+3. FIRST COMMANDS ON LOGIN
+================================================================================
+cd /srv/sites/nasaspaceappchallenge
+tw pulse
+tw who
+tw status --all --limit 50
+tw inbox --limit 20
+tw pin list
+tw seat                    # if using agent cred in .tw/
+systemctl status tw-hub --no-pager
+git status -sb && git log -5 --oneline
+
+Drain own wakes if ALERTA:
+  timeout 5 tw agent run
+
+Hub operator (admin, rare):
+  tw --dir /srv/sites/tw-hub/.tw …
+  operator.json lives there — do not leak it.
+
+================================================================================
+4. SNAPSHOT WHEN THIS HANDOFF WAS WRITTEN
+================================================================================
+vps: idle, 0 open tw tasks
+cricri open/in_progress: t11, t13, t18, t30 (all context/copy)
+Inbox that triggered this handoff: n388/n389 human → GrokBot board visibility
+Also pending product ask: n387 cricri → prioritize big NISAR+GEV plan with subagents
+  (cricri reviews science constraints + copy)
+
+Recently shipped (on master + Worker):
+  study-zone GEV UX (activePlace ≠ Santiago, distance fly, mago tip, tile cache, cloud fade)
+  t32/f73 UI (Años / Estás en / leyenda) via cherry-pick 9d58048
+  science F01–F17 library + tests; f72 agua topic
+  Open-Meteo wind: GET /api/wind + particle layer (Clima → Viento)
+    point: ?lat=&lon=   grid: ?bbox=w,s,e,n   archive: &date=YYYY-MM-DD
+
+Still human: Namecheap NS → Cloudflare (pins p17/p18).
+
+================================================================================
+5. DEPLOY / MERGE (VPS)
+================================================================================
+Worker:
+  cd /srv/sites/nasaspaceappchallenge/preview
+  npx wrangler deploy
+  # announce: tw notify --to cricri --topic deploy --body "DEPLOY <gitsha> / <Version ID> …"
+
+Web build (when UI changes):
+  cd /srv/sites/nasaspaceappchallenge/web && npm run build
+  # commit web/dist with src; then wrangler deploy (ASSETS from web/dist)
+
+Git:
+  Master integrates. Prefer small commits. twguard blocks commits outside role roots
+  unless paths are on an open task. vps roots include web/ now.
+
+FLUJO UNICO (pin): LAND notify → FF merge ≤10 min → deploy; no freeze; hot files EDIT-HOT.
+
+================================================================================
+6. CREDENTIALS (LOCATIONS ONLY — NO VALUES HERE)
+================================================================================
+  Worker / CF: wrangler login state under the deploy user; secrets via wrangler secret
+  FIRMS_MAP_KEY, EARTHDATA_TOKEN, etc.: Worker secrets / config/secrets.local.toml
+  Agent creds: <worktree>/.tw/cred.json (600, owner = agente-*)
+  Hub operator: /srv/sites/tw-hub/.tw/operator.json
+  Preview auth: D1 binding termalwave-preview-auth on Worker
+If .tw/cred.json unreadable for agente-*: chown agente-X:sites ; chmod 700 .tw ; 600 cred.json
+  then: tw --dir /srv/sites/tw-hub/.tw hub agent rotate --role <role> --out /tmp/cred.json
+        and install into that worktree’s .tw/
+
+================================================================================
+7. DO / DON’T
+================================================================================
+DO: tw pulse every turn; archive inbox when handled; keep notify ≤280 chars; no jury/scoring in UI.
+DO: edit only owned roots or task paths; prefer CLI over browsing archives/references/vendor.
+DON’T: put secrets in tw notify / board / commits / UI strings.
+DON’T: promise earthquake prediction; mark validated vs hypothesis layers clearly.
+DON’T: leave dirty uncommitted work on master as a habit (flujo).
+
+================================================================================
+8. USEFUL PATHS
+================================================================================
+  AGENTS.md                          product + ownership
+  config/apis.toml                   providers + [space.wind] etc.
+  preview/src/{api,wind,firms,clouds,nisar-coverage}.js
+  web/src/scene/space/{wind,clouds}.ts
+  docs/handoff/                      short handoffs (this file)
+  scripts/comms.py                   legacy lean harness (secondary to tw)
+
+End of handoff.

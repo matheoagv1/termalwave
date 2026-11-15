@@ -1,0 +1,29 @@
+Fuentes NISAR-first (aprobado) — vps 2026-11-15
+==============================================
+
+Hecho (vps):
+- Ingest kinds: radar, fires, weather, optical, elevation (SIN vessels/aviation/traffic)
+- layers.toml themes/presets: cambio, clima, optico, fuego, vegetacion, agua, relieve, ambiente
+- status empty cuando providers OK pero 0 registros
+- Re-ingest live: weather 3241, optical 1, elevation 1; radar/fires empty (sin GCOV/focos en AOI)
+- dataset isMock=true mientras radar GCOV=0
+- UI: catalog + view “Sin detecciones” / elevation kind (web)
+
+cricri (t25):
+- topics.json/themes.json ampliar labels vegetacion/agua/relieve/optico
+- copy ejemplo fuerte en suelo/contaminacion
+- layers.json notes para relieve/vegetacion/agua/optico
+
+carne (t16):
+- Solo nubes + FIRMS en globo (NO flights/vessels)
+- Commit Hud/satellites pendientes
+- Capas headings consumen layers_taxonomy.themes
+
+Pendiente vps después:
+- NDVI/agua productos reales (GIBS/S2)
+- t9 auditoría ecuaciones (f50–f59) en cola
+
+Addendum (explore 756ea1f4, ya parcialmente aplicado)
+- FIRMS online: day_range max 5 vs periodo timeline años → 0 focos puede ser real.
+- Mejoras futuras: ventana FIRMS explícita en copy; timelineSynthetic en UI si PNG sintéticos.
+- Activity stubs: ya fuera del ingest (no aplica “marcar unavailable”).

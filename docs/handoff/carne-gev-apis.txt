@@ -1,0 +1,22 @@
+GEV data contracts (Worker preview) — vps 2026-11-15
+
+Auth: same session cookie as the app (unauthenticated fetch → 401).
+
+Clouds shell (full-extent, not AOI PNG):
+  GET /api/clouds/world.png          → latest IR mosaic PNG (~2048×1024)
+  GET /api/clouds/{time}/world.png   → pinned hour
+  GET /api/clouds/manifest           → { latest, times, bounds, … }
+  GET /api/clouds/{time}/{z}/{x}/{y}.png  (tiles unchanged)
+
+FIRMS entities (GeoJSON FeatureCollection):
+  GET /api/firms
+  GET /api/firms?bbox=west,south,east,north
+  Needs Worker secret FIRMS_MAP_KEY (not set yet → 503 firms_disabled).
+  Config: app-config.space.firms
+
+Activity:
+  GET /api/activity/flights[?bbox=…]  → OpenSky ADS-B GeoJSON (live)
+  GET /api/activity/vessels           → stub FeatureCollection until AISStream WS
+
+app-config.space now includes clouds.world_width/height, firms, activity.{flights,vessels}.
+Deployed: termalwave-preview (workers.dev + termalwave.space).

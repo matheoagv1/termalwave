@@ -1,0 +1,45 @@
+PLAN: Rubros → temas de datos (estilo GEV)
+==========================================
+Pedido: rearmar rubros; capas/presets por clasificación de datos,
+no por oficio. Ref. docs/GLOBE_LAYERS_PRESETS.md + GEV LayerPanel
+(PANEL_GROUPS: Movement / Events / Weather — no oficios).
+
+Dos ejes (no mezclar)
+---------------------
+A) Panel Capas — headings por fenómeno (como GEV DATA LAYERS):
+   1. Radar y cambio de superficie     → radar (core, always-on)
+   2. Suelo y ambiente del territorio  → suelo, contaminacion
+   3. Fuego y focos térmicos           → incendios, firms*
+   4. Clima y nubes                    → clouds*
+   5. Movimiento y actividad           → flights*, vessels*
+   (* ids globales: cableo UI en t16; vps deja config lista.)
+   Dentro de cada tema, badge/sub: data | prediction | inference
+   (taxonomy ya en layers.toml / view.ts). Predicciones vacío hasta
+   que existan capas.
+
+B) Presets (intro + Lectura) — chips que prenden extras; keyed por id:
+   - cambio        → []
+   - ambiente      → suelo, contaminacion
+   - fuego         → incendios (+ firms cuando exista en catálogo)
+   - clima         → clouds (cuando exista)
+   - actividad     → flights, vessels (cuando existan)
+   Radar nunca se apaga. Usuario puede seguir toggling a mano.
+
+Notas de alineación
+-------------------
+- “Urbano” / “contaminación” del pedido humano → en panel van bajo
+  Suelo y ambiente; no hace falta heading Urbano aparte en v1.
+- incendios (AOI/timeline) + firms (globo/API) = un tema Fuego,
+  dos footprints (como GEV Events / Active Fires).
+- Oficios (trades.json) dejan de ser keys de preset.
+
+Ownership
+---------
+vps   : layers.toml themes+presets by id; emit config.py /
+        dataset_export.py; app-config; notes en layer-defaults.
+carne : Capas headings por tema; Intro/Lectura chips; App apply
+        por presetId (t22). t16 = entities clouds/firms/activity.
+cricri: copy ES-AR-SGO por preset id + labels de headings (t23).
+
+Orden: vps contrato → cricri copy → carne UX (t22); t16 en paralelo
+cuando Hud/satellites commiteados por carne.
