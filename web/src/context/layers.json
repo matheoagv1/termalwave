@@ -1,9 +1,9 @@
 {
   "capas": {
-    "radar": "Acá ves la respuesta del radar a la superficie. Si cambia entre fechas, puede ser humedad, vegetación, rugosidad o el ángulo de la pasada. Una sola capa no alcanza para señalar la causa.",
-    "suelo": "Estimación de la superficie a partir del radar, en porcentaje. Sirve para comparar fechas, no para medir el agua de la raíz. Pedi producto y validación propios antes de usarla en el campo.",
-    "contaminacion": "Es un índice de apoyo, no un ensayo de laboratorio. Revisa la fuente y el método. NISAR no mide concentración de contaminantes ni confirma contaminación de agua o suelo.",
-    "incendios": "Los focos de calor marcan actividad térmica vista desde el satélite, a veces en hectáreas acumuladas. No todo foco es un incendio, y si no hay foco no significa que no haya fuego. Contrasta fecha, cobertura y lo que se sepa en el lugar."
+    "radar": "El radar NISAR registra la señal que vuelve de la superficie, llamada retrodispersión o backscatter. Comparar fechas ayuda a observar cambios. La humedad, la vegetación, la rugosidad y la geometría de observación pueden influir en la señal; hace falta contrastar otras fuentes para interpretar la causa.",
+    "suelo": "Esta capa puede mostrar un indicador derivado del radar y datos de contexto. Revisá la fuente, la unidad y el método antes de interpretarla. No mide directamente el agua en las raíces ni reemplaza una medición de campo.",
+    "contaminacion": "Es un índice de apoyo, no un análisis de laboratorio. Revisá la fuente y el método. NISAR no mide la concentración de contaminantes ni confirma por sí solo contaminación del agua o del suelo.",
+    "incendios": "Los focos térmicos indican señales de calor detectadas por satélite. No todos son incendios, y la ausencia de un foco no demuestra que no haya fuego. Compará la fecha y la cobertura con información del lugar y avisos oficiales."
   },
   "fuentes": {
     "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisa la fecha, la colección y si esa observación ya está validada.",
