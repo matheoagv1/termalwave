@@ -88,6 +88,13 @@ const TAXONOMY: Record<string, Pick<LayerDef, "category" | "core">> = {
   contaminacion: { category: "inference" },
 };
 
+// Espejo de los presets de config/layers.toml, por nombre de rubro. El radar (core) no se lista: siempre esta.
+export const PRESETS: Record<string, string[]> = {
+  "GestiÃ³n de emergencias": ["incendios"],
+  Agricultura: ["suelo"],
+  "Ambiente y conservaciÃ³n": ["suelo", "incendios"],
+};
+
 export function layerDef(id: string, label: string): LayerDef {
   const tax = TAXONOMY[id] ?? { category: "data" as const };
   const base: LayerDef = { id, label: LABELS[id] ?? label, ...(DEFAULTS[id] ?? GENERIC), ...tax };

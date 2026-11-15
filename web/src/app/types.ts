@@ -59,6 +59,7 @@ export type AppState = {
   moniOpen: boolean;
   basemap: string;
   helpText: string;
+  extras: string[];
 };
 
 export type AppProps = {
