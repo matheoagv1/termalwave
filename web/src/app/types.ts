@@ -18,6 +18,12 @@ export type Status = { online: boolean; terrain: boolean; basemap: boolean };
 
 export type AppError = { code?: string; message?: string };
 
+export type ActivePlace = {
+  label: string;
+  lonlat: [number, number];
+  bounds?: { west: number; east: number; south: number; north: number };
+};
+
 export type AppState = {
   ready: boolean;
   ds: Dataset | null;
@@ -39,6 +45,8 @@ export type AppState = {
   results: SearchResult[];
   searched: boolean;
   searchOpen: boolean;
+  // null al abrir: el AOI no aparece hasta que haya busqueda (o demo area)
+  activePlace: ActivePlace | null;
   toast: string;
   help: boolean;
   ficha: boolean;

@@ -48,6 +48,10 @@ const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
 const URBAN_ZOOM = 1.85;
 const URBAN_DETAIL = 1.35;
 const URBAN_PITCH = 6;
+// busqueda de lugar desde orbita; duracion y zoom tipo gev
+const PLACE_FLY_MS = 3000;
+const PLACE_ZOOM = 10;
+const PLACE_FLY_CURVE = 1.15;
 // AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
 const AOI_VIEWPORT_FRAC = 0.12;
 
@@ -111,6 +115,8 @@ export class MapLibreScene implements SceneApi {
   private intendedOpacity = new Map<string, number>();
   private gapFill = 0;
   private dragCurtain = false;
+  // zona activa desde busqueda; sin eso no hay outline ni PNG del AOI
+  private placeOn = false;
 
   constructor(o: Partial<MapSceneOptions> = {}) {
     this.o = {
@@ -366,6 +372,53 @@ export class MapLibreScene implements SceneApi {
     this.space?.setVisible(id, on);
   }
 
+  // geojson global (firms, etc); null limpia la capa
+  setEntities(id: string, data: unknown | null): void {
+    this.whenReady(() => this.applyEntities(id, data));
+  }
+
+  setActivePlace(on: boolean): void {
+    this.placeOn = on;
+    this.whenReady(() => this.updateAreaChrome());
+  }
+
+  private radarOn(): boolean {
+    return this.s.layer === "radar" || this.extras.includes("radar");
+  }
+
+  private applyEntities(id: string, data: unknown | null): void {
+    if (!this.ready) return;
+    const map = this.map;
+    const srcId = `tw-ent-${id}`;
+    const layerId = `tw-ent-${id}`;
+    if (!data) {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(srcId)) map.removeSource(srcId);
+      return;
+    }
+    const raw = data as { type?: string; features?: unknown[] };
+    if (!raw || raw.type !== "FeatureCollection" || !Array.isArray(raw.features)) return;
+    const fc = data as GeoJSON.GeoJSON;
+    const src = map.getSource(srcId) as GeoJSONSource | undefined;
+    if (src) {
+      src.setData(fc);
+      return;
+    }
+    map.addSource(srcId, { type: "geojson", data: fc });
+    map.addLayer({
+      id: layerId,
+      type: "circle",
+      source: srcId,
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.2, 3, 2.5, 6, 4.5, 10, 7],
+        "circle-color": this.css("--acc", "#ff6b35"),
+        "circle-opacity": 0.85,
+        "circle-stroke-width": 0.6,
+        "circle-stroke-color": this.css("--scene-outline", "#f4f1e8"),
+      },
+    });
+  }
+
   // Si fallan teselas o relieve se sigue con lo que haya, sin romper la escena.
   private degrade(): void {
     if (this.map.getTerrain()) this.map.setTerrain(null);
@@ -402,16 +455,17 @@ export class MapLibreScene implements SceneApi {
     this.updateAreaChrome();
   }
 
-  // en orbita el globo manda: sin caja ni anillo que ensucien el aterrizaje
+  // outline y anillo solo con zona activa + radar; en orbita el globo manda
   private updateAreaChrome(): void {
     const c = this.s.camera;
     const map = this.map;
+    const gate = this.placeOn && this.radarOn();
     if (map.getLayer("tw-area")) {
-      const on = c === "territory" || c === "detail";
+      const on = gate && (c === "territory" || c === "detail");
       map.setPaintProperty("tw-area", "line-opacity", on ? 1 : 0);
     }
     if (this.ring) {
-      this.ring.getElement().style.display = c === "approach" ? "block" : "none";
+      this.ring.getElement().style.display = gate && c === "approach" ? "block" : "none";
     }
     this.syncAoiOverlays();
   }
@@ -449,8 +503,9 @@ export class MapLibreScene implements SceneApi {
     return Math.min(maxX - minX, maxY - minY);
   }
 
-  /** PNG SAR/fenómeno solo en territorio/detalle y con encuadre suficiente (no cuadrante flotante). */
+  /** PNG SAR/fenomeno: zona activa + radar + territorio/detalle con encuadre suficiente. */
   private aoiOverlaysVisible(): boolean {
+    if (!this.placeOn || !this.radarOn()) return false;
     const c = this.s.camera;
     if (c !== "territory" && c !== "detail") return false;
     const vmin = Math.min(this.mapEl.clientWidth, this.mapEl.clientHeight);
@@ -524,6 +579,7 @@ export class MapLibreScene implements SceneApi {
   setExtras(ids: string[]): void {
     this.extras = ids;
     this.applyExtras();
+    this.updateAreaChrome();
   }
 
   private applyExtras(): void {
@@ -776,12 +832,36 @@ export class MapLibreScene implements SceneApi {
     if (!this.ready) return;
     const map = this.map;
     const dur = this.dur(opt.ms);
-    const area = this.ds?.area.center ?? [-64.25, -27.8];
     if (camera === "orbit") {
       const f = this.s.focus;
-      const center = f ? f.lonlat : area;
-      const z = f ? this.orbitZoom() * 1.0 : this.orbitZoom();
-      map.easeTo({ center: center as [number, number], zoom: z, pitch: 0, bearing: 0, padding: this.pad, duration: dur, essential: true });
+      // sin focus: vista planeta neutra (0,0), no el centro del AOI
+      const center = f ? f.lonlat : (this.o.home ?? [0, 0]);
+      if (!f) {
+        map.easeTo({
+          center: center as [number, number],
+          zoom: this.orbitZoom(),
+          pitch: 0,
+          bearing: 0,
+          padding: this.pad,
+          duration: dur,
+          essential: true,
+        });
+        return;
+      }
+      const pitch = clamp(this.s.tilt, 25, 30);
+      const bearing = this.s.northUp ? 0 : -18;
+      const opts = {
+        center: center as [number, number],
+        zoom: PLACE_ZOOM,
+        pitch,
+        bearing,
+        padding: this.pad,
+        duration: dur,
+        essential: true,
+        curve: PLACE_FLY_CURVE,
+      };
+      if (opt.fly && dur > 0) map.flyTo(opts);
+      else map.easeTo(opts);
       return;
     }
     if (camera === "detail" && this.s.focus) {
@@ -890,7 +970,8 @@ export class MapLibreScene implements SceneApi {
     } else if ("focus" in n && s.camera === "detail" && s.focus) {
       this.whenReady(() => this.go("detail", { fly: false, ms: 700 }));
     } else if ("focus" in n && s.camera === "orbit") {
-      this.whenReady(() => this.go("orbit", { fly: false, ms: 900 }));
+      const place = Boolean(s.focus);
+      this.whenReady(() => this.go("orbit", { fly: place, ms: place ? PLACE_FLY_MS : 900 }));
     }
     this.whenReady(() => {
       this.applyFrame();
