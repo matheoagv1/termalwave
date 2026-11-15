@@ -160,6 +160,7 @@ export function buildView(m: Model) {
   // capas globales (GEV): un interruptor cada una, dentro de su tema
   const GLOBALS = [
     { id: "clouds", theme: "clima", label: "Nubes", note: "Mosaico infrarrojo casi en tiempo real sobre el globo." },
+    { id: "wind", theme: "clima", label: "Viento", note: "Campo de viento a 10 m (Open-Meteo). Las rayas muestran dirección y fuerza relativa." },
     { id: "firms", theme: "fuego", label: "Focos de calor", note: "Detecciones térmicas satelitales (NASA FIRMS). Un foco no confirma tamaño ni daño." },
   ];
   const fm = S.firms;

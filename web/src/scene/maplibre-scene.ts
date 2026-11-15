@@ -23,6 +23,7 @@ import { CloudsLayer } from "./space/clouds";
 import { SpaceScene, type SpaceConfig } from "./space";
 import { SatellitesLayer } from "./space/satellites";
 import { SkyLayer } from "./space/sky";
+import { WindLayer } from "./space/wind";
 import type { Bounds } from "./space/satellites-geometry";
 import { installTileCache, tileCacheTransformRequest } from "./tile-cache";
 
@@ -411,6 +412,8 @@ export class MapLibreScene implements SceneApi {
         true,
       );
       await this.space.add(new CloudsLayer({ opacity: 0.85 }), true);
+      // wind off by default; App toggles via setSpaceLayer("wind", ...)
+      await this.space.add(new WindLayer(), false);
     } catch (e) {
       console.warn("escena espacial:", e);
     }

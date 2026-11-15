@@ -27,6 +27,14 @@ export interface CloudsConfig {
   max_zoom: number;
 }
 
+export interface WindConfig {
+  endpoint: string;
+  forecast?: string;
+  archive?: string;
+  cache_ttl_s?: number;
+  attribution?: string;
+}
+
 /** `space` block of app-config.json, emitted from [space] in config/apis.toml. */
 export interface SpaceConfig {
   sky_assets: string;
@@ -34,6 +42,7 @@ export interface SpaceConfig {
   ephemeris: EphemerisConfig;
   satellites: SatellitesConfig;
   clouds: CloudsConfig;
+  wind?: WindConfig;
 }
 
 export interface SpaceHost {

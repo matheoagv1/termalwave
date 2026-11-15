@@ -2,7 +2,7 @@ import React from "react";
 import { T } from "../tw/catalog.es-AR.js";
 import { PRESETS } from "../data/layer-defaults";
 
-const GLOBAL_IDS = ["clouds", "firms"];
+const GLOBAL_IDS = ["clouds", "firms", "wind"];
 import { longHelp } from "../ui/tip-help";
 import type {
   BasemapOption,
@@ -701,8 +701,12 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   applyGlobals(): void {
     const on = this.state.extras;
     this.scene?.setSpaceLayer?.("clouds", on.includes("clouds"));
+    this.scene?.setSpaceLayer?.("wind", on.includes("wind"));
     // la escena monta el espacio de forma asincrona: se reaplica una vez
-    window.setTimeout(() => this.scene?.setSpaceLayer?.("clouds", this.state.extras.includes("clouds")), 3500);
+    window.setTimeout(() => {
+      this.scene?.setSpaceLayer?.("clouds", this.state.extras.includes("clouds"));
+      this.scene?.setSpaceLayer?.("wind", this.state.extras.includes("wind"));
+    }, 3500);
     const f = on.includes("firms");
     if (f === this.firmsOn) return;
     this.firmsOn = f;

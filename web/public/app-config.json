@@ -361,6 +361,13 @@
       "attribution": "NOAA nowCOAST · NESDIS global infrared mosaic",
       "manifest_ttl_s": 600,
       "max_zoom": 6
+    },
+    "wind": {
+      "endpoint": "/api/wind",
+      "forecast": "https://api.open-meteo.com/v1/forecast",
+      "archive": "https://archive-api.open-meteo.com/v1/archive",
+      "cache_ttl_s": 900,
+      "attribution": "Open-Meteo (CC BY 4.0)"
     }
   },
   "search": {

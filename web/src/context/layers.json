@@ -7,6 +7,7 @@
     "incendios": "Los focos térmicos indican señales de calor por satélite. No todos son incendios; la ausencia de un foco no demuestra que no haya fuego. Contrastá fecha y avisos oficiales.",
     "firms": "Focos térmicos globales en tiempo casi real. La densidad del mapa no es el perímetro del fuego; contrastá fecha y avisos locales.",
     "clouds": "Cobertura de nubes sobre el globo. Ayuda a ver si el cielo estaba despejado; no reemplaza imagen óptica ni un modelo meteorológico.",
+    "wind": "Viento a 10 m (Open-Meteo). Las partículas siguen el campo; no es un pronóstico de ráfagas locales ni reemplaza mediciones en tierra.",
     "vegetacion": "NDVI / verdor. Orienta sobre cobertura vegetal; no es mapa de rendimiento, especies ni forraje disponible.",
     "agua": "Agua o humedad superficial desde óptico (p. ej. MNDWI). Apoyo al radar; no reemplaza caudales ni aforo.",
     "relieve": "Elevación del terreno (DEM). Contexto del área; no es modelo de inundación ni de pendiente para obra."

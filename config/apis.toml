@@ -495,3 +495,11 @@ max_zoom = 6
 endpoint = "/api/nisar/coverage"
 collection = "NISAR_L2_GCOV"
 cache_ttl_s = 600
+
+# Live + archive wind (Open-Meteo; no key). Grid/point for particle overlay.
+[space.wind]
+endpoint = "/api/wind"
+forecast = "https://api.open-meteo.com/v1/forecast"
+archive = "https://archive-api.open-meteo.com/v1/archive"
+cache_ttl_s = 900
+attribution = "Open-Meteo (CC BY 4.0)"
