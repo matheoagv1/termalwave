@@ -22,3 +22,31 @@ colormap_scale = "db_fixed"
 [vegetation]
 # F03 dual HH/HV; valid range (0, 4), not [0, 1]
 rvi_dual_bounded_unit_interval = false
+
+[drought]
+# F02: merge weather has Tmax/Tmin/P only — default ET₀ path is Hargreaves; Penman needs R_n, u2, ea
+et0_default = "hargreaves"
+spi_thom_gamma = true
+
+[water_balance]
+# F05 FAO-56 root zone (p symbol renamed p_fao in code to avoid radar polarization p)
+p_fao_min = 0.1
+p_fao_max = 0.8
+
+[soil_wetness]
+# F04 W_t: unclipped ratio allowed outside [0,1] when dry/wet span is valid
+wetness_clip_product = false
+min_wet_dry_span_db = 0.001
+
+[cover]
+# F09
+olofsson_estimator = true
+
+[carbon]
+# F11 IPCC default carbon fraction
+ipcc_f_c = 0.47
+
+[turbidity]
+# F15 Dogliotti red/NIR switch thresholds (re-calibrate per sensor)
+red_clear_rho = 0.05
+red_turbid_rho = 0.07

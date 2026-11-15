@@ -29,6 +29,20 @@ def sigma_soil_db_from_moisture(theta: float, c_db: float, d_db_per_theta: float
     return c_db + d_db_per_theta * theta
 
 
+def wetness_ratio_unclipped(
+    b_t_db: float,
+    b_dry_db: float,
+    b_wet_db: float,
+    *,
+    min_span_db: float = 1e-3,
+) -> float:
+    """W_t linear ratio without clip; NaN when |B_wet−B_dry| < min_span_db (F04 / cricri)."""
+    span = b_wet_db - b_dry_db
+    if not np.isfinite(span) or abs(span) < min_span_db:
+        return float("nan")
+    return (b_t_db - b_dry_db) / span
+
+
 def relative_wetness_wt(
     b_t_db: float,
     b_dry_db: float,

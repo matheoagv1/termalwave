@@ -684,7 +684,7 @@ Remuestreo de máscaras y clases: vecino más cercano o regla de prioridad, nunc
 
 ## Coincidencia con el código
 
-Revisión de lectura sobre `termalwave/`, `config/` y la capa de presentación en `web/src/data/`. Implementación auditable en `termalwave/science/` (F01, F03–F04, F06–F08, F16–F17) con tests; SPI/SPEI/ET₀ FAO-56, BFAST, RUSLE y capas derivadas en UI siguen pendientes. La cadena PNG radar delega radiometría F01 en `termalwave.science.radar`.
+Revisión de lectura sobre `termalwave/`, `config/` y la capa de presentación en `web/src/data/`. Implementación auditable en `termalwave/science/`: batch 1 (F01, F03–F04, F06–F08, F16–F17) y batch 2 (F02 Thom/Hargreaves/PM scaffold, F05 `water_balance`, stubs F09–F15) con `tests/test_science_formulas.py`. Pendiente: SME2 multiescala `θ_F` (confirmar ATBD antes de codificar), ajuste SPEI log-logístico en serie larga, BFAST, pipeline ΔB sidecar, capas UI. **NDMI** = humedad de vegetación (USGS), no suelo. **W_t sin recorte**: `wetness_ratio_unclipped` cuando el denominador está lejos de cero; el producto recortado sigue en `relative_wetness_wt`. La cadena PNG radar delega radiometría F01 en `termalwave.science.radar`.
 
 | Ubicación | Qué hace | Ecuación esperada | Coincide |
 |---|---|---|---|
