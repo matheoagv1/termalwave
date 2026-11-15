@@ -1,5 +1,7 @@
 // preview gate: register/login before serving web/dist
 // invite code (PREVIEW_INVITE_CODE secret) required to register while WIP
+import { handleApi } from "./api.js";
+import { json } from "./edge-cache.js";
 
 const COOKIE = "tw_preview";
 const SESSION_DAYS = 14;
@@ -11,9 +13,9 @@ const PBKDF2_ITERS = 100_000;
  * @returns {Promise<Response>}
  */
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
-      return await handle(request, env);
+      return await handle(request, env, ctx);
     } catch (err) {
       const msg = err && err.message ? String(err.message) : "error";
       console.error("preview_gate", msg);
@@ -25,8 +27,9 @@ export default {
 /**
  * @param {Request} request
  * @param {Env} env
+ * @param {ExecutionContext} ctx
  */
-async function handle(request, env) {
+async function handle(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -47,14 +50,35 @@ async function handle(request, env) {
 
   const session = await readSession(request, env);
   if (!session) {
+    // only page loads get the login redirect; a fetch that follows it would
+    // receive the login html with status 200 and cache it as data
+    const mode = request.headers.get("sec-fetch-mode");
+    if (mode && mode !== "navigate") {
+      return json({ error: "unauthenticated" }, 401);
+    }
     const next = encodeURIComponent(path + url.search);
     return Response.redirect(new URL(`/auth?next=${next}`, url).toString(), 302);
   }
 
+  const api = await handleApi(request, env, ctx);
+  if (api) return api;
+
   if (!env.ASSETS) {
     return new Response("ASSETS binding missing", { status: 500 });
   }
-  return env.ASSETS.fetch(request);
+  return withCachePolicy(path, await env.ASSETS.fetch(request));
+}
+
+// hashed build output never changes under the same name; everything else
+// (index, sw, config, dataset, overlays) must revalidate so a deploy shows up at once
+function withCachePolicy(path, res) {
+  if (!res.ok) return res;
+  const out = new Response(res.body, res);
+  out.headers.set(
+    "cache-control",
+    path.startsWith("/assets/") ? "private, max-age=31536000, immutable" : "private, no-cache",
+  );
+  return out;
 }
 
 /**
@@ -64,6 +88,7 @@ async function handle(request, env) {
  *   APP_NAME?: string,
  *   PREVIEW_INVITE_CODE?: string,
  *   SESSION_SECRET?: string,
+ *   GOOGLE_MAPS_SERVER_API_KEY?: string,
  * }} Env
  */
 

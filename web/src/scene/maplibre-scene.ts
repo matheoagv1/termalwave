@@ -7,6 +7,7 @@ import maplibregl, {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type {
+  BasemapTiles,
   CameraMode,
   Dataset,
   FrameRef,
@@ -17,16 +18,23 @@ import type {
   SceneState,
   TimeTick,
 } from "../tw/contract";
+import { BodiesLayer } from "./space/bodies";
+import { CloudsLayer } from "./space/clouds";
+import { SpaceScene, type SpaceConfig } from "./space";
+import { SatellitesLayer } from "./space/satellites";
+import { SkyLayer } from "./space/sky";
+import type { Bounds } from "./space/satellites-geometry";
 
-export interface BasemapTiles {
-  url: string;
-  tileSize: number;
-  maxzoom: number;
-  attribution: string;
-}
+export type { BasemapTiles } from "../tw/contract";
+export type BasemapLayers = BasemapTiles & { underlay?: BasemapTiles };
 
 export interface MapSceneOptions extends SceneOptions {
-  basemapTiles?: BasemapTiles;
+  basemapTiles?: BasemapLayers;
+  // centro del area de estudio (app-config aoi); sin eso arranca en 0,0
+  home?: [number, number];
+  aoi?: Bounds;
+  // cielo, satelites y nubes alrededor del globo (app-config space)
+  space?: SpaceConfig;
   // plantilla de teselas de relieve (codificacion terrarium). Opcional.
   demTiles?: string;
 }
@@ -50,6 +58,16 @@ function coordsOf(b: { west: number; east: number; south: number; north: number 
   ];
 }
 
+const BASE_IDS = ["tw-under", "tw-base"] as const;
+
+function baseLayers(bt: BasemapLayers): Array<[(typeof BASE_IDS)[number], BasemapTiles]> {
+  return bt.underlay ? [["tw-under", bt.underlay], ["tw-base", bt]] : [["tw-base", bt]];
+}
+
+function rasterSource(bt: BasemapTiles): maplibregl.RasterSourceSpecification {
+  return { type: "raster", tiles: [bt.url], tileSize: bt.tileSize, maxzoom: bt.maxzoom, attribution: bt.attribution };
+}
+
 function absolute(url: string): string {
   return url.startsWith("data:") ? url : new URL(url, window.location.href).href;
 }
@@ -65,6 +83,7 @@ export class MapLibreScene implements SceneApi {
   private host!: HTMLElement;
   private mapEl!: HTMLDivElement;
   private map!: maplibregl.Map;
+  private space: SpaceScene | null = null;
   private ready = false;
   private queue: Array<() => void> = [];
   private markers: Marker[] = [];
@@ -105,13 +124,13 @@ export class MapLibreScene implements SceneApi {
     this.host = el;
     if (getComputedStyle(el).position === "static") el.style.position = "relative";
     this.mapEl = document.createElement("div");
-    this.mapEl.style.cssText = "position:absolute;inset:0;background:var(--bg)";
+    this.mapEl.style.cssText = "position:absolute;inset:0;background:#000";
     el.appendChild(this.mapEl);
 
     this.map = new maplibregl.Map({
       container: this.mapEl,
       style: this.baseStyle(),
-      center: [-64.25, -27.8],
+      center: this.o.home ?? [0, 0],
       zoom: this.orbitZoom(),
       minZoom: 0.6,
       maxZoom: 17,
@@ -122,6 +141,7 @@ export class MapLibreScene implements SceneApi {
     });
     this.map.touchZoomRotate.disableRotation();
     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+    if (this.o.space) this.space = new SpaceScene(this.map, this.o.space);
 
     this.handle = document.createElement("div");
     this.handle.style.cssText =
@@ -165,6 +185,7 @@ export class MapLibreScene implements SceneApi {
     window.clearTimeout(this.resumeT);
     this.markers.forEach((m) => m.remove());
     this.ring?.remove();
+    this.space?.destroy();
     this.map?.remove();
     this.mapEl?.remove();
     this.handle?.remove();
@@ -182,44 +203,49 @@ export class MapLibreScene implements SceneApi {
   private baseStyle(): StyleSpecification {
     const sources: StyleSpecification["sources"] = {};
     const layers: StyleSpecification["layers"] = [
-      { id: "tw-bg", type: "background", paint: { "background-color": this.css("--scene-ground", "#0b1220") } },
+      { id: "tw-bg", type: "background", paint: { "background-color": this.o.space ? "#000000" : this.css("--scene-ground", "#0b1220"), "background-opacity": this.o.space ? 0 : 1 } },
     ];
     const bt = this.o.basemapTiles;
     if (this.o.basemap && this.o.online && bt) {
-      sources["tw-base"] = {
-        type: "raster",
-        tiles: [bt.url],
-        tileSize: bt.tileSize,
-        maxzoom: bt.maxzoom,
-        attribution: bt.attribution,
-      };
-      layers.push({ id: "tw-base", type: "raster", source: "tw-base" });
+      for (const [id, tiles] of baseLayers(bt)) {
+        sources[id] = rasterSource(tiles);
+        layers.push({ id, type: "raster", source: id });
+      }
     }
     return {
       version: 8,
       projection: { type: "globe" },
       sources,
       layers,
-      sky: {
-        "sky-color": this.css("--scene-sphere", "#082460"),
-        "horizon-color": this.css("--scene-grid", "#2474ec"),
-        "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-      },
+      sky: this.o.space
+        ? {
+            "sky-color": "#000000",
+            "horizon-color": "#000000",
+            "atmosphere-blend": 0.15,
+          }
+        : {
+            "sky-color": this.css("--scene-sphere", "#082460"),
+            "horizon-color": this.css("--scene-grid", "#2474ec"),
+            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
+          },
     } as StyleSpecification;
   }
 
-  setBasemap(bt: BasemapTiles): void {
+  setBasemap(bt: BasemapLayers): void {
     this.o.basemapTiles = bt;
     const map = this.map;
     if (!map || !this.ready || !this.o.basemap || !this.o.online) return;
     try {
       const ids = map.getStyle().layers.map((l) => l.id);
-      const had = ids.indexOf("tw-base");
-      const before = ids[(had >= 0 ? had : ids.indexOf("tw-bg")) + 1];
-      if (map.getLayer("tw-base")) map.removeLayer("tw-base");
-      if (map.getSource("tw-base")) map.removeSource("tw-base");
-      map.addSource("tw-base", { type: "raster", tiles: [bt.url], tileSize: bt.tileSize, maxzoom: bt.maxzoom, attribution: bt.attribution });
-      map.addLayer({ id: "tw-base", type: "raster", source: "tw-base" }, before);
+      const before = ids[ids.indexOf("tw-bg") + 1 + BASE_IDS.filter((id) => map.getLayer(id)).length];
+      for (const id of BASE_IDS) {
+        if (map.getLayer(id)) map.removeLayer(id);
+        if (map.getSource(id)) map.removeSource(id);
+      }
+      for (const [id, tiles] of baseLayers(bt)) {
+        map.addSource(id, rasterSource(tiles));
+        map.addLayer({ id, type: "raster", source: id }, before);
+      }
     } catch {
       /* si falla se conserva el estilo actual */
     }
@@ -245,6 +271,7 @@ export class MapLibreScene implements SceneApi {
     if (this.s.camera === "orbit") this.go("orbit", { fly: false, ms: 0 });
     this.buildLayers();
     this.refreshStyle();
+    void this.mountSpace();
     const q = this.queue;
     this.queue = [];
     q.forEach((f) => {
@@ -307,6 +334,29 @@ export class MapLibreScene implements SceneApi {
       "horizon-color": this.css("--scene-grid", "#2474ec"),
       "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
     } as never);
+  }
+
+  private spaceMounted = false;
+
+  private async mountSpace(): Promise<void> {
+    if (!this.space || this.spaceMounted) return;
+    this.spaceMounted = true;
+    const aoi = this.o.aoi ?? null;
+    try {
+      await this.space.add(new SkyLayer({ labels: false }), true);
+      await this.space.add(new BodiesLayer(), true);
+      await this.space.add(
+        new SatellitesLayer(aoi, { labels: true, swath: true, footprint: false, tracks: true }),
+        true,
+      );
+      await this.space.add(new CloudsLayer({ opacity: 0.85 }), true);
+    } catch (e) {
+      console.warn("escena espacial:", e);
+    }
+  }
+
+  setSpaceLayer(id: string, on: boolean): void {
+    this.space?.setVisible(id, on);
   }
 
   // Si fallan teselas o relieve se sigue con lo que haya, sin romper la escena.
