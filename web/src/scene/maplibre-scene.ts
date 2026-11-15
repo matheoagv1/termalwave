@@ -405,6 +405,35 @@ export class MapLibreScene implements SceneApi {
     return this.ticks[tickId]?.frames[this.s.layer] ?? null;
   }
 
+  private extras: string[] = [];
+
+  setExtras(ids: string[]): void {
+    this.extras = ids;
+    this.applyExtras();
+  }
+
+  private applyExtras(): void {
+    if (!this.ready || !this.ds || !this.map.getSource("tw-area")) return;
+    const map = this.map;
+    const want = this.extras.filter((id) => id !== this.s.layer);
+    const known = new Set((map.getStyle().layers ?? []).map((l) => l.id).filter((id) => id.startsWith("tw-x-")));
+    for (const id of known) if (!want.includes(id.slice(5))) this.setOpacity(id, 0);
+    for (const id of want) {
+      const lid = `tw-x-${id}`;
+      const fr = this.ticks[this.s.tickId]?.frames[id];
+      if (!fr) {
+        this.setOpacity(lid, 0);
+        continue;
+      }
+      if (!map.getSource(lid)) {
+        map.addSource(lid, { type: "image", url: BLANK, coordinates: coordsOf(fr.bounds) });
+        map.addLayer({ id: lid, type: "raster", source: lid, paint: { "raster-opacity": 0, "raster-fade-duration": 0 } }, "tw-cmp");
+      }
+      (map.getSource(lid) as ImageSource).updateImage({ url: absolute(fr.url), coordinates: coordsOf(fr.bounds) });
+      this.setOpacity(lid, fr.quality === "partial" ? 0.6 : 0.8);
+    }
+  }
+
   private setOpacity(layer: string, v: number): void {
     if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", v);
   }
@@ -412,6 +441,7 @@ export class MapLibreScene implements SceneApi {
   private applyFrame(): void {
     if (!this.ready || !this.ds || !this.map.getSource("tw-area")) return;
     const map = this.map;
+    this.applyExtras();
     const tick = this.ticks[this.s.tickId];
     const fr = this.frameOf(this.s.tickId);
     this.token += 1;

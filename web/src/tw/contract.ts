@@ -165,6 +165,8 @@ export interface SceneApi {
   status(): { online: boolean; terrain: boolean; basemap: boolean };
   // opcional: cambia el mapa base raster (solo la escena real)
   setBasemap?(b: BasemapOption): void;
+  // opcional: capas extra superpuestas a la activa (nucleo + las que sume el usuario o un rubro)
+  setExtras?(ids: string[]): void;
 
   // agregados
   setDataset(ds: Dataset): void;               // la escena necesita limites y urls de cada imagen

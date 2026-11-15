@@ -16,6 +16,7 @@ export interface Model {
   toOrbit(): void;
   basemaps: Array<{ id: string; label: string }>;
   setBasemap(id: string): void;
+  toggleExtra(id: string): void;
   retry(): void;
   closePick(): void;
   togglePlay(): void;
@@ -628,6 +629,15 @@ export function buildView(m: Model) {
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
     dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems,
+    overlayItems: sortedLayers
+      .filter((l) => l.id !== sc.layer)
+      .map((l) => ({
+        id: l.id,
+        label: l.label,
+        core: !!l.core,
+        on: !!l.core || S.extras.includes(l.id),
+        go: () => (l.core ? undefined : m.toggleExtra(l.id)),
+      })),
     basemapItems: m.basemaps.length > 1 ? m.basemaps.map((x) => ({ id: x.id, label: x.label, on: x.id === S.basemap, go: () => m.setBasemap(x.id) })) : [],
     camOn: hud, northOn: !sc.northUp,
     northLabel: sc.northUp ? T.camera.northUp : T.camera.northFree,

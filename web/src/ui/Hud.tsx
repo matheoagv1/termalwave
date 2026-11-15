@@ -213,6 +213,27 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             </button>
             </React.Fragment>
           ))}
+          {v.dockOpen && v.overlayItems.length > 0 && (
+            <div role="group" aria-label="Superponer capas" style={s("border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-direction:column;gap:6px")}>
+              <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>Superponer</span>
+              <div style={s("display:flex;flex-wrap:wrap;gap:6px")}>
+                {v.overlayItems.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    className="tw-hov"
+                    aria-pressed={o.on}
+                    disabled={o.core}
+                    title={o.core ? "Siempre activa: es el nÃºcleo del producto" : o.on ? "Quitar de encima del mapa" : "Mostrar encima de la capa activa"}
+                    onClick={o.go}
+                    style={s(`min-height:30px;padding:0 10px;border:1px solid ${o.on ? "var(--acc-fg)" : "var(--line2)"};background:${o.on ? "var(--sel)" : "transparent"};color:var(--fg);font:12px var(--sans);cursor:${o.core ? "default" : "pointer"}`)}
+                  >
+                    {o.label}{o.core ? " Â· nÃºcleo" : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {v.dockOpen && v.layerHint ? (
             <p id="tw-layer-hint" style={s("margin:0;border-top:1px solid var(--line);padding:10px 12px;font:11px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>
               {v.layerHint}

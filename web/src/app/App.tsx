@@ -1,5 +1,6 @@
 import React from "react";
 import { T } from "../tw/catalog.es-AR.js";
+import { PRESETS } from "../data/layer-defaults";
 import { longHelp } from "../ui/tip-help";
 import type {
   BasemapOption,
@@ -65,6 +66,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     soundOn: intro0.sound,
     moniOpen: false,
     helpText: "",
+    extras: [],
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -133,6 +135,16 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       }
       if (this.scenario() !== this.scnKey) void this.boot();
       if (S.pick !== ps.pick) this.trackPos();
+      if (S.trade !== ps.trade && S.ds) {
+        const tr = S.ds.context[S.trade]?.trade ?? "";
+        const ids = PRESETS[tr] ?? [];
+        if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
+      }
+      const eff = this.effectiveExtras();
+      if (eff.join() !== this.extKey) {
+        this.extKey = eff.join();
+        this.scene.setExtras?.(eff);
+      }
     }
     const el = this.tlRef.current;
     if (el && this.tlEl !== el) {
@@ -605,6 +617,20 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.setState({ explore: false, ficha: this.state.W >= 760 });
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory");
+  };
+
+  private extKey = "";
+
+  // el nucleo (core) nunca se apaga; el resto lo suman el usuario o el rubro
+  effectiveExtras(): string[] {
+    const ds = this.state.ds;
+    const core = ds ? ds.layers.filter((l) => l.core).map((l) => l.id) : [];
+    return [...new Set([...core, ...this.state.extras])];
+  }
+
+  toggleExtra = (id: string): void => {
+    const cur = this.state.extras;
+    this.setState({ extras: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
   };
 
   get basemaps(): BasemapOption[] {
