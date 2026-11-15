@@ -132,27 +132,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           </button>
           {v.dockOpen && (
             <div style={s("border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:8px")}>
-              <p style={s("margin:0;font:12px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>{t.layers.lead}</p>
-              <button
-                type="button"
-                className="tw-hov"
-                data-help-hook="layers-reading"
-                onClick={() => a.set({ ficha: true, tab: "read" })}
-                style={s(`align-self:flex-start;height:${lay.hit};padding:0 10px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
-              >
-                {t.layers.reading}
-              </button>
-              <button
-                type="button"
-                className="tw-hov"
-                onClick={a.toOrbit}
-                title={`${t.camera.reset} (O)`}
-                aria-label={t.camera.reset}
-                style={s(`align-self:flex-start;height:${lay.hit};padding:0 10px;${SECONDARY};font:12px var(--sans);color:var(--fg);display:flex;align-items:center;gap:6px`)}
-              >
-                <span aria-hidden="true" style={s("width:10px;height:10px;border:2px solid currentColor;border-radius:50%")} />
-                Inicio
-              </button>
+              <p className="tw-pixel" style={s("margin:0;font-size:8px;line-height:1.6;color:var(--fg2);text-wrap:pretty")}>{t.layers.lead}</p>
               {v.basemapItems.length > 0 && (
                 <div role="radiogroup" aria-label="Mapa base" style={s("display:flex;flex-direction:column;gap:4px;margin-top:4px")}>
                   <div className="tw-pixel" style={s("font-size:7px;line-height:1.6;color:var(--fg2)")}>Mapa base</div>
@@ -211,7 +191,6 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               className="tw-hov"
               role="radio"
               aria-checked={l.on}
-              aria-describedby={l.on && v.layerHint ? "tw-layer-hint" : undefined}
               data-layer-id={l.id}
               data-help-hook={`layer-${l.id}`}
               title={l.note || l.label}
@@ -228,9 +207,6 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                     <span style={s("font:9px var(--mono);letter-spacing:.04em;color:var(--fg3);font-weight:400")}>{l.catBadge}</span>
                   ) : null}
                 </span>
-                {l.on && l.note ? (
-                  <span style={s("font:11px/1.35 var(--sans);color:var(--fg2);white-space:normal;text-wrap:pretty")}>{l.note}</span>
-                ) : null}
               </span>
               {l.gap && (
                 <span
@@ -269,11 +245,6 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               </div>
             </div>
           )}
-          {v.dockOpen && v.layerHint ? (
-            <p id="tw-layer-hint" style={s("margin:0;border-top:1px solid var(--line);padding:10px 12px;font:11px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>
-              {v.layerHint}
-            </p>
-          ) : null}
           {v.noDs && (
             <div style={s("border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:12px")}>
               {[0, 1, 2].map((i) => (
@@ -448,6 +419,18 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
+      {v.dockOn && (
+        <button
+          type="button"
+          className="tw-hov"
+          onClick={a.toOrbit}
+          title={`${t.camera.reset} (O)`}
+          aria-label={t.camera.reset}
+          style={s(`pointer-events:auto;height:40px;padding:0 10px;${PANEL};cursor:pointer;font:12px var(--sans);color:var(--fg);flex:none`)}
+        >
+          Inicio
+        </button>
+      )}
       {v.searchField && (
         <div style={s("pointer-events:auto;flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative")}>
           <input
