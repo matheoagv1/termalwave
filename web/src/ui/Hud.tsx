@@ -207,6 +207,9 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                     <span style={s("font:9px var(--mono);letter-spacing:.04em;color:var(--fg3);font-weight:400")}>{l.catBadge}</span>
                   ) : null}
                 </span>
+                {l.info ? (
+                  <span role={l.warn ? "alert" : "status"} style={s(`font:11px/1.35 var(--sans);color:${l.warn ? "var(--warn, #e0a050)" : "var(--fg2)"};white-space:normal;text-wrap:pretty`)}>{l.info}</span>
+                ) : null}
               </span>
               {l.gap && (
                 <span

@@ -131,6 +131,9 @@ export function buildView(m: Model) {
     if (ia !== ib) return ia - ib;
     return CAT_ORDER.indexOf(catOf(a)) - CAT_ORDER.indexOf(catOf(b));
   });
+  const nz = S.nisar;
+  const nisarText = nz.status === "loading" ? "Consultando cobertura NISAR…" : nz.status === "empty" ? "Sin cobertura NISAR en esta zona" : nz.status === "ok" ? `${nz.count} ${nz.count === 1 ? "escena" : "escenas"}` : nz.status === "error" ? nz.msg : "";
+  const firstCoreId = sortedLayers.find((x) => x.core)?.id;
   const layerItems = sortedLayers.map((l, i) => {
     const on = l.id === sc.layer;
     const gap = !!(fa && !fa.tick.frames[l.id]);
@@ -142,6 +145,8 @@ export function buildView(m: Model) {
       unit: l.unit,
       note: l.note,
       core: !!l.core,
+      info: l.core && l.id === firstCoreId ? nisarText : "",
+      warn: l.core && l.id === firstCoreId && nz.status === "error",
       head: i === 0 || prevTh !== th ? (themeLabels[th] ?? "") : "",
       catBadge: CAT_LABEL[catOf(l)] ?? "",
       on,
