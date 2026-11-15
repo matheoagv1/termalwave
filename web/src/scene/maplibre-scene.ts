@@ -40,6 +40,8 @@ const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
 const URBAN_ZOOM = 1.85;
 const URBAN_DETAIL = 1.35;
 const URBAN_PITCH = 6;
+// AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
+const AOI_VIEWPORT_FRAC = 0.12;
 
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
@@ -86,6 +88,9 @@ export class MapLibreScene implements SceneApi {
   private images = new Map<string, HTMLImageElement>();
   private cmpRaf = 0;
   private territoryZoom = 11;
+  private aoiMinZoom = 8;
+  private intendedOpacity = new Map<string, number>();
+  private gapFill = 0;
   private dragCurtain = false;
 
   constructor(o: Partial<MapSceneOptions> = {}) {
@@ -144,6 +149,7 @@ export class MapLibreScene implements SceneApi {
     });
     this.map.on("move", () => {
       this.placeHandle();
+      this.syncAoiOverlays();
       this.cbMove();
     });
     this.map.on("error", (e) => {
@@ -287,6 +293,7 @@ export class MapLibreScene implements SceneApi {
       paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2, "line-opacity": 0 },
     });
     map.addLayer({ id: "tw-curtain", type: "line", source: "tw-curtain", paint: { "line-color": this.css("--acc", "#f0a014"), "line-width": 2 } });
+    this.refreshAoiMinZoom();
     this.applyFrame();
     this.applyCompare();
     this.updateAreaChrome();
@@ -323,6 +330,7 @@ export class MapLibreScene implements SceneApi {
     this.whenReady(() => {
       this.buildLayers();
       this.buildRing();
+      this.refreshAoiMinZoom();
       this.applyFrame();
       this.applyCompare();
       // El arranque desde la URL pide cámara antes de que existan los límites del área.
@@ -354,6 +362,62 @@ export class MapLibreScene implements SceneApi {
     }
     if (this.ring) {
       this.ring.getElement().style.display = c === "approach" ? "block" : "none";
+    }
+    this.syncAoiOverlays();
+  }
+
+  private refreshAoiMinZoom(): void {
+    const cam = this.territoryCam();
+    const orbitZ = this.orbitZoom();
+    if (cam?.zoom != null) {
+      this.aoiMinZoom = Math.max(orbitZ + 1.25, cam.zoom - 2.5);
+      this.territoryZoom = cam.zoom;
+    } else {
+      this.aoiMinZoom = orbitZ + 2;
+    }
+  }
+
+  private aoiSpanPx(): number {
+    if (!this.ds || !this.ready) return 0;
+    const b = this.ds.area.bounds;
+    const pts = [
+      this.map.project([b.west, b.north]),
+      this.map.project([b.east, b.north]),
+      this.map.project([b.east, b.south]),
+      this.map.project([b.west, b.south]),
+    ];
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const p of pts) {
+      minX = Math.min(minX, p.x);
+      maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y);
+      maxY = Math.max(maxY, p.y);
+    }
+    return Math.min(maxX - minX, maxY - minY);
+  }
+
+  /** PNG SAR/fenómeno solo en territorio/detalle y con encuadre suficiente (no cuadrante flotante). */
+  private aoiOverlaysVisible(): boolean {
+    const c = this.s.camera;
+    if (c !== "territory" && c !== "detail") return false;
+    const vmin = Math.min(this.mapEl.clientWidth, this.mapEl.clientHeight);
+    if (vmin < 40) return false;
+    const span = this.aoiSpanPx();
+    if (span >= vmin * AOI_VIEWPORT_FRAC) return true;
+    return this.map.getZoom() >= this.aoiMinZoom;
+  }
+
+  private syncAoiOverlays(): void {
+    if (!this.ready) return;
+    const on = this.aoiOverlaysVisible();
+    for (const [layer, v] of this.intendedOpacity) {
+      if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", on ? v : 0);
+    }
+    if (this.map.getLayer("tw-gap")) {
+      this.map.setPaintProperty("tw-gap", "fill-opacity", on ? this.gapFill : 0);
     }
   }
 
@@ -435,7 +499,9 @@ export class MapLibreScene implements SceneApi {
   }
 
   private setOpacity(layer: string, v: number): void {
-    if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", v);
+    this.intendedOpacity.set(layer, v);
+    if (!this.map.getLayer(layer)) return;
+    this.map.setPaintProperty(layer, "raster-opacity", this.aoiOverlaysVisible() ? v : 0);
   }
 
   private applyFrame(): void {
@@ -448,7 +514,8 @@ export class MapLibreScene implements SceneApi {
     const mine = this.token;
     if (this.pending) map.off("sourcedata", this.pending);
     this.pending = null;
-    if (map.getLayer("tw-gap")) map.setPaintProperty("tw-gap", "fill-opacity", tick && !fr ? 0.25 : 0);
+    this.gapFill = tick && !fr ? 0.25 : 0;
+    if (map.getLayer("tw-gap")) map.setPaintProperty("tw-gap", "fill-opacity", this.aoiOverlaysVisible() ? this.gapFill : 0);
     if (!fr) {
       this.slots.forEach((sl) => this.setOpacity(sl.layer, 0));
       this.hasFront = false;

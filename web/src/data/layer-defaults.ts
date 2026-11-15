@@ -1,8 +1,7 @@
 import type { LayerDef } from "../tw/contract";
 import layersCopy from "../context/layers.json";
 
-// Interino: unidad/rango/rampa locales; la nota de capa sale de
-// web/src/context/layers.json (cricri) cuando existe.
+// unit/range/ramp defaults; note from context/layers.json when present
 type LayersCopy = {
   capas?: Record<string, string>;
   fuentes?: Record<string, string>;
@@ -25,7 +24,7 @@ const DEFAULTS: Record<string, Omit<LayerDef, "id" | "label">> = {
     note: "Retrodispersión de banda L. Los valores altos indican superficies rugosas o con más humedad.",
   },
   suelo: {
-    unit: "%",
+    unit: "",
     range: [20, 50],
     decimals: 0,
     ramp: [
@@ -35,7 +34,7 @@ const DEFAULTS: Record<string, Omit<LayerDef, "id" | "label">> = {
       { at: 0.78, color: "#6fae86" },
       { at: 1, color: "#2a6f78" },
     ],
-    note: "Estado del suelo estimado a partir del radar. Los verdes y azules indican más humedad.",
+    note: "Visualización de ejemplo derivada del radar. No es una medición de humedad: la escala es relativa y no tiene unidad física.",
   },
   contaminacion: {
     unit: "índice",
@@ -88,11 +87,16 @@ const TAXONOMY: Record<string, Pick<LayerDef, "category" | "core">> = {
   contaminacion: { category: "inference" },
 };
 
-// Espejo de los presets de config/layers.toml, por nombre de rubro. El radar (core) no se lista: siempre esta.
+// Fallback si dataset.json aun no trae presets. Radar core no se lista: siempre on.
 export const PRESETS: Record<string, string[]> = {
-  "GestiÃ³n de emergencias": ["incendios"],
+  "Gestión de emergencias": ["incendios"],
   Agricultura: ["suelo"],
-  "Ambiente y conservaciÃ³n": ["suelo", "incendios"],
+  "Ambiente y conservación": ["suelo", "incendios"],
+  "Ganadería y pasturas": ["suelo"],
+  "Gestión del agua": ["suelo"],
+  "Ordenamiento territorial": [],
+  Infraestructura: [],
+  "Ciencia y educación": [],
 };
 
 export function layerDef(id: string, label: string): LayerDef {

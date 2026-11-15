@@ -1,6 +1,5 @@
 // contrato entre la interfaz y el exterior
 // los componentes solo conocen DataProvider y SceneApi
-// los agregados respecto del handoff original estan marcados con "agregado"
 
 export type LayerId = string;
 export type Iso = string;
@@ -20,7 +19,6 @@ export interface LayerDef {
   range: [min: number, max: number];
   ramp: Array<{ at: number; color: string }>;
   note: string;
-  // agregado: decimales para formatear valores de la ficha y la serie
   decimals?: number;
   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
   category?: "data" | "prediction" | "inference";
@@ -61,8 +59,7 @@ export interface TimeSegment {
 export interface EventMark { id: string; date: Iso; layer?: LayerId; label: string }
 
 export interface Hotspot {
-  // agregado: el id es estable entre momentos de la misma capa ("suelo-0")
-  // asi la tarjeta de detalle sigue abierta mientras se arrastra el tiempo
+  // id estable entre ticks de la misma capa para no cerrar la ficha al scrubear
   id: string;
   layer: LayerId;
   tickId: string;
@@ -77,14 +74,12 @@ export interface Hotspot {
 export interface SeriesPoint { tickId: string; date: Iso; value: number | null }
 export interface ContextEntry { trade: string; text: string }
 
-// agregado: resultado de busqueda de lugar o coordenadas
 export interface SearchResult {
   kind: "area" | "coords";
   label: string;
   lonlat: [number, number];
 }
 
-// agregado: de donde salen los datos (provenance del backend)
 export interface SourceTry { provider: string; ok: boolean; count?: number }
 export interface SourceGroup {
   kind: string;          // "fires" | "weather" | "optical" | "radar" | ...
@@ -97,7 +92,6 @@ export interface SourceGroup {
 }
 
 export interface Dataset {
-  // agregado: opcional, lo llena el backend
   sources?: SourceGroup[];
   sourcesAt?: Iso;
   area: Area;
@@ -108,13 +102,13 @@ export interface Dataset {
   events: EventMark[];
   context: ContextEntry[];
   isMock: boolean;
+  timelineSynthetic?: boolean;
 }
 
 export interface DataProvider {
   load(): Promise<Dataset>;
   series(layer: LayerId): Promise<SeriesPoint[]>;
   hotspots(layer: LayerId, tickId: string): Promise<Hotspot[]>;
-  // agregado
   search(q: string): Promise<SearchResult[]>;
 }
 
@@ -154,11 +148,11 @@ export interface BasemapOption {
 
 export interface SceneApi {
   mount(el: HTMLElement): void;
-  // agregado: set acepta null en compare y focus para borrarlos
+  // null en compare/focus los borra; instant salta animacion (p. ej. deep link)
   set(next: Partial<Omit<SceneState, "compare" | "focus">> & {
     compare?: SceneState["compare"] | null;
     focus?: SceneState["focus"] | null;
-  }, opt?: { instant?: boolean }): void;   // agregado: instant omite el vuelo (arranque desde la URL)
+  }, opt?: { instant?: boolean }): void;
   getState(): SceneState;
   flyTo(camera: CameraMode): Promise<void>;
   resetToOrbit(): Promise<void>;
@@ -170,7 +164,6 @@ export interface SceneApi {
   // opcional: capas extra superpuestas a la activa (nucleo + las que sume el usuario o un rubro)
   setExtras?(ids: string[]): void;
 
-  // agregados
   setDataset(ds: Dataset): void;               // la escena necesita limites y urls de cada imagen
   setHotspots(list: Hotspot[]): void;          // puntos de interes del momento y capa activos
   setPadding(p: Padding): void;                // espacio que ocupan los paneles flotantes

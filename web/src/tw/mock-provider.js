@@ -1,6 +1,7 @@
 // MockProvider: implementa DataProvider con datos inventados (isMock: true)
 import { F } from './catalog.es-AR.js';
 import { hash, fbm } from './noise.js';
+import { createPlaceSearch, searchConfigFromApp } from '../data/search/index.js';
 
 export const SCENARIOS = ['normal', 'cargando', 'sin-conexion', 'sin-relieve', 'error-config', 'un-tramo', 'un-punto', 'rango-largo', 'tramo-vacio'];
 
@@ -46,8 +47,6 @@ const iso = (d) => d.toISOString().slice(0, 10);
 const D = (y, m, d) => new Date(Date.UTC(y, m, d));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
 function yf(s) {
   const d = new Date(s + 'T00:00:00Z'), y = d.getUTCFullYear();
   return y + (d - Date.UTC(y, 0, 1)) / (Date.UTC(y + 1, 0, 1) - Date.UTC(y, 0, 1));
@@ -111,6 +110,8 @@ function paintLayer(L, tn, ti, fr, partial) {
   g.putImageData(im, 0, 0);
   return cv.toDataURL('image/png');
 }
+
+const runDemoSearch = createPlaceSearch(searchConfigFromApp(undefined));
 
 export class MockProvider {
   constructor(opts = {}) { this.scenario = opts.scenario || 'normal'; this.ds = null; this.order = []; }
@@ -206,14 +207,7 @@ export class MockProvider {
 
   async search(q) {
     await sleep(80);
-    const s = q.trim();
-    if (!s) return [];
-    const m = s.match(/^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/);
-    if (m) {
-      const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
-      if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return [{ kind: 'coords', label: `${F.lat(lat)} · ${F.lon(lon)}`, lonlat: [lon, lat] }];
-    }
-    if (norm(AREA.name).includes(norm(s))) return [{ kind: 'area', label: AREA.name, lonlat: AREA.center }];
-    return [];
+    if (!this.ds) return [];
+    return runDemoSearch(q, this.ds.area);
   }
 }

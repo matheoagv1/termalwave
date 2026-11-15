@@ -667,9 +667,22 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   };
 
   onQKey = (key: string): void => {
-    const first = this.state.results[0];
-    if (key === "Enter" && first) this.goResult(first);
+    if (key === "Enter") void this.submitQ();
     if (key === "Escape") this.setState({ q: "", results: [], searchOpen: false });
+  };
+
+  // Enter antes de que llegue el resultado del debounce: se busca ya y se va al primero
+  submitQ = async (): Promise<void> => {
+    const q = this.state.q.trim();
+    if (!q) return;
+    let first = this.state.results[0];
+    if (!first) {
+      window.clearTimeout(this.qt);
+      const r = this.provider ? await this.provider.search(q) : [];
+      this.setState({ results: r, searched: true });
+      first = r[0];
+    }
+    if (first) this.goResult(first);
   };
 
   goResult = (r: SearchResult): void => {

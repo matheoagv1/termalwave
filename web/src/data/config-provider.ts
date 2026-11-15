@@ -5,23 +5,40 @@ import type {
   Dataset,
   FrameRef,
   Hotspot,
+  LayerDef,
   LayerId,
   SearchResult,
   SeriesPoint,
   TimeTick,
 } from "../tw/contract";
 import { layerDef } from "./layer-defaults";
+import {
+  createPlaceSearch,
+  searchConfigFromApp,
+  type SearchConfig,
+} from "./search";
 
 // Formato actual del backend (app-config.json): una lista plana de años.
 type LegacyConfig = {
   aoi: Bounds & { name?: string };
   timeline: {
     years: number[];
-    layers: Array<{ id: string; label: string }>;
+    layers: Array<{ id: string; label: string; category?: string; core?: boolean }>;
     frames: Record<string, Record<string, { png: string; bounds: Bounds }>>;
     synthetic?: boolean;
   };
+  presets?: Record<string, string[]>;
+  layers_taxonomy?: {
+    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string }>;
+  };
   provenance?: { generated_at?: string };
+  search?: {
+    providers?: string[];
+    endpoints?: Record<string, string>;
+    user_agent?: string;
+    google_maps_enabled?: boolean;
+  };
+  scene?: { google_maps_enabled?: boolean };
   data_sources?: Record<
     string,
     {
@@ -70,14 +87,17 @@ function validBounds(b: Bounds | undefined): b is Bounds {
   );
 }
 
-function norm(text: string): string {
-  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
-
 export class ConfigProvider implements DataProvider {
   private ds: Dataset | null = null;
+  private searchCfg: SearchConfig = searchConfigFromApp(undefined);
+  private runSearch = createPlaceSearch(this.searchCfg);
 
   constructor(private readonly base = "./") {}
+
+  private setSearchFromConfig(cfg: Pick<LegacyConfig, "search" | "scene"> | null | undefined): void {
+    this.searchCfg = searchConfigFromApp(cfg?.search, cfg?.scene?.google_maps_enabled);
+    this.runSearch = createPlaceSearch(this.searchCfg);
+  }
 
   async load(): Promise<Dataset> {
     // Contrato nuevo: el backend publica dataset.json con tramos.
@@ -88,6 +108,29 @@ export class ConfigProvider implements DataProvider {
         direct.context =
           (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
       }
+      // merge visual defaults with emitted taxonomy (category/core)
+      direct.layers = direct.layers.map((l) => {
+        const base = layerDef(l.id, l.label);
+        return {
+          ...base,
+          ...l,
+          category: l.category ?? base.category,
+          core: l.core ?? base.core,
+          note: l.note || base.note,
+          ramp: l.ramp?.length ? l.ramp : base.ramp,
+          unit: l.unit || base.unit,
+          range: l.range ?? base.range,
+        };
+      });
+      // presets from dataset or companion app-config
+      if (!direct.presets) {
+        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
+        if (cfg?.presets) direct.presets = cfg.presets;
+        this.setSearchFromConfig(cfg);
+      } else {
+        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
+        this.setSearchFromConfig(cfg);
+      }
       this.check(direct);
       this.ds = direct;
       return direct;
@@ -96,6 +139,7 @@ export class ConfigProvider implements DataProvider {
     // Contrato actual: se arma un solo tramo anual desde app-config.json.
     const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
     if (!cfg) throw new ConfigError("config", "No se pudo leer app-config.json");
+    this.setSearchFromConfig(cfg);
     const ds = this.fromLegacy(cfg);
     ds.context = (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
     this.check(ds);
@@ -122,13 +166,25 @@ export class ConfigProvider implements DataProvider {
     });
     const first = timeline.years[0] ?? new Date().getFullYear();
     const last = timeline.years[timeline.years.length - 1] ?? first;
+    const taxById = Object.fromEntries(
+      (cfg.layers_taxonomy?.layers ?? []).map((r) => [r.id, r]),
+    );
     return {
       area: {
         name: aoi.name ?? "Área de estudio",
         bounds,
         center: [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2],
       },
-      layers: timeline.layers.map((l) => layerDef(l.id, l.label)),
+      layers: timeline.layers.map((l) => {
+        const base = layerDef(l.id, l.label);
+        const tax = taxById[l.id];
+        return {
+          ...base,
+          category: (l.category as LayerDef["category"]) ?? tax?.category as LayerDef["category"] ?? base.category,
+          core: l.core ?? tax?.core ?? base.core,
+        };
+      }),
+      presets: cfg.presets,
       segments: [
         {
           id: "anual",
@@ -152,8 +208,9 @@ export class ConfigProvider implements DataProvider {
         fromCache: !!g.from_cache,
         count: g.count ?? 0,
       })),
-      // Mientras el backend procese datos sintéticos se avisa en pantalla.
-      isMock: timeline.synthetic !== false,
+      timelineSynthetic: timeline.synthetic !== false,
+      // pipeline fixture path is not MockProvider
+      isMock: false,
     };
   }
 
@@ -172,19 +229,7 @@ export class ConfigProvider implements DataProvider {
 
   async search(q: string): Promise<SearchResult[]> {
     const ds = this.ds;
-    const text = q.trim();
-    if (!ds || !text) return [];
-    const m = text.match(/^(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)$/);
-    if (m) {
-      const lat = parseFloat((m[1] ?? "").replace(",", "."));
-      const lon = parseFloat((m[2] ?? "").replace(",", "."));
-      if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
-        return [{ kind: "coords", label: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, lonlat: [lon, lat] }];
-      }
-    }
-    if (norm(ds.area.name).includes(norm(text))) {
-      return [{ kind: "area", label: ds.area.name, lonlat: ds.area.center }];
-    }
-    return [];
+    if (!ds) return [];
+    return this.runSearch(q, ds.area);
   }
 }

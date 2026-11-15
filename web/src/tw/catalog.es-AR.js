@@ -112,7 +112,6 @@ export const T = {
   },
   legend: { title: "Leyenda" },
 
-  // agregado: la interfaz es opcional frente al globo
   hud: {
     hide: "Ocultar interfaz",
     show: "Mostrar interfaz",
@@ -122,7 +121,6 @@ export const T = {
     tlOpen: "Desplegar línea de tiempo",
   },
 
-  // agregado: pestana Fuentes de la ficha
   sources: {
     lead: "De dónde salen los datos de esta área y cuáles se usaron.",
     updated: (d) => `Actualizado el ${d}`,

@@ -1,0 +1,964 @@
+diff --git a/web/src/context/layers.json b/web/src/context/layers.json
+index df85c35..89e27a0 100644
+--- a/web/src/context/layers.json
++++ b/web/src/context/layers.json
+@@ -1,16 +1,16 @@
+ {
+   "capas": {
+-    "radar": "Acá ves la respuesta del radar a la superficie. Si cambia entre fechas, puede ser humedad, vegetación, rugosidad o el ángulo de la pasada. Una sola capa no alcanza para señalar la causa.",
+-    "suelo": "La respuesta del radar puede aportar información sobre las condiciones superficiales del suelo. Revisá la fuente, la unidad y la validación de esta capa; no mide directamente el agua disponible para las raíces.",
+-    "contaminacion": "Es un índice de apoyo, no un ensayo de laboratorio. Revisá la fuente y el método. NISAR no mide concentración de contaminantes ni confirma contaminación de agua o suelo.",
+-    "incendios": "Los focos de calor son detecciones de actividad térmica en el momento de la observación. Un foco no equivale a un incendio confirmado ni mide por sí solo la superficie quemada. Revisá la fecha, la cobertura y los reportes locales."
++    "radar": "El radar NISAR registra la señal que vuelve de la superficie, llamada retrodispersión o backscatter. Comparar fechas ayuda a observar cambios. La humedad, la vegetación, la rugosidad y la geometría de observación pueden influir en la señal; hace falta contrastar otras fuentes para interpretar la causa.",
++    "suelo": "Esta capa puede mostrar un indicador derivado del radar y datos de contexto. Revisá la fuente, la unidad y el método antes de interpretarla. No mide directamente el agua en las raíces ni reemplaza una medición de campo.",
++    "contaminacion": "Es un índice de apoyo, no un análisis de laboratorio. Revisá la fuente y el método. NISAR no mide la concentración de contaminantes ni confirma por sí solo contaminación del agua o del suelo.",
++    "incendios": "Los focos térmicos indican señales de calor detectadas por satélite. No todos son incendios, y la ausencia de un foco no demuestra que no haya fuego. Compará la fecha y la cobertura con información del lugar y avisos oficiales."
+   },
+   "fuentes": {
+-    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisá la fecha, la colección y si esa observación ya está validada.",
++    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisa la fecha, la colección y si esa observación ya está validada.",
+     "planetary_computer_s2": "Sentinel-2 suma imagen óptica para comparar cobertura. Nubes y sombras pueden dejar huecos cerca de la pasada de radar.",
+     "open_meteo_archive": "Open-Meteo aporta clima de archivo para contextualizar las pasadas. La escala depende de la variable que mires.",
+-    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisá qué variable llega y con qué cobertura.",
+-    "firms_viirs_sp": "FIRMS VIIRS procesado: detecciones térmicas de la versión procesada. Son focos identificados por satélite, no el perímetro completo del fuego ni una confirmación en terreno.",
++    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisa qué variable llega y con qué cobertura.",
++    "firms_viirs_sp": "FIRMS VIIRS procesado: focos térmicos ya revisados. Son detecciones puntuales, no el perímetro completo del fuego.",
+     "firms_viirs_nrt": "FIRMS VIIRS de disponibilidad rápida. Puede corregirse o filtrarse en un procesamiento posterior.",
+     "firms_modis": "FIRMS MODIS: focos térmicos a otra escala. Si no aparece un foco, no asumas que no hubo actividad."
+   },
+diff --git a/web/src/data/config-provider.ts b/web/src/data/config-provider.ts
+index 4959f16..aa00d7b 100644
+--- a/web/src/data/config-provider.ts
++++ b/web/src/data/config-provider.ts
+@@ -5,23 +5,40 @@ import type {
+   Dataset,
+   FrameRef,
+   Hotspot,
++  LayerDef,
+   LayerId,
+   SearchResult,
+   SeriesPoint,
+   TimeTick,
+ } from "../tw/contract";
+ import { layerDef } from "./layer-defaults";
++import {
++  createPlaceSearch,
++  searchConfigFromApp,
++  type SearchConfig,
++} from "./search";
+ 
+ // Formato actual del backend (app-config.json): una lista plana de años.
+ type LegacyConfig = {
+   aoi: Bounds & { name?: string };
+   timeline: {
+     years: number[];
+-    layers: Array<{ id: string; label: string }>;
++    layers: Array<{ id: string; label: string; category?: string; core?: boolean }>;
+     frames: Record<string, Record<string, { png: string; bounds: Bounds }>>;
+     synthetic?: boolean;
+   };
++  presets?: Record<string, string[]>;
++  layers_taxonomy?: {
++    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string }>;
++  };
+   provenance?: { generated_at?: string };
++  search?: {
++    providers?: string[];
++    endpoints?: Record<string, string>;
++    user_agent?: string;
++    google_maps_enabled?: boolean;
++  };
++  scene?: { google_maps_enabled?: boolean };
+   data_sources?: Record<
+     string,
+     {
+@@ -70,15 +87,18 @@ function validBounds(b: Bounds | undefined): b is Bounds {
+   );
+ }
+ 
+-function norm(text: string): string {
+-  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+-}
+-
+ export class ConfigProvider implements DataProvider {
+   private ds: Dataset | null = null;
++  private searchCfg: SearchConfig = searchConfigFromApp(undefined);
++  private runSearch = createPlaceSearch(this.searchCfg);
+ 
+   constructor(private readonly base = "./") {}
+ 
++  private setSearchFromConfig(cfg: Pick<LegacyConfig, "search" | "scene"> | null | undefined): void {
++    this.searchCfg = searchConfigFromApp(cfg?.search, cfg?.scene?.google_maps_enabled);
++    this.runSearch = createPlaceSearch(this.searchCfg);
++  }
++
+   async load(): Promise<Dataset> {
+     // Contrato nuevo: el backend publica dataset.json con tramos.
+     const direct = await tryJson<Dataset>(this.base + "dataset.json");
+@@ -88,6 +108,29 @@ export class ConfigProvider implements DataProvider {
+         direct.context =
+           (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
+       }
++      // merge visual defaults with emitted taxonomy (category/core)
++      direct.layers = direct.layers.map((l) => {
++        const base = layerDef(l.id, l.label);
++        return {
++          ...base,
++          ...l,
++          category: l.category ?? base.category,
++          core: l.core ?? base.core,
++          note: l.note || base.note,
++          ramp: l.ramp?.length ? l.ramp : base.ramp,
++          unit: l.unit || base.unit,
++          range: l.range ?? base.range,
++        };
++      });
++      // presets from dataset or companion app-config
++      if (!direct.presets) {
++        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
++        if (cfg?.presets) direct.presets = cfg.presets;
++        this.setSearchFromConfig(cfg);
++      } else {
++        const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
++        this.setSearchFromConfig(cfg);
++      }
+       this.check(direct);
+       this.ds = direct;
+       return direct;
+@@ -96,6 +139,7 @@ export class ConfigProvider implements DataProvider {
+     // Contrato actual: se arma un solo tramo anual desde app-config.json.
+     const cfg = await tryJson<LegacyConfig>(this.base + "app-config.json");
+     if (!cfg) throw new ConfigError("config", "No se pudo leer app-config.json");
++    this.setSearchFromConfig(cfg);
+     const ds = this.fromLegacy(cfg);
+     ds.context = (await tryJson<ContextEntry[]>(this.base + "context.json")) ?? bundledTrades;
+     this.check(ds);
+@@ -122,13 +166,25 @@ export class ConfigProvider implements DataProvider {
+     });
+     const first = timeline.years[0] ?? new Date().getFullYear();
+     const last = timeline.years[timeline.years.length - 1] ?? first;
++    const taxById = Object.fromEntries(
++      (cfg.layers_taxonomy?.layers ?? []).map((r) => [r.id, r]),
++    );
+     return {
+       area: {
+         name: aoi.name ?? "Área de estudio",
+         bounds,
+         center: [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2],
+       },
+-      layers: timeline.layers.map((l) => layerDef(l.id, l.label)),
++      layers: timeline.layers.map((l) => {
++        const base = layerDef(l.id, l.label);
++        const tax = taxById[l.id];
++        return {
++          ...base,
++          category: (l.category as LayerDef["category"]) ?? tax?.category as LayerDef["category"] ?? base.category,
++          core: l.core ?? tax?.core ?? base.core,
++        };
++      }),
++      presets: cfg.presets,
+       segments: [
+         {
+           id: "anual",
+@@ -152,8 +208,9 @@ export class ConfigProvider implements DataProvider {
+         fromCache: !!g.from_cache,
+         count: g.count ?? 0,
+       })),
+-      // Mientras el backend procese datos sintéticos se avisa en pantalla.
+-      isMock: timeline.synthetic !== false,
++      timelineSynthetic: timeline.synthetic !== false,
++      // pipeline fixture path is not MockProvider
++      isMock: false,
+     };
+   }
+ 
+@@ -172,19 +229,7 @@ export class ConfigProvider implements DataProvider {
+ 
+   async search(q: string): Promise<SearchResult[]> {
+     const ds = this.ds;
+-    const text = q.trim();
+-    if (!ds || !text) return [];
+-    const m = text.match(/^(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)$/);
+-    if (m) {
+-      const lat = parseFloat((m[1] ?? "").replace(",", "."));
+-      const lon = parseFloat((m[2] ?? "").replace(",", "."));
+-      if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+-        return [{ kind: "coords", label: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, lonlat: [lon, lat] }];
+-      }
+-    }
+-    if (norm(ds.area.name).includes(norm(text))) {
+-      return [{ kind: "area", label: ds.area.name, lonlat: ds.area.center }];
+-    }
+-    return [];
++    if (!ds) return [];
++    return this.runSearch(q, ds.area);
+   }
+ }
+diff --git a/web/src/data/layer-defaults.ts b/web/src/data/layer-defaults.ts
+index 1536f5f..4a5feab 100644
+--- a/web/src/data/layer-defaults.ts
++++ b/web/src/data/layer-defaults.ts
+@@ -1,8 +1,7 @@
+ import type { LayerDef } from "../tw/contract";
+ import layersCopy from "../context/layers.json";
+ 
+-// Interino: unidad/rango/rampa locales; la nota de capa sale de
+-// web/src/context/layers.json (cricri) cuando existe.
++// unit/range/ramp defaults; note from context/layers.json when present
+ type LayersCopy = {
+   capas?: Record<string, string>;
+   fuentes?: Record<string, string>;
+@@ -88,11 +87,16 @@ const TAXONOMY: Record<string, Pick<LayerDef, "category" | "core">> = {
+   contaminacion: { category: "inference" },
+ };
+ 
+-// Espejo de los presets de config/layers.toml, por nombre de rubro. El radar (core) no se lista: siempre esta.
++// Fallback si dataset.json aun no trae presets. Radar core no se lista: siempre on.
+ export const PRESETS: Record<string, string[]> = {
+-  "GestiÃ³n de emergencias": ["incendios"],
++  "Gestión de emergencias": ["incendios"],
+   Agricultura: ["suelo"],
+-  "Ambiente y conservaciÃ³n": ["suelo", "incendios"],
++  "Ambiente y conservación": ["suelo", "incendios"],
++  "Ganadería y pasturas": ["suelo"],
++  "Gestión del agua": ["suelo"],
++  "Ordenamiento territorial": [],
++  Infraestructura: [],
++  "Ciencia y educación": [],
+ };
+ 
+ export function layerDef(id: string, label: string): LayerDef {
+diff --git a/web/src/data/search/index.ts b/web/src/data/search/index.ts
+new file mode 100644
+index 0000000..6a7262f
+--- /dev/null
++++ b/web/src/data/search/index.ts
+@@ -0,0 +1,2 @@
++export { createPlaceSearch, emptyQueryYieldsNoResults, searchConfigFromApp } from "./place-search";
++export type { SearchConfig } from "./types";
+\ No newline at end of file
+diff --git a/web/src/data/search/place-search.ts b/web/src/data/search/place-search.ts
+new file mode 100644
+index 0000000..c5e0102
+--- /dev/null
++++ b/web/src/data/search/place-search.ts
+@@ -0,0 +1,55 @@
++import type { Area, SearchResult } from "../../tw/contract";
++import { DEFAULT_REMOTE_PROVIDERS, resolveSearchChain } from "./registry";
++import type { GeocodeContext, SearchConfig } from "./types";
++
++export const EMPTY_QUERY_RESULTS: SearchResult[] = [];
++
++const DEFAULT_USER_AGENT = "TermalWave/0.1 (+https://termalwave.space)";
++
++export type AppSearchBlock = {
++  providers?: string[];
++  endpoints?: Record<string, string>;
++  user_agent?: string;
++  google_maps_enabled?: boolean;
++};
++
++export function searchConfigFromApp(
++  block: AppSearchBlock | undefined,
++  sceneGoogleEnabled?: boolean,
++): SearchConfig {
++  const googleMapsEnabled = !!(block?.google_maps_enabled ?? sceneGoogleEnabled);
++  const providers = block?.providers?.length ? [...block.providers] : [...DEFAULT_REMOTE_PROVIDERS];
++  if (googleMapsEnabled && !providers.includes("google")) {
++    providers.unshift("google");
++  }
++  return {
++    providers,
++    endpoints: block?.endpoints ?? {},
++    userAgent: block?.user_agent ?? DEFAULT_USER_AGENT,
++    googleMapsEnabled,
++    googleApiKey:
++      typeof import.meta.env?.VITE_GOOGLE_MAPS_API_KEY === "string"
++        ? import.meta.env.VITE_GOOGLE_MAPS_API_KEY
++        : undefined,
++    limit: 8,
++  };
++}
++
++export function createPlaceSearch(config: SearchConfig) {
++  const chain = resolveSearchChain(config.providers);
++  return async (q: string, area: Area): Promise<SearchResult[]> => {
++    const text = q.trim();
++    if (!text) return EMPTY_QUERY_RESULTS;
++    const ctx: GeocodeContext = { area, config };
++    for (const provider of chain) {
++      const { results, answered } = await provider.search(text, ctx);
++      if (answered && results.length) return results;
++    }
++    return EMPTY_QUERY_RESULTS;
++  };
++}
++
++/** Sanity: empty or whitespace query yields no results (no network). */
++export function emptyQueryYieldsNoResults(q: string): boolean {
++  return q.trim() === "";
++}
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/aoi.ts b/web/src/data/search/providers/aoi.ts
+new file mode 100644
+index 0000000..fe13cbc
+--- /dev/null
++++ b/web/src/data/search/providers/aoi.ts
+@@ -0,0 +1,10 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { matchAoiPreset } from "../util";
++
++export const aoiGeocoder: Geocoder = {
++  id: "aoi",
++  async search(q, ctx): Promise<GeocodeAnswer> {
++    const hit = matchAoiPreset(q.trim(), ctx.area);
++    return hit ? { results: [hit], answered: true } : { results: [], answered: false };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/coords.ts b/web/src/data/search/providers/coords.ts
+new file mode 100644
+index 0000000..e6d265c
+--- /dev/null
++++ b/web/src/data/search/providers/coords.ts
+@@ -0,0 +1,10 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { matchCoords } from "../util";
++
++export const coordsGeocoder: Geocoder = {
++  id: "coords",
++  async search(q, _ctx): Promise<GeocodeAnswer> {
++    const hit = matchCoords(q.trim());
++    return hit ? { results: [hit], answered: true } : { results: [], answered: false };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/google.ts b/web/src/data/search/providers/google.ts
+new file mode 100644
+index 0000000..3a2fb3c
+--- /dev/null
++++ b/web/src/data/search/providers/google.ts
+@@ -0,0 +1,42 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { fetchJson, toPlaceResult } from "../util";
++
++type GoogleGeocodeRow = {
++  formatted_address?: string;
++  geometry?: { location?: { lat?: number; lng?: number } };
++};
++
++type GoogleGeocodePayload = { status?: string; results?: GoogleGeocodeRow[] };
++
++export const googleGeocoder: Geocoder = {
++  id: "google",
++  async search(q, ctx): Promise<GeocodeAnswer> {
++    if (!ctx.config.googleMapsEnabled || !ctx.config.googleApiKey) {
++      return { results: [], answered: false };
++    }
++    const text = q.trim();
++    if (!text) return { results: [], answered: false };
++    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
++    url.searchParams.set("address", text);
++    url.searchParams.set("key", ctx.config.googleApiKey);
++    const [lon, lat] = ctx.area.center;
++    url.searchParams.set("region", "ar");
++    url.searchParams.set("location", `${lat},${lon}`);
++    const payload = await fetchJson<GoogleGeocodePayload>(url.toString());
++    if (!payload || payload.status === "REQUEST_DENIED" || payload.status === "ZERO_RESULTS") {
++      return { results: [], answered: false };
++    }
++    const rows = payload.results ?? [];
++    const results = rows
++      .map((row) => {
++        const glat = row.geometry?.location?.lat;
++        const glon = row.geometry?.location?.lng;
++        if (glat == null || glon == null) return null;
++        const label = row.formatted_address ?? text;
++        return toPlaceResult(label, glon, glat);
++      })
++      .filter((r): r is NonNullable<typeof r> => !!r)
++      .slice(0, ctx.config.limit);
++    return { results, answered: results.length > 0 };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/nominatim.ts b/web/src/data/search/providers/nominatim.ts
+new file mode 100644
+index 0000000..f2b56be
+--- /dev/null
++++ b/web/src/data/search/providers/nominatim.ts
+@@ -0,0 +1,39 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { fetchJson, sortByAoiBias, toPlaceResult } from "../util";
++
++type NominatimRow = {
++  lat?: string;
++  lon?: string;
++  display_name?: string;
++};
++
++export const nominatimGeocoder: Geocoder = {
++  id: "nominatim",
++  async search(q, ctx): Promise<GeocodeAnswer> {
++    const text = q.trim();
++    if (!text) return { results: [], answered: false };
++    const base = ctx.config.endpoints.nominatim ?? "https://nominatim.openstreetmap.org/search";
++    const url = new URL(base);
++    url.searchParams.set("q", text);
++    url.searchParams.set("format", "jsonv2");
++    url.searchParams.set("limit", String(ctx.config.limit));
++    const b = ctx.area.bounds;
++    url.searchParams.set("viewbox", `${b.west},${b.north},${b.east},${b.south}`);
++    url.searchParams.set("bounded", "0");
++    const payload = await fetchJson<NominatimRow[]>(url.toString(), {
++      headers: { Accept: "application/json", "User-Agent": ctx.config.userAgent },
++    });
++    if (!payload) return { results: [], answered: false };
++    const results = payload
++      .map((row) => {
++        const lat = row.lat != null ? parseFloat(row.lat) : NaN;
++        const lon = row.lon != null ? parseFloat(row.lon) : NaN;
++        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
++        const label = (row.display_name ?? text).split(",").slice(0, 3).join(",").trim();
++        return toPlaceResult(label, lon, lat);
++      })
++      .filter((r): r is NonNullable<typeof r> => !!r);
++    const biased = sortByAoiBias(results, ctx.area).slice(0, ctx.config.limit);
++    return { results: biased, answered: biased.length > 0 };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/open-meteo.ts b/web/src/data/search/providers/open-meteo.ts
+new file mode 100644
+index 0000000..937aa9c
+--- /dev/null
++++ b/web/src/data/search/providers/open-meteo.ts
+@@ -0,0 +1,40 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { fetchJson, placeLabel, sortByAoiBias, toPlaceResult } from "../util";
++
++type OpenMeteoRow = {
++  name?: string;
++  latitude?: number;
++  longitude?: number;
++  admin1?: string;
++  country?: string;
++};
++
++type OpenMeteoPayload = { results?: OpenMeteoRow[] };
++
++export const openMeteoGeocoder: Geocoder = {
++  id: "open_meteo_geocode",
++  async search(q, ctx): Promise<GeocodeAnswer> {
++    const text = q.trim();
++    if (!text) return { results: [], answered: false };
++    const base =
++      ctx.config.endpoints.open_meteo_geocode ??
++      "https://geocoding-api.open-meteo.com/v1/search";
++    const url = new URL(base);
++    url.searchParams.set("name", text);
++    url.searchParams.set("count", String(ctx.config.limit));
++    url.searchParams.set("language", "es");
++    const payload = await fetchJson<OpenMeteoPayload>(url.toString());
++    const rows = payload?.results ?? [];
++    const results = rows
++      .map((row) => {
++        const lat = row.latitude;
++        const lon = row.longitude;
++        if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
++        const label = placeLabel([row.name, row.admin1, row.country]);
++        return toPlaceResult(label || text, lon, lat);
++      })
++      .filter((r): r is NonNullable<typeof r> => !!r);
++    const biased = sortByAoiBias(results, ctx.area).slice(0, ctx.config.limit);
++    return { results: biased, answered: biased.length > 0 };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/providers/photon.ts b/web/src/data/search/providers/photon.ts
+new file mode 100644
+index 0000000..0493cd3
+--- /dev/null
++++ b/web/src/data/search/providers/photon.ts
+@@ -0,0 +1,45 @@
++import type { GeocodeAnswer, Geocoder } from "../types";
++import { fetchJson, placeLabel, sortByAoiBias, toPlaceResult } from "../util";
++
++type PhotonProps = {
++  name?: string;
++  city?: string;
++  state?: string;
++  country?: string;
++  street?: string;
++};
++
++type PhotonFeature = {
++  geometry?: { coordinates?: [number, number] };
++  properties?: PhotonProps;
++};
++
++type PhotonPayload = { features?: PhotonFeature[] };
++
++export const photonGeocoder: Geocoder = {
++  id: "photon",
++  async search(q, ctx): Promise<GeocodeAnswer> {
++    const text = q.trim();
++    if (!text) return { results: [], answered: false };
++    const base = ctx.config.endpoints.photon ?? "https://photon.komoot.io/api/";
++    const url = new URL(base.endsWith("/") ? base : `${base}/`);
++    url.searchParams.set("q", text);
++    url.searchParams.set("limit", String(ctx.config.limit));
++    const [lon, lat] = ctx.area.center;
++    url.searchParams.set("lat", String(lat));
++    url.searchParams.set("lon", String(lon));
++    const payload = await fetchJson<PhotonPayload>(url.toString());
++    const features = payload?.features ?? [];
++    const results = features
++      .map((f) => {
++        const coords = f.geometry?.coordinates;
++        if (!coords || coords.length < 2) return null;
++        const p = f.properties ?? {};
++        const label = placeLabel([p.name, p.street, p.city, p.state, p.country]);
++        return toPlaceResult(label || text, coords[0], coords[1]);
++      })
++      .filter((r): r is NonNullable<typeof r> => !!r);
++    const biased = sortByAoiBias(results, ctx.area).slice(0, ctx.config.limit);
++    return { results: biased, answered: biased.length > 0 };
++  },
++};
+\ No newline at end of file
+diff --git a/web/src/data/search/registry.ts b/web/src/data/search/registry.ts
+new file mode 100644
+index 0000000..bc8fee7
+--- /dev/null
++++ b/web/src/data/search/registry.ts
+@@ -0,0 +1,43 @@
++import type { Geocoder } from "./types";
++import { aoiGeocoder } from "./providers/aoi";
++import { coordsGeocoder } from "./providers/coords";
++import { googleGeocoder } from "./providers/google";
++import { nominatimGeocoder } from "./providers/nominatim";
++import { openMeteoGeocoder } from "./providers/open-meteo";
++import { photonGeocoder } from "./providers/photon";
++
++const BUILTIN: Geocoder[] = [coordsGeocoder, aoiGeocoder];
++
++const REMOTE: Geocoder[] = [
++  googleGeocoder,
++  openMeteoGeocoder,
++  photonGeocoder,
++  nominatimGeocoder,
++];
++
++const BY_ID = new Map<string, Geocoder>(
++  [...BUILTIN, ...REMOTE].map((g) => [g.id, g]),
++);
++
++/** Default remote order: keyless providers first. */
++export const DEFAULT_REMOTE_PROVIDERS = ["open_meteo_geocode", "photon", "nominatim"];
++
++export function resolveSearchChain(providerIds: string[]): Geocoder[] {
++  const builtins = BUILTIN;
++  const remotes: Geocoder[] = [];
++  const seen = new Set<string>();
++  for (const id of providerIds) {
++    if (seen.has(id) || id === "coords" || id === "aoi") continue;
++    const g = BY_ID.get(id);
++    if (!g) continue;
++    seen.add(id);
++    remotes.push(g);
++  }
++  if (!remotes.length) {
++    for (const id of DEFAULT_REMOTE_PROVIDERS) {
++      const g = BY_ID.get(id);
++      if (g) remotes.push(g);
++    }
++  }
++  return [...builtins, ...remotes];
++}
+\ No newline at end of file
+diff --git a/web/src/data/search/types.ts b/web/src/data/search/types.ts
+new file mode 100644
+index 0000000..fe408c7
+--- /dev/null
++++ b/web/src/data/search/types.ts
+@@ -0,0 +1,26 @@
++import type { Area, SearchResult } from "../../tw/contract";
++
++export type SearchConfig = {
++  /** Remote provider ids from app-config (e.g. open_meteo_geocode, photon). */
++  providers: string[];
++  endpoints: Record<string, string>;
++  userAgent: string;
++  googleMapsEnabled: boolean;
++  googleApiKey?: string;
++  limit: number;
++};
++
++export type GeocodeContext = {
++  area: Area;
++  config: SearchConfig;
++};
++
++export type GeocodeAnswer = {
++  results: SearchResult[];
++  answered: boolean;
++};
++
++export interface Geocoder {
++  readonly id: string;
++  search(q: string, ctx: GeocodeContext): Promise<GeocodeAnswer>;
++}
+\ No newline at end of file
+diff --git a/web/src/data/search/util.ts b/web/src/data/search/util.ts
+new file mode 100644
+index 0000000..d9e3f8b
+--- /dev/null
++++ b/web/src/data/search/util.ts
+@@ -0,0 +1,58 @@
++import type { Area, SearchResult } from "../../tw/contract";
++
++export function norm(text: string): string {
++  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
++}
++
++export function haversineM(lon1: number, lat1: number, lon2: number, lat2: number): number {
++  const r = 6_371_000;
++  const toRad = (d: number) => (d * Math.PI) / 180;
++  const dLat = toRad(lat2 - lat1);
++  const dLon = toRad(lon2 - lon1);
++  const a =
++    Math.sin(dLat / 2) ** 2 +
++    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
++  return 2 * r * Math.asin(Math.sqrt(a));
++}
++
++export function sortByAoiBias(results: SearchResult[], area: Area): SearchResult[] {
++  const [clon, clat] = area.center;
++  return [...results].sort(
++    (a, b) => haversineM(a.lonlat[0], a.lonlat[1], clon, clat) - haversineM(b.lonlat[0], b.lonlat[1], clon, clat),
++  );
++}
++
++export function placeLabel(parts: Array<string | undefined>): string {
++  return parts.filter((p) => p && p.trim()).join(", ");
++}
++
++export function toPlaceResult(label: string, lon: number, lat: number): SearchResult {
++  return { kind: "coords", label, lonlat: [lon, lat] };
++}
++
++export function matchCoords(text: string): SearchResult | null {
++  const m = text.match(/^(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)$/);
++  if (!m) return null;
++  const lat = parseFloat((m[1] ?? "").replace(",", "."));
++  const lon = parseFloat((m[2] ?? "").replace(",", "."));
++  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
++  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
++  return { kind: "coords", label: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, lonlat: [lon, lat] };
++}
++
++export function matchAoiPreset(text: string, area: Area): SearchResult | null {
++  if (norm(area.name).includes(norm(text)) || norm(text).includes(norm(area.name))) {
++    return { kind: "area", label: area.name, lonlat: area.center };
++  }
++  return null;
++}
++
++export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> {
++  try {
++    const res = await fetch(url, init);
++    if (!res.ok) return null;
++    return (await res.json()) as T;
++  } catch {
++    return null;
++  }
++}
+\ No newline at end of file
+diff --git a/web/src/scene/maplibre-scene.ts b/web/src/scene/maplibre-scene.ts
+index dae84e3..8001865 100644
+--- a/web/src/scene/maplibre-scene.ts
++++ b/web/src/scene/maplibre-scene.ts
+@@ -40,6 +40,8 @@ const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
+ const URBAN_ZOOM = 1.85;
+ const URBAN_DETAIL = 1.35;
+ const URBAN_PITCH = 6;
++// AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
++const AOI_VIEWPORT_FRAC = 0.12;
+ 
+ function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
+   return [
+@@ -86,6 +88,9 @@ export class MapLibreScene implements SceneApi {
+   private images = new Map<string, HTMLImageElement>();
+   private cmpRaf = 0;
+   private territoryZoom = 11;
++  private aoiMinZoom = 8;
++  private intendedOpacity = new Map<string, number>();
++  private gapFill = 0;
+   private dragCurtain = false;
+ 
+   constructor(o: Partial<MapSceneOptions> = {}) {
+@@ -144,6 +149,7 @@ export class MapLibreScene implements SceneApi {
+     });
+     this.map.on("move", () => {
+       this.placeHandle();
++      this.syncAoiOverlays();
+       this.cbMove();
+     });
+     this.map.on("error", (e) => {
+@@ -287,6 +293,7 @@ export class MapLibreScene implements SceneApi {
+       paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2, "line-opacity": 0 },
+     });
+     map.addLayer({ id: "tw-curtain", type: "line", source: "tw-curtain", paint: { "line-color": this.css("--acc", "#f0a014"), "line-width": 2 } });
++    this.refreshAoiMinZoom();
+     this.applyFrame();
+     this.applyCompare();
+     this.updateAreaChrome();
+@@ -323,6 +330,7 @@ export class MapLibreScene implements SceneApi {
+     this.whenReady(() => {
+       this.buildLayers();
+       this.buildRing();
++      this.refreshAoiMinZoom();
+       this.applyFrame();
+       this.applyCompare();
+       // El arranque desde la URL pide cámara antes de que existan los límites del área.
+@@ -355,6 +363,62 @@ export class MapLibreScene implements SceneApi {
+     if (this.ring) {
+       this.ring.getElement().style.display = c === "approach" ? "block" : "none";
+     }
++    this.syncAoiOverlays();
++  }
++
++  private refreshAoiMinZoom(): void {
++    const cam = this.territoryCam();
++    const orbitZ = this.orbitZoom();
++    if (cam?.zoom != null) {
++      this.aoiMinZoom = Math.max(orbitZ + 1.25, cam.zoom - 2.5);
++      this.territoryZoom = cam.zoom;
++    } else {
++      this.aoiMinZoom = orbitZ + 2;
++    }
++  }
++
++  private aoiSpanPx(): number {
++    if (!this.ds || !this.ready) return 0;
++    const b = this.ds.area.bounds;
++    const pts = [
++      this.map.project([b.west, b.north]),
++      this.map.project([b.east, b.north]),
++      this.map.project([b.east, b.south]),
++      this.map.project([b.west, b.south]),
++    ];
++    let minX = Infinity;
++    let maxX = -Infinity;
++    let minY = Infinity;
++    let maxY = -Infinity;
++    for (const p of pts) {
++      minX = Math.min(minX, p.x);
++      maxX = Math.max(maxX, p.x);
++      minY = Math.min(minY, p.y);
++      maxY = Math.max(maxY, p.y);
++    }
++    return Math.min(maxX - minX, maxY - minY);
++  }
++
++  /** PNG SAR/fenómeno solo en territorio/detalle y con encuadre suficiente (no cuadrante flotante). */
++  private aoiOverlaysVisible(): boolean {
++    const c = this.s.camera;
++    if (c !== "territory" && c !== "detail") return false;
++    const vmin = Math.min(this.mapEl.clientWidth, this.mapEl.clientHeight);
++    if (vmin < 40) return false;
++    const span = this.aoiSpanPx();
++    if (span >= vmin * AOI_VIEWPORT_FRAC) return true;
++    return this.map.getZoom() >= this.aoiMinZoom;
++  }
++
++  private syncAoiOverlays(): void {
++    if (!this.ready) return;
++    const on = this.aoiOverlaysVisible();
++    for (const [layer, v] of this.intendedOpacity) {
++      if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", on ? v : 0);
++    }
++    if (this.map.getLayer("tw-gap")) {
++      this.map.setPaintProperty("tw-gap", "fill-opacity", on ? this.gapFill : 0);
++    }
+   }
+ 
+   private whenReady(fn: () => void): void {
+@@ -435,7 +499,9 @@ export class MapLibreScene implements SceneApi {
+   }
+ 
+   private setOpacity(layer: string, v: number): void {
+-    if (this.map.getLayer(layer)) this.map.setPaintProperty(layer, "raster-opacity", v);
++    this.intendedOpacity.set(layer, v);
++    if (!this.map.getLayer(layer)) return;
++    this.map.setPaintProperty(layer, "raster-opacity", this.aoiOverlaysVisible() ? v : 0);
+   }
+ 
+   private applyFrame(): void {
+@@ -448,7 +514,8 @@ export class MapLibreScene implements SceneApi {
+     const mine = this.token;
+     if (this.pending) map.off("sourcedata", this.pending);
+     this.pending = null;
+-    if (map.getLayer("tw-gap")) map.setPaintProperty("tw-gap", "fill-opacity", tick && !fr ? 0.25 : 0);
++    this.gapFill = tick && !fr ? 0.25 : 0;
++    if (map.getLayer("tw-gap")) map.setPaintProperty("tw-gap", "fill-opacity", this.aoiOverlaysVisible() ? this.gapFill : 0);
+     if (!fr) {
+       this.slots.forEach((sl) => this.setOpacity(sl.layer, 0));
+       this.hasFront = false;
+diff --git a/web/src/tw/catalog.es-AR.js b/web/src/tw/catalog.es-AR.js
+index 1c74545..417d754 100644
+--- a/web/src/tw/catalog.es-AR.js
++++ b/web/src/tw/catalog.es-AR.js
+@@ -112,7 +112,6 @@ export const T = {
+   },
+   legend: { title: "Leyenda" },
+ 
+-  // agregado: la interfaz es opcional frente al globo
+   hud: {
+     hide: "Ocultar interfaz",
+     show: "Mostrar interfaz",
+@@ -122,7 +121,6 @@ export const T = {
+     tlOpen: "Desplegar línea de tiempo",
+   },
+ 
+-  // agregado: pestana Fuentes de la ficha
+   sources: {
+     lead: "De dónde salen los datos de esta área y cuáles se usaron.",
+     updated: (d) => `Actualizado el ${d}`,
+diff --git a/web/src/tw/contract.ts b/web/src/tw/contract.ts
+index 8da4f20..00d3a07 100644
+--- a/web/src/tw/contract.ts
++++ b/web/src/tw/contract.ts
+@@ -1,6 +1,5 @@
+ // contrato entre la interfaz y el exterior
+ // los componentes solo conocen DataProvider y SceneApi
+-// los agregados respecto del handoff original estan marcados con "agregado"
+ 
+ export type LayerId = string;
+ export type Iso = string;
+@@ -20,7 +19,6 @@ export interface LayerDef {
+   range: [min: number, max: number];
+   ramp: Array<{ at: number; color: string }>;
+   note: string;
+-  // agregado: decimales para formatear valores de la ficha y la serie
+   decimals?: number;
+   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
+   category?: "data" | "prediction" | "inference";
+@@ -61,8 +59,7 @@ export interface TimeSegment {
+ export interface EventMark { id: string; date: Iso; layer?: LayerId; label: string }
+ 
+ export interface Hotspot {
+-  // agregado: el id es estable entre momentos de la misma capa ("suelo-0")
+-  // asi la tarjeta de detalle sigue abierta mientras se arrastra el tiempo
++  // id estable entre ticks de la misma capa para no cerrar la ficha al scrubear
+   id: string;
+   layer: LayerId;
+   tickId: string;
+@@ -77,14 +74,12 @@ export interface Hotspot {
+ export interface SeriesPoint { tickId: string; date: Iso; value: number | null }
+ export interface ContextEntry { trade: string; text: string }
+ 
+-// agregado: resultado de busqueda de lugar o coordenadas
+ export interface SearchResult {
+   kind: "area" | "coords";
+   label: string;
+   lonlat: [number, number];
+ }
+ 
+-// agregado: de donde salen los datos (provenance del backend)
+ export interface SourceTry { provider: string; ok: boolean; count?: number }
+ export interface SourceGroup {
+   kind: string;          // "fires" | "weather" | "optical" | "radar" | ...
+@@ -97,7 +92,6 @@ export interface SourceGroup {
+ }
+ 
+ export interface Dataset {
+-  // agregado: opcional, lo llena el backend
+   sources?: SourceGroup[];
+   sourcesAt?: Iso;
+   area: Area;
+@@ -108,13 +102,13 @@ export interface Dataset {
+   events: EventMark[];
+   context: ContextEntry[];
+   isMock: boolean;
++  timelineSynthetic?: boolean;
+ }
+ 
+ export interface DataProvider {
+   load(): Promise<Dataset>;
+   series(layer: LayerId): Promise<SeriesPoint[]>;
+   hotspots(layer: LayerId, tickId: string): Promise<Hotspot[]>;
+-  // agregado
+   search(q: string): Promise<SearchResult[]>;
+ }
+ 
+@@ -154,11 +148,11 @@ export interface BasemapOption {
+ 
+ export interface SceneApi {
+   mount(el: HTMLElement): void;
+-  // agregado: set acepta null en compare y focus para borrarlos
++  // null en compare/focus los borra; instant salta animacion (p. ej. deep link)
+   set(next: Partial<Omit<SceneState, "compare" | "focus">> & {
+     compare?: SceneState["compare"] | null;
+     focus?: SceneState["focus"] | null;
+-  }, opt?: { instant?: boolean }): void;   // agregado: instant omite el vuelo (arranque desde la URL)
++  }, opt?: { instant?: boolean }): void;
+   getState(): SceneState;
+   flyTo(camera: CameraMode): Promise<void>;
+   resetToOrbit(): Promise<void>;
+@@ -170,7 +164,6 @@ export interface SceneApi {
+   // opcional: capas extra superpuestas a la activa (nucleo + las que sume el usuario o un rubro)
+   setExtras?(ids: string[]): void;
+ 
+-  // agregados
+   setDataset(ds: Dataset): void;               // la escena necesita limites y urls de cada imagen
+   setHotspots(list: Hotspot[]): void;          // puntos de interes del momento y capa activos
+   setPadding(p: Padding): void;                // espacio que ocupan los paneles flotantes
+diff --git a/web/src/tw/mock-provider.js b/web/src/tw/mock-provider.js
+index 75a34b8..1b4e12a 100644
+--- a/web/src/tw/mock-provider.js
++++ b/web/src/tw/mock-provider.js
+@@ -1,6 +1,7 @@
+ // MockProvider: implementa DataProvider con datos inventados (isMock: true)
+ import { F } from './catalog.es-AR.js';
+ import { hash, fbm } from './noise.js';
++import { createPlaceSearch, searchConfigFromApp } from '../data/search/index.js';
+ 
+ export const SCENARIOS = ['normal', 'cargando', 'sin-conexion', 'sin-relieve', 'error-config', 'un-tramo', 'un-punto', 'rango-largo', 'tramo-vacio'];
+ 
+@@ -46,8 +47,6 @@ const iso = (d) => d.toISOString().slice(0, 10);
+ const D = (y, m, d) => new Date(Date.UTC(y, m, d));
+ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+-const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+-
+ function yf(s) {
+   const d = new Date(s + 'T00:00:00Z'), y = d.getUTCFullYear();
+   return y + (d - Date.UTC(y, 0, 1)) / (Date.UTC(y + 1, 0, 1) - Date.UTC(y, 0, 1));
+@@ -112,6 +111,8 @@ function paintLayer(L, tn, ti, fr, partial) {
+   return cv.toDataURL('image/png');
+ }
+ 
++const runDemoSearch = createPlaceSearch(searchConfigFromApp(undefined));
++
+ export class MockProvider {
+   constructor(opts = {}) { this.scenario = opts.scenario || 'normal'; this.ds = null; this.order = []; }
+ 
+@@ -206,14 +207,7 @@ export class MockProvider {
+ 
+   async search(q) {
+     await sleep(80);
+-    const s = q.trim();
+-    if (!s) return [];
+-    const m = s.match(/^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/);
+-    if (m) {
+-      const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+-      if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return [{ kind: 'coords', label: `${F.lat(lat)} · ${F.lon(lon)}`, lonlat: [lon, lat] }];
+-    }
+-    if (norm(AREA.name).includes(norm(s))) return [{ kind: 'area', label: AREA.name, lonlat: AREA.center }];
+-    return [];
++    if (!this.ds) return [];
++    return runDemoSearch(q, this.ds.area);
+   }
+ }
