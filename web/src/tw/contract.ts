@@ -143,13 +143,18 @@ export interface SceneOptions {
   labels: { curtain: string };
 }
 
-export interface BasemapOption {
-  id: string;
-  label: string;
+export interface BasemapTiles {
   url: string;
   tileSize: number;
   maxzoom: number;
   attribution: string;
+}
+
+export interface BasemapOption extends BasemapTiles {
+  id: string;
+  label: string;
+  // capa de fondo continua debajo, tapa los huecos de las pasadas diarias
+  underlay?: BasemapTiles;
 }
 
 export interface SceneApi {
@@ -177,5 +182,7 @@ export interface SceneApi {
   project(lonlat: [number, number]): { x: number; y: number } | null; // para anclar la tarjeta de detalle
   setReducedMotion(on: boolean): void;
   refreshStyle(): void;                        // relee variables css al cambiar de tema
+  // opcional: prende o apaga cielo, satelites, nubes, cuerpos
+  setSpaceLayer?(id: string, on: boolean): void;
   destroy(): void;
 }
