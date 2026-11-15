@@ -170,8 +170,13 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             </div>
           )}
           {v.dockOpen && v.layerItems.map((l) => (
+            <React.Fragment key={l.id}>
+            {l.head && (
+              <div role="presentation" style={s("padding:6px 12px 4px;border-top:1px solid var(--line);font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>
+                {l.head}
+              </div>
+            )}
             <button
-              key={l.id}
               className="tw-hov"
               role="radio"
               aria-checked={l.on}
@@ -201,8 +206,12 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 />
               )}
+              {l.core && (
+                <span title="Siempre activa: es el núcleo del producto" style={s("flex:none;font:9px var(--mono);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 4px;color:var(--fg2)")}>NÚCLEO</span>
+              )}
               <span style={s("flex:none;font:11px var(--mono);color:var(--fg2)")}>{l.unit}</span>
             </button>
+            </React.Fragment>
           ))}
           {v.dockOpen && v.layerHint ? (
             <p id="tw-layer-hint" style={s("margin:0;border-top:1px solid var(--line);padding:10px 12px;font:11px/1.4 var(--sans);color:var(--fg2);text-wrap:pretty")}>

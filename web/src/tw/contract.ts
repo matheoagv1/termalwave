@@ -22,6 +22,9 @@ export interface LayerDef {
   note: string;
   // agregado: decimales para formatear valores de la ficha y la serie
   decimals?: number;
+  // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
+  category?: "data" | "prediction" | "inference";
+  core?: boolean;
 }
 
 export type Granularity = "year" | "quarter" | "month" | "week" | "day";
