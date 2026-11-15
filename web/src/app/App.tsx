@@ -137,7 +137,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if (S.pick !== ps.pick) this.trackPos();
       if (S.trade !== ps.trade && S.ds) {
         const tr = S.ds.context[S.trade]?.trade ?? "";
-        const ids = PRESETS[tr] ?? [];
+        const ids = (S.ds.presets ?? PRESETS)[tr] ?? [];
         if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
       }
       const eff = this.effectiveExtras();
