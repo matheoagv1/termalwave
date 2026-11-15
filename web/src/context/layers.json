@@ -6,11 +6,11 @@
     "incendios": "Los focos térmicos indican señales de calor detectadas por satélite. No todos son incendios, y la ausencia de un foco no demuestra que no haya fuego. Compará la fecha y la cobertura con información del lugar y avisos oficiales."
   },
   "fuentes": {
-    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisa la fecha, la colección y si esa observación ya está validada.",
+    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisá la fecha, la colección y si esa observación ya está validada.",
     "planetary_computer_s2": "Sentinel-2 suma imagen óptica para comparar cobertura. Nubes y sombras pueden dejar huecos cerca de la pasada de radar.",
     "open_meteo_archive": "Open-Meteo aporta clima de archivo para contextualizar las pasadas. La escala depende de la variable que mires.",
-    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisa qué variable llega y con qué cobertura.",
-    "firms_viirs_sp": "FIRMS VIIRS procesado: focos térmicos ya revisados. Son detecciones puntuales, no el perímetro completo del fuego.",
+    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisá qué variable llega y con qué cobertura.",
+    "firms_viirs_sp": "FIRMS VIIRS procesado: detecciones térmicas de la versión procesada. Son focos identificados por satélite, no el perímetro completo del fuego ni una confirmación en terreno.",
     "firms_viirs_nrt": "FIRMS VIIRS de disponibilidad rápida. Puede corregirse o filtrarse en un procesamiento posterior.",
     "firms_modis": "FIRMS MODIS: focos térmicos a otra escala. Si no aparece un foco, no asumas que no hubo actividad."
   },
