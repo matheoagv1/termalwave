@@ -1,5 +1,6 @@
 import React from "react";
 import { T } from "../tw/catalog.es-AR.js";
+import { longHelp } from "../ui/tip-help";
 import type {
   BasemapOption,
   Dataset,
@@ -63,6 +64,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     userTrade: intro0.trade,
     soundOn: intro0.sound,
     moniOpen: false,
+    helpText: "",
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -319,10 +321,16 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   toggleMoni = (): void => {
     const next = !this.state.moniOpen;
     if (next && this.state.soundOn) Sfx.tip();
-    this.setState({ moniOpen: next });
+    this.setState({ moniOpen: next, helpText: next ? this.state.helpText : "" });
   };
 
-  closeMoni = (): void => this.setState({ moniOpen: false });
+  closeMoni = (): void => this.setState({ moniOpen: false, helpText: "" });
+
+  // el mago explica con palabras simples el control que el usuario sigue leyendo
+  showHelpText = (tip: string): void => {
+    if (this.state.soundOn) Sfx.tip();
+    this.setState({ moniOpen: true, helpText: longHelp(tip) });
+  };
 
   toggleSound = (): void => {
     const soundOn = !this.state.soundOn;

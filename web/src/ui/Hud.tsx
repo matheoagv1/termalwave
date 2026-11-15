@@ -4,6 +4,7 @@ import { s } from "../app/css";
 import type { View } from "../app/view";
 import { IntroOverlay } from "./IntroOverlay";
 import { MonigoteBuddy } from "./MonigoteBuddy";
+import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
@@ -222,7 +223,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         <div
           role="radiogroup"
           aria-label={t.layers.title}
-          style={s("position:absolute;left:8px;right:8px;top:52px;display:flex;gap:6px;overflow-x:auto;pointer-events:auto")}
+          style={s("position:absolute;left:8px;right:8px;top:52px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;pointer-events:auto")}
         >
           {v.layerItems.map((l) => (
             <button
@@ -231,7 +232,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               aria-checked={l.on}
               onClick={l.go}
               style={s(
-                `flex:none;display:flex;gap:8px;align-items:center;height:44px;padding:0 12px;border:1px solid var(--line);background:${l.chipBg};backdrop-filter:blur(8px);cursor:pointer`,
+                `min-width:0;display:flex;gap:8px;align-items:center;height:44px;padding:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid var(--line);background:${l.chipBg};backdrop-filter:blur(8px);cursor:pointer`,
               )}
             >
               <span style={s(`width:12px;height:12px;background:${l.grad};border:1px solid var(--line2)`)} />
@@ -336,6 +337,8 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
       )}
 
       {v.tlOn && <Timeline v={v} a={a} tlRef={tlRef} />}
+
+      <TipLayer onLong={a.showHelpText} />
 
       {v.help && (
         <div

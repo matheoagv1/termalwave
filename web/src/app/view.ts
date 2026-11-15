@@ -613,7 +613,7 @@ export function buildView(m: Model) {
     introOpen: S.introOpen,
     moniB: S.tlH + (isM ? 52 : 0) + 20 + "px",
     moniOn: S.introDone && !S.introOpen && !imm,
-    moniTip,
+    moniTip: S.helpText || moniTip,
     moniOpen: S.moniOpen,
     soundOn: S.soundOn,
     userName: S.userName,

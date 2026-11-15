@@ -1,4 +1,4 @@
-﻿import type { BasemapOption,
+import type { BasemapOption,
   CameraMode,
   Dataset,
   DataProvider,
@@ -58,6 +58,7 @@ export type AppState = {
   soundOn: boolean;
   moniOpen: boolean;
   basemap: string;
+  helpText: string;
 };
 
 export type AppProps = {
