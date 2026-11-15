@@ -182,7 +182,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 ))}
               </div>
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
-                <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
+                <span title="Años: la barra muestra todo el período con datos; el rombo marca dónde estás" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
                 <div style={s("position:relative;flex:1;height:28px;box-sizing:border-box;border-style:solid;border-width:0 32px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 32px 0 32px stretch")}>
                   <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
@@ -196,6 +196,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 </div>
                 <span>{tl.y1}</span>
+                <span title="Estás viendo esta fecha" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ Estás en: " + tl.name}</span>
               </div>
               {v.compareOn && (
                 <div style={s("font:11px var(--sans);color:var(--fg2);line-height:1.35")}>{v.compareHint}</div>
@@ -289,7 +290,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 ))}
               </div>
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
-                <span style={s("white-space:nowrap")}>{t.timeline.realTime}</span>
+                <span title="Años: la barra muestra todo el período con datos; el rombo marca dónde estás" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
                 <div style={s("position:relative;flex:1;height:34px;box-sizing:border-box;border-style:solid;border-width:0 38px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 38px 0 38px stretch")}>
                   <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
@@ -303,6 +304,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 </div>
                 <span>{tl.y1}</span>
+                <span title="Estás viendo esta fecha" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ Estás en: " + tl.name}</span>
                 {v.isD && <span style={s("font:11px var(--sans);max-width:330px;line-height:1.25")}>{t.timeline.scaleNote}</span>}
               </div>
             </>

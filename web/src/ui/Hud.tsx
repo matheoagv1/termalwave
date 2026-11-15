@@ -238,11 +238,11 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                     className="tw-hov"
                     aria-pressed={o.on}
                     disabled={o.core}
-                    title={o.core ? "Siempre activa: es el nÃºcleo del producto" : o.on ? "Quitar de encima del mapa" : "Mostrar encima de la capa activa"}
+                    title={o.core ? "Siempre activa: es el núcleo del producto" : o.on ? "Quitar de encima del mapa" : "Mostrar encima de la capa activa"}
                     onClick={o.go}
                     style={s(`min-height:30px;padding:0 10px;border:1px solid ${o.on ? "var(--acc-fg)" : "var(--line2)"};background:${o.on ? "var(--sel)" : "transparent"};color:var(--fg);font:12px var(--sans);cursor:${o.core ? "default" : "pointer"}`)}
                   >
-                    {o.label}{o.core ? " Â· nÃºcleo" : ""}
+                    {o.id === "radar" ? "Radar NISAR" : o.label}{o.core ? " · núcleo" : ""}
                   </button>
                 ))}
               </div>
@@ -873,7 +873,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
               {t.legend.title}
             </span>
             <span style={s("font:11px var(--mono);white-space:nowrap")}>
-              {leg.label} · {leg.unit}
+              {leg.label} · {leg.unit}{leg.note?.trimStart().toUpperCase().startsWith("EJEMPLO") ? " · EJEMPLO" : ""}
             </span>
           </div>
           <div style={s(`height:10px;background:${leg.grad}`)} />
@@ -881,7 +881,6 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
             <span>{leg.min}</span>
             <span>{leg.max}</span>
           </div>
-          <div style={s("font:11px var(--sans);color:var(--fg2);text-wrap:pretty")}>{leg.note}</div>
         </div>
       )}
     </div>
