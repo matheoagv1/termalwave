@@ -110,7 +110,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           role="radiogroup"
           aria-label={t.layers.title}
           style={s(
-            `position:absolute;left:12px;top:64px;width:${v.dockOpen ? "232px" : "auto"};min-width:${v.dockOpen ? "0" : "120px"};pointer-events:auto;${PANEL}`,
+            `position:absolute;left:12px;top:64px;width:${v.dockOpen ? "232px" : "auto"};min-width:${v.dockOpen ? "0" : "120px"};max-height:${v.dockMaxH};overflow-y:auto;pointer-events:auto;${PANEL}`,
           )}
         >
           <button

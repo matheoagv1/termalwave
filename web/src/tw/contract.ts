@@ -102,6 +102,8 @@ export interface Dataset {
   sourcesAt?: Iso;
   area: Area;
   layers: LayerDef[];
+  // rubro -> ids de capas que prende (el nucleo core no se lista: siempre esta); lo publica el backend
+  presets?: Record<string, string[]>;
   segments: TimeSegment[];
   events: EventMark[];
   context: ContextEntry[];

@@ -629,6 +629,7 @@ export function buildView(m: Model) {
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
     dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems,
+    dockMaxH: Math.max(140, S.H - 64 - S.tlH - 16) + "px",
     overlayItems: sortedLayers
       .filter((l) => l.id !== sc.layer)
       .map((l) => ({
