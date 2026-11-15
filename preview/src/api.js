@@ -3,6 +3,8 @@ import { edgeJson, json } from "./edge-cache.js";
 import { searchChain } from "./search.js";
 import { handleClouds } from "./clouds.js";
 import { handleEphemeris } from "./ephemeris.js";
+import { handleFirms } from "./firms.js";
+import { handleNisarCoverage } from "./nisar-coverage.js";
 import { handleSatellites } from "./satellites.js";
 import { handleTile } from "./tiles.js";
 
@@ -39,11 +41,19 @@ export async function handleApi(request, env, ctx) {
   }
   if (url.pathname === "/api/satellites") {
     const cfg = await loadAppConfig(request, env);
-    return handleSatellites(url, env, ctx, cfg);
+    return handleSatellites(url, env, ctx, cfg.space?.satellites || cfg);
   }
   if (url.pathname === "/api/clouds" || url.pathname.startsWith("/api/clouds/")) {
     const cfg = await loadAppConfig(request, env);
-    return handleClouds(url, env, ctx, cfg);
+    return handleClouds(url, env, ctx, cfg.space?.clouds || cfg);
+  }
+  if (url.pathname === "/api/firms") {
+    const cfg = await loadAppConfig(request, env);
+    return handleFirms(url, env, ctx, cfg.space?.firms || cfg.firms || {});
+  }
+  if (url.pathname === "/api/nisar/coverage") {
+    const cfg = await loadAppConfig(request, env);
+    return handleNisarCoverage(url, env, ctx, cfg, request);
   }
   if (url.pathname.startsWith("/api/")) return json({ error: "not_found" }, 404);
   return handleTile(request, env, ctx, () => loadAppConfig(request, env));

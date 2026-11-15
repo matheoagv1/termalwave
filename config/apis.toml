@@ -68,9 +68,20 @@ planetary_computer_s2 = "https://planetarycomputer.microsoft.com/api/stac/v1/sea
 order = ["earthdata_nisar_gcov"]
 strategy = "prefer_validated"
 collection = "NISAR_L2_GCOV"
+# Preview Worker: GET /api/nisar/coverage?bbox=w,s,e,n
+# Bbox intersects default AOI (app-config) → honest demo frames from web/dist overlays.
+# Else CMR granules when Worker secret EARTHDATA_TOKEN is set; otherwise status=empty (no fake Santiago).
+coverage_endpoint = "/api/nisar/coverage"
 
 [radar.endpoints]
 earthdata_nisar_gcov = "https://cmr.earthdata.nasa.gov/search/granules.json"
+
+[radar.coverage]
+endpoint = "/api/nisar/coverage"
+upstream = "https://cmr.earthdata.nasa.gov/search/granules.json"
+collection = "NISAR_L2_GCOV"
+cache_ttl_s = 600
+attribution = "NASA Earthdata · NISAR L2 GCOV"
 
 [providers.firms_viirs_sp]
 kind = "fires"
@@ -478,3 +489,9 @@ layer = "global_longwave_imagery_mosaic"
 attribution = "NOAA nowCOAST · NESDIS global infrared mosaic"
 manifest_ttl_s = 600
 max_zoom = 6
+
+# Browser discovers the path; Worker implements it (see preview/src/nisar-coverage.js).
+[space.nisar_coverage]
+endpoint = "/api/nisar/coverage"
+collection = "NISAR_L2_GCOV"
+cache_ttl_s = 600
