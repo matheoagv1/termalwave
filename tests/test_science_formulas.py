@@ -157,6 +157,19 @@ class ScienceFormulaTests(unittest.TestCase):
         self.assertAlmostEqual(gdd_daily_simple(20.0, 10.0, 10.0), 5.0)
         self.assertAlmostEqual(gdd_daily_simple(8.0, 5.0, 10.0), 0.0)
 
+    def test_gamma_to_sigma_f04(self) -> None:
+        from termalwave.science.radar import gamma_to_sigma
+
+        g = np.array([0.1, 0.2])
+        f = np.array([1.5, 1.5])
+        s = gamma_to_sigma(g, f)
+        self.assertAlmostEqual(float(s[0]), 0.15)
+
+    def test_science_toml_lists_all_f_ids(self) -> None:
+        text = (REPO / "config" / "science.toml").read_text(encoding="utf-8")
+        missing = [f"F{i:02d}" for i in range(1, 18) if f"F{i:02d}" not in text]
+        self.assertEqual(missing, [])
+
 
 if __name__ == "__main__":
     unittest.main()

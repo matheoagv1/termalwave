@@ -27,7 +27,7 @@
   {
     "id": "agua",
     "label": "Agua",
-    "text": "Máscaras de agua o humedad superficial desde óptico. Es apoyo al radar; no reemplaza caudales ni medición en el terreno."
+    "text": "Las máscaras ópticas pueden ayudar a identificar agua superficial. Revisá fecha, nubes y cobertura; no miden humedad del suelo, caudales ni niveles."
   },
   {
     "id": "relieve",

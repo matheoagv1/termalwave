@@ -50,3 +50,36 @@ ipcc_f_c = 0.47
 # F15 Dogliotti red/NIR switch thresholds (re-calibrate per sensor)
 red_clear_rho = 0.05
 red_turbid_rho = 0.07
+
+[fire]
+# F07 FRE trapezoid; biomass factor is site-calibrated (kg dry / MJ)
+fre_integration = "trapezoid"
+# F08 Key/Benson thresholds need dNBR * dnbr_key_benson_scale
+dnbr_scaled = true
+
+[phenology]
+# F10 simple GDD; yield models need local calibration
+gdd_method = "daily_simple"
+
+[erosion]
+# F12 RUSLE product; R (EI30) needs sub-hourly rain (often missing)
+require_subhourly_r = true
+
+[salinity]
+# F13 log-linear EC; apply Duan smearing on residuals
+retransform = "duan_smearing"
+
+[surface_temp]
+# F14 Landsat C2 ST_B10; not a NISAR product
+source = "landsat_c2_st_b10"
+
+[air]
+# F16 CAMS mass mixing: kg/m3 -> ug/m3 (*1e9)
+cams_kg_m3_to_ug_m3 = 1.0e9
+
+[deform]
+# F17 GUNW: +phase = +range (retreat); screen ionosphere before interpret
+gunw_positive_phase = "increasing_range"
+
+# checklist: every F01–F17 id must appear in this file (grep-friendly)
+# F01 F02 F03 F04 F05 F06 F07 F08 F09 F10 F11 F12 F13 F14 F15 F16 F17
