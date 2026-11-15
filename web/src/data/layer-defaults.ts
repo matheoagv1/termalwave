@@ -80,8 +80,17 @@ const LABELS: Record<string, string> = {
   suelo: "Suelo",
 };
 
+// Espejo de config/layers.toml (el backend es la fuente; esto cubre configs viejos).
+const TAXONOMY: Record<string, Pick<LayerDef, "category" | "core">> = {
+  radar: { category: "data", core: true },
+  incendios: { category: "data" },
+  suelo: { category: "inference" },
+  contaminacion: { category: "inference" },
+};
+
 export function layerDef(id: string, label: string): LayerDef {
-  const base = { id, label: LABELS[id] ?? label, ...(DEFAULTS[id] ?? GENERIC) };
+  const tax = TAXONOMY[id] ?? { category: "data" as const };
+  const base: LayerDef = { id, label: LABELS[id] ?? label, ...(DEFAULTS[id] ?? GENERIC), ...tax };
   const fromContext = copy.capas?.[id];
   return fromContext ? { ...base, note: fromContext } : base;
 }

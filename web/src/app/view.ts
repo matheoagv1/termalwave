@@ -112,7 +112,11 @@ export function buildView(m: Model) {
   const st = S.status;
 
   // capas
-  const layerItems = layers.map((l) => {
+  const CAT_ORDER = ["data", "prediction", "inference"];
+  const CAT_LABEL: Record<string, string> = { data: "Datos", prediction: "Predicciones", inference: "Inferencias" };
+  const catOf = (l: LayerDef): string => l.category ?? "data";
+  const sortedLayers = [...layers].sort((a, b) => CAT_ORDER.indexOf(catOf(a)) - CAT_ORDER.indexOf(catOf(b)));
+  const layerItems = sortedLayers.map((l, i) => {
     const on = l.id === sc.layer;
     const gap = !!(fa && !fa.tick.frames[l.id]);
     return {
@@ -120,6 +124,8 @@ export function buildView(m: Model) {
       label: l.label,
       unit: l.unit,
       note: l.note,
+      core: !!l.core,
+      head: i === 0 || catOf(sortedLayers[i - 1]) !== catOf(l) ? (CAT_LABEL[catOf(l)] ?? "") : "",
       on,
       gap,
       grad: grad(l),
