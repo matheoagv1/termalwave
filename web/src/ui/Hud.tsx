@@ -485,7 +485,7 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
         </button>
       )}
       {v.brandOn && (
-        <div style={s(`pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 10px;${PANEL};flex:none`)}>
+        <div style={s(`pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 0 0 10px;margin-right:calc(-1 * ${lay.pad});${PANEL};flex:none`)}>
           {v.mock && (
             <span title={t.mock.detail} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
               {t.mock.tag}

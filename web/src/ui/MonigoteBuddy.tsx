@@ -35,7 +35,7 @@ export function MonigoteBuddy({
   const greet = name ? `, ${name}` : "";
   return (
     <div
-      style={s(`position:absolute;right:12px;bottom:${bottom};pointer-events:auto;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px`)}
+      style={s(`position:absolute;right:0;bottom:${bottom};pointer-events:auto;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px`)}
     >
       {open && tip && (
         <div
