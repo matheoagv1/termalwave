@@ -234,7 +234,6 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                         `height:18px;width:100%;display:flex;align-items:center;gap:6px;padding:0 4px;border:0;border-top:2px solid ${seg.tone};background:transparent;text-align:left;cursor:pointer;overflow:hidden;white-space:nowrap`,
                       )}
                     >
-                      <span style={s(`flex:none;width:8px;height:8px;border:1.5px solid ${seg.tone};background:${seg.mark}`)} />
                       <img src={`./ui/${seg.cal}.png`} alt="" aria-hidden="true" width={16} height={16} style={s("flex:none;image-rendering:pixelated")} />
                       {seg.showLabel && <span style={s("font:500 12px var(--sans);overflow:hidden;text-overflow:ellipsis")}>{seg.label}</span>}
                       {seg.showMeta && <span style={s("font:10px var(--mono);color:var(--fg3);overflow:hidden;text-overflow:ellipsis")}>{seg.meta}</span>}

@@ -676,7 +676,7 @@ export function buildView(m: Model) {
     sceneSoft: S.introOpen,
     introOpen: S.introOpen,
     moniB: S.tlH + (isM ? 52 : 0) + 20 + "px",
-    moniOn: S.introDone && !S.introOpen && !imm,
+    moniOn: S.introDone && !S.introOpen && !imm && !(chrome && !!L && (isM ? S.sheet : cardOpen)),
     moniTip: S.helpText || moniTip,
     moniOpen: S.moniOpen,
     soundOn: S.soundOn,
