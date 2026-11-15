@@ -17,6 +17,7 @@ import type {
   ViewScale,
 } from "../tw/contract";
 import { hashParams } from "./hash";
+import { cityBounds } from "../scene/maplibre-scene";
 import { Hud } from "../ui/Hud";
 import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
 import { Sfx } from "../ui/sfx";
@@ -268,7 +269,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       activePlace: null,
       scene: INITIAL_SCENE,
     });
-    this.scene.setActivePlace?.(false);
+    this.scene.setActivePlace?.(null);
     this.padKey = null;
     this.scene.setPadding(this.padding());
     let start = hp.c ?? (sc !== "normal" && sc !== "error-config" ? "territory" : "orbit");
@@ -291,7 +292,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     if (deepTerritory) {
       const place = { label: ds.area.name, lonlat: ds.area.center, bounds: ds.area.bounds };
       await new Promise<void>((r) => this.setState({ ds, activePlace: place }, r));
-      this.scene.setActivePlace?.(true);
+      this.scene.setActivePlace?.(ds.area.bounds);
     } else {
       await new Promise<void>((r) => this.setState({ ds }, r));
     }
@@ -634,10 +635,13 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   enter = (): void => {
     if (!this.state.ds || !this.scene) return;
-    const a = this.state.ds.area;
-    const place = this.state.activePlace ?? { label: a.name, lonlat: a.center, bounds: a.bounds };
-    this.setState({ explore: false, ficha: this.state.W >= 760, activePlace: place });
-    this.scene.setActivePlace?.(true);
+    const place = this.state.activePlace;
+    if (!place?.bounds) {
+      this.showToast(T.search.needPlace);
+      return;
+    }
+    this.setState({ explore: false, ficha: this.state.W >= 760, dockOpen: true });
+    this.scene.setActivePlace?.(place.bounds);
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory");
   };
@@ -800,27 +804,31 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   goResult = (r: SearchResult): void => {
     if (!this.scene) return;
     const ds = this.state.ds;
-    const place = {
-      label: r.label,
-      lonlat: r.lonlat as [number, number],
-      bounds: r.kind === "area" && ds ? ds.area.bounds : undefined,
-    };
-    this.setState({ q: "", results: [], searched: false, searchOpen: false, activePlace: place, explore: true });
-    this.scene.setActivePlace?.(true);
-    // preset del area de demo: entra a territorio; no fuerza radar
-    if (r.kind === "area") {
-      this.setState({ explore: false, ficha: this.state.W >= 760 });
-      this.scene.set({ focus: null });
-      void this.scene.flyTo("territory");
-      return;
-    }
+    const lonlat = r.lonlat as [number, number];
+    const bounds =
+      r.kind === "area" && ds ? ds.area.bounds : cityBounds(lonlat[0], lonlat[1]);
+    const place = { label: r.label, lonlat, bounds };
+    this.setState({
+      q: "",
+      results: [],
+      searched: false,
+      searchOpen: false,
+      activePlace: place,
+      explore: true,
+    });
+    this.scene.setActivePlace?.(bounds);
     this.showToast(T.search.going(r.label));
-    const focus = { lonlat: r.lonlat, zoom: 1 };
-    const armFocus = (): void => {
-      this.scene?.set({ focus });
-    };
-    if (this.state.scene.camera !== "orbit") void this.scene.resetToOrbit().then(armFocus);
-    else armFocus();
+    this.scene.set({ focus: null });
+    void this.scene.flyTo("territory").then(() => {
+      this.setState({
+        moniOpen: true,
+        helpText: T.search.whatSee(r.label),
+        ficha: this.state.W >= 760,
+        dockOpen: true,
+        explore: false,
+      });
+      if (this.state.soundOn) Sfx.tip();
+    });
   };
 
   // teclado

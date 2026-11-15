@@ -27,7 +27,8 @@ export const T = {
   search: {
     none: (q) => `Sin resultados para "${q}". Prueba con el nombre del área o con latitud y longitud.`,
     going: (label) => `Yendo a ${label}`,
-    needPlace: "Buscá un lugar primero para ver capas locales.",
+    needPlace: "Buscá un lugar primero para entrar a una zona.",
+    whatSee: (label) => `Llegaste a ${label}. ¿Qué querés ver? Activá capas en el panel.`,
   },
 
   status: {
@@ -67,11 +68,11 @@ export const T = {
   },
 
   entry: {
-    kicker: "Área de estudio",
-    lead: "Mira cómo ha cambiado la superficie de este territorio a lo largo del tiempo, con radar satelital NISAR (NASA e ISRO).",
-    enter: "Entrar al área",
+    kicker: "Zona activa",
+    lead: "Elegí un lugar en el globo y pedí las capas que quieras ver. El radar NISAR es opcional para esa zona.",
+    enter: "Entrar a la zona",
     explore: "Explorar el mundo",
-    backToArea: "Ir al área de estudio",
+    backToArea: "Encuadrar esta zona",
     dragHint: "Arrastra para girar la Tierra.",
     coords: (lat, lon) => `${lat} · ${lon}`,
     range: (a, b) => `${a} a ${b}`,

@@ -24,6 +24,7 @@ import { SpaceScene, type SpaceConfig } from "./space";
 import { SatellitesLayer } from "./space/satellites";
 import { SkyLayer } from "./space/sky";
 import type { Bounds } from "./space/satellites-geometry";
+import { installTileCache, tileCacheTransformRequest } from "./tile-cache";
 
 export type { BasemapTiles } from "../tw/contract";
 export type BasemapLayers = BasemapTiles & { underlay?: BasemapTiles };
@@ -50,10 +51,51 @@ const URBAN_DETAIL = 1.35;
 const URBAN_PITCH = 6;
 // busqueda de lugar desde orbita; duracion y zoom tipo gev
 const PLACE_FLY_MS = 3000;
+const PLACE_FLY_MS_MIN = 2800;
+const PLACE_FLY_MS_MAX = 7500;
+const PLACE_FLY_KM = 0.45;
 const PLACE_ZOOM = 10;
-const PLACE_FLY_CURVE = 1.15;
+const PLACE_FLY_CURVE = 1.12;
+const CITY_HALF_DEG = 0.75;
 // AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
 const AOI_VIEWPORT_FRAC = 0.12;
+
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const R = 6371;
+  const toR = (d: number) => (d * Math.PI) / 180;
+  const dLat = toR(b[1] - a[1]);
+  const dLon = toR(b[0] - a[0]);
+  const lat1 = toR(a[1]);
+  const lat2 = toR(b[1]);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function placeFlyMs(from: [number, number], to: [number, number]): number {
+  const km = haversineKm(from, to);
+  return Math.round(clamp(PLACE_FLY_MS_MIN + km * PLACE_FLY_KM, PLACE_FLY_MS_MIN, PLACE_FLY_MS_MAX));
+}
+
+function cityBounds(lon: number, lat: number, half = CITY_HALF_DEG): Bounds {
+  return {
+    west: lon - half,
+    east: lon + half,
+    south: Math.max(-85, lat - half),
+    north: Math.min(85, lat + half),
+  };
+}
+
+function boundsNear(a: Bounds, b: Bounds, eps = 0.08): boolean {
+  return (
+    Math.abs(a.west - b.west) < eps &&
+    Math.abs(a.east - b.east) < eps &&
+    Math.abs(a.south - b.south) < eps &&
+    Math.abs(a.north - b.north) < eps
+  );
+}
+
+export { cityBounds, placeFlyMs };
 
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
@@ -117,6 +159,7 @@ export class MapLibreScene implements SceneApi {
   private dragCurtain = false;
   // zona activa desde busqueda; sin eso no hay outline ni PNG del AOI
   private placeOn = false;
+  private placeBounds: Bounds | null = null;
 
   constructor(o: Partial<MapSceneOptions> = {}) {
     this.o = {
@@ -138,6 +181,7 @@ export class MapLibreScene implements SceneApi {
     this.mapEl.style.cssText = "position:absolute;inset:0;background:#000";
     el.appendChild(this.mapEl);
 
+    installTileCache();
     this.map = new maplibregl.Map({
       container: this.mapEl,
       style: this.baseStyle(),
@@ -149,6 +193,7 @@ export class MapLibreScene implements SceneApi {
       attributionControl: false,
       dragRotate: false,
       pitchWithRotate: false,
+      transformRequest: tileCacheTransformRequest,
     });
     this.map.touchZoomRotate.disableRotation();
     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
@@ -229,11 +274,14 @@ export class MapLibreScene implements SceneApi {
       projection: { type: "globe" },
       sources,
       layers,
+      // space: soft limb like gev orbit; fades out as you enter study zoom
       sky: this.o.space
         ? {
-            "sky-color": "#000000",
-            "horizon-color": "#000000",
-            "atmosphere-blend": 0.15,
+            "sky-color": "#02060f",
+            "horizon-color": "#1a3a6e",
+            "fog-color": "#6ec8ff",
+            "fog-ground-blend": 0.65,
+            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 4, 0.55, 7, 0.08, 9, 0],
           }
         : {
             "sky-color": this.css("--scene-sphere", "#082460"),
@@ -377,9 +425,35 @@ export class MapLibreScene implements SceneApi {
     this.whenReady(() => this.applyEntities(id, data));
   }
 
-  setActivePlace(on: boolean): void {
-    this.placeOn = on;
-    this.whenReady(() => this.updateAreaChrome());
+  setActivePlace(bounds: Bounds | null): void {
+    this.placeOn = !!bounds;
+    this.placeBounds = bounds;
+    this.whenReady(() => {
+      this.syncPlaceChrome();
+      this.refreshAoiMinZoom();
+      this.updateAreaChrome();
+    });
+  }
+
+  private syncPlaceChrome(): void {
+    if (!this.ready || !this.map.getSource("tw-area")) return;
+    const b = this.placeBounds ?? this.ds?.area.bounds;
+    if (!b) return;
+    const ring = [
+      [b.west, b.north],
+      [b.east, b.north],
+      [b.east, b.south],
+      [b.west, b.south],
+      [b.west, b.north],
+    ];
+    (this.map.getSource("tw-area") as GeoJSONSource).setData({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Polygon", coordinates: [ring] },
+    });
+    if (this.ring) {
+      this.ring.setLngLat([(b.west + b.east) / 2, (b.south + b.north) / 2]);
+    }
   }
 
   private radarOn(): boolean {
@@ -503,9 +577,10 @@ export class MapLibreScene implements SceneApi {
     return Math.min(maxX - minX, maxY - minY);
   }
 
-  /** PNG SAR/fenomeno: zona activa + radar + territorio/detalle con encuadre suficiente. */
+  // PNG SAR/fenomeno: solo si la zona activa es el AOI del dataset (demo)
   private aoiOverlaysVisible(): boolean {
-    if (!this.placeOn || !this.radarOn()) return false;
+    if (!this.placeOn || !this.radarOn() || !this.ds || !this.placeBounds) return false;
+    if (!boundsNear(this.placeBounds, this.ds.area.bounds)) return false;
     const c = this.s.camera;
     if (c !== "territory" && c !== "detail") return false;
     const vmin = Math.min(this.mapEl.clientWidth, this.mapEl.clientHeight);
@@ -784,8 +859,8 @@ export class MapLibreScene implements SceneApi {
   }
 
   private territoryCam(): { center: [number, number]; zoom: number; pitch: number; bearing: number } | null {
-    if (!this.ds) return null;
-    const b = this.ds.area.bounds;
+    if (!this.ds && !this.placeBounds) return null;
+    const b = this.placeBounds ?? this.ds!.area.bounds;
     const pitch = clamp(this.s.tilt + (this.urban() ? URBAN_PITCH : 0), 0, 70);
     const bearing = this.s.northUp ? 0 : -18;
     const box: [[number, number], [number, number]] = [[b.west, b.south], [b.east, b.north]];
@@ -887,12 +962,26 @@ export class MapLibreScene implements SceneApi {
     else map.easeTo(opts);
   }
 
+  private flightMsTo(center: [number, number]): number {
+    if (!this.ready) return PLACE_FLY_MS;
+    const c = this.map.getCenter();
+    return placeFlyMs([c.lng, c.lat], center);
+  }
+
   flyTo(camera: CameraMode): Promise<void> {
     return new Promise((resolve) => {
       this.flyId += 1;
       const id = this.flyId;
       const from = this.s.camera;
-      const dur = camera === "orbit" ? 1800 : 2600;
+      let dur = camera === "orbit" ? 1800 : PLACE_FLY_MS;
+      if (camera === "territory" || camera === "detail") {
+        const cam = this.territoryCam();
+        const to =
+          camera === "detail" && this.s.focus
+            ? (this.s.focus.lonlat as [number, number])
+            : cam?.center;
+        if (to) dur = this.flightMsTo(to);
+      }
       this.s.camera = camera === "territory" || camera === "orbit" ? "approach" : camera;
       this.emit();
       const finish = (): void => {
@@ -904,7 +993,7 @@ export class MapLibreScene implements SceneApi {
       if (!this.ready) return finish();
       this.map.once("moveend", finish);
       this.go(camera, { fly: from === "orbit" || camera === "orbit", ms: dur });
-      // Sin animación (movimiento reducido o cámara que no se pudo calcular) no habrá moveend.
+      // sin moveend si reducedMotion o camara no calculable
       window.setTimeout(() => {
         if (id === this.flyId && !this.map.isMoving()) {
           this.map.off("moveend", finish);
@@ -971,7 +1060,14 @@ export class MapLibreScene implements SceneApi {
       this.whenReady(() => this.go("detail", { fly: false, ms: 700 }));
     } else if ("focus" in n && s.camera === "orbit") {
       const place = Boolean(s.focus);
-      this.whenReady(() => this.go("orbit", { fly: place, ms: place ? PLACE_FLY_MS : 900 }));
+      this.whenReady(() => {
+        let ms = 900;
+        if (place && s.focus) {
+          const c = this.map.getCenter();
+          ms = placeFlyMs([c.lng, c.lat], s.focus.lonlat as [number, number]);
+        }
+        this.go("orbit", { fly: place, ms });
+      });
     }
     this.whenReady(() => {
       this.applyFrame();

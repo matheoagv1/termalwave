@@ -578,10 +578,37 @@ export class CloudsLayer implements SpaceLayer {
         }
       }
       this.shown = time;
+      // fade clouds at study zoom so terrain/layers stay readable
+      const cloudOp: unknown = [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        2,
+        this.opacity,
+        6,
+        this.opacity * 0.55,
+        9,
+        this.opacity * 0.12,
+        11,
+        0,
+      ];
+      const shadowOp: unknown = [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        1,
+        0.22 * this.opacity,
+        5,
+        0.45 * this.opacity,
+        8,
+        0.08 * this.opacity,
+        10,
+        0,
+      ];
       if (this.painted !== this.opacity) {
         this.painted = this.opacity;
-        map.setPaintProperty(LAYER, "raster-opacity", this.opacity);
-        map.setPaintProperty(SHADOW, "raster-opacity", ["interpolate", ["linear"], ["zoom"], 1, 0.22 * this.opacity, 5, 0.5 * this.opacity]);
+        map.setPaintProperty(LAYER, "raster-opacity", cloudOp);
+        map.setPaintProperty(SHADOW, "raster-opacity", shadowOp);
       }
       // stay over the basemap and sar overlays, even those added after us
       const order = map.getLayersOrder();
