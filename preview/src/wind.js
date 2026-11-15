@@ -48,6 +48,8 @@ export async function handleWind(url, _env, ctx, cfg) {
 
 /** @returns {[number, number] | null} lat, lon */
 function parseLatLon(latRaw, lonRaw) {
+  // Number(null)===0; require explicit query params
+  if (latRaw == null || lonRaw == null || latRaw === "" || lonRaw === "") return null;
   const lat = Number(latRaw);
   const lon = Number(lonRaw);
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
