@@ -92,6 +92,29 @@ def build_dataset(
     first = years[0] if years else 2000
     last = years[-1] if years else first
     synthetic = bool(timeline.get("synthetic", True))
+    tax = cfg.get("layers_taxonomy") or {}
+    by_id = {str(r["id"]): r for r in (tax.get("layers") or []) if r.get("id")}
+    enriched: list[dict[str, Any]] = []
+    for L in layer_defs:
+        row = dict(L)
+        meta = by_id.get(row["id"]) or {}
+        if meta.get("category"):
+            row["category"] = str(meta["category"])
+        if "core" in meta:
+            row["core"] = bool(meta["core"])
+        elif row["id"] == "radar":
+            row["core"] = True
+            row.setdefault("category", "data")
+        if meta.get("label"):
+            row["label"] = str(meta["label"])
+        enriched.append(row)
+    layer_defs = enriched
+    presets = {
+        str(p["trade"]): [x for x in p.get("enable") or [] if x != "radar"]
+        for p in (tax.get("presets") or [])
+        if p.get("trade")
+    }
+    # pipeline fixture HDF5→PNG is not MockProvider; badge off for pitch trust
     return {
         "area": {
             "name": str(aoi.get("name") or "Area de estudio"),
@@ -99,6 +122,12 @@ def build_dataset(
             "center": _center(bounds),
         },
         "layers": layer_defs,
+        "presets": presets,
+        "layers_taxonomy": {
+            "policy": tax.get("policy") or {},
+            "layers": tax.get("layers") or [],
+            "presets": tax.get("presets") or [],
+        },
         "segments": [
             {
                 "id": "anual",
@@ -114,7 +143,8 @@ def build_dataset(
         "context": [],
         "sources": _sources(provenance),
         "sourcesAt": (provenance or {}).get("generated_at"),
-        "isMock": synthetic,
+        "timelineSynthetic": synthetic,
+        "isMock": False,
     }
 
 

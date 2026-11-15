@@ -8,6 +8,45 @@ from pathlib import Path
 from typing import Any
 
 
+def load_layers_taxonomy(repo_root: Path) -> dict[str, Any]:
+    """category/core/presets from config/layers.toml (challenge taxonomy)."""
+    path = repo_root / "config" / "layers.toml"
+    if not path.is_file():
+        return {"policy": {}, "layers": [], "presets": []}
+    with path.open("rb") as fh:
+        raw = tomllib.load(fh)
+    layers = []
+    for row in raw.get("layers") or []:
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        layers.append(
+            {
+                "id": str(row["id"]),
+                "category": str(row.get("category") or "data"),
+                "core": bool(row.get("core", False)),
+                "label": str(row.get("label") or row["id"]),
+                "notes": str(row.get("notes") or ""),
+            }
+        )
+    presets = []
+    for row in raw.get("presets") or []:
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        enable = [str(x) for x in (row.get("enable") or []) if str(x).strip()]
+        presets.append(
+            {
+                "id": str(row["id"]),
+                "trade": str(row.get("trade") or row["id"]),
+                "enable": enable,
+            }
+        )
+    return {
+        "policy": dict(raw.get("policy") or {}),
+        "layers": layers,
+        "presets": presets,
+    }
+
+
 def load_config(path: Path, repo_root: Path) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"Config not found: {path}")
@@ -38,6 +77,8 @@ def load_config(path: Path, repo_root: Path) -> dict[str, Any]:
     if "overlay_mirrors" in paths:
         paths["overlay_mirrors"] = [str(resolve(p)) for p in paths["overlay_mirrors"]]
 
+    # site layers keep id/label; taxonomy overlays category/core/presets
+    data["layers_taxonomy"] = load_layers_taxonomy(repo_root)
     return data
 
 
@@ -110,6 +151,34 @@ def write_web_app_config(
             "cesium_ion_asset_world_terrain"
         ),
     }
+
+    tax = cfg.get("layers_taxonomy") or {}
+    # Enrich timeline.layers[] with category/core so UI doesn't need a join.
+    tl = payload.get("timeline")
+    if tl and isinstance(tl.get("layers"), list) and tax.get("layers"):
+        tax_by_id = {r["id"]: r for r in tax["layers"] if r.get("id")}
+        enriched_tl_layers = []
+        for lrow in tl["layers"]:
+            row = dict(lrow)
+            meta = tax_by_id.get(row.get("id", "")) or {}
+            if meta.get("category"):
+                row["category"] = str(meta["category"])
+            row["core"] = bool(meta.get("core", row.get("id") == "radar"))
+            enriched_tl_layers.append(row)
+        payload["timeline"] = dict(tl, layers=enriched_tl_layers)
+
+    if tax.get("layers") or tax.get("presets"):
+        payload["layers_taxonomy"] = {
+            "policy": tax.get("policy") or {},
+            "layers": tax.get("layers") or [],
+            "presets": tax.get("presets") or [],
+        }
+        # flat presets for UI rubros: trade name -> layer ids (core always implied)
+        payload["presets"] = {
+            str(p["trade"]): [x for x in p.get("enable") or [] if x != "radar"]
+            for p in (tax.get("presets") or [])
+            if p.get("trade")
+        }
 
     written: list[Path] = []
     for key in ("web_config_out", "web_dist_config_out"):
