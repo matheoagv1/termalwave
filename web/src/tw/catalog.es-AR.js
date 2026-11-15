@@ -268,7 +268,7 @@ export const T = {
     points: (n) => (n === 1 ? "1 punto" : `${n} puntos`),
     crossing: (seg, gran) => `Ahora: ${seg}, ${gran}`,
     scaleNote: "Cada punto ocupa el mismo ancho. La franja de abajo muestra el tiempo real.",
-    realTime: "Tiempo real",
+    realTime: "Años",
     kindComposite: "Compuesto",
     kindAcquisition: "Pasada",
     gapLegend: "Sin imagen",
