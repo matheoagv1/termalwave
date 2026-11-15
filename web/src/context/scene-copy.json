@@ -17,12 +17,25 @@
   "cielo": {
     "estrellas": "Estrellas",
     "constelaciones": "Constelaciones",
-    "aclaracion": "Referencias visuales del cielo."
+    "aclaracion": "Referencias visuales del cielo. Consultá la fecha y la ubicación usadas para representarlas.",
+    "sol": "Sol",
+    "luna": "Luna",
+    "planetas": "Planetas"
   },
   "satelites": {
     "titulo": "Satélites",
     "cobertura": "Cobertura representada",
     "campoVision": "Campo de visión",
-    "aclaracion": "La cobertura depende de la órbita, el instrumento y la fecha. Una representación en pantalla no confirma una observación disponible."
+    "aclaracion": "La posición y la cobertura representadas dependen de los datos de órbita y del instrumento disponibles. No confirman por sí solas que exista una observación del lugar.",
+    "nisar": "NISAR",
+    "saocom": "SAOCOM",
+    "sentinel1": "Sentinel-1",
+    "alos4": "ALOS-4"
+  },
+  "nubesIR": {
+    "titulo": "Nubes infrarrojas",
+    "fuente": "Fuente: nowCOAST",
+    "descripcion": "Imagen infrarroja para observar nubes según la cobertura y la fecha disponibles. Las zonas sin datos no indican ausencia de nubes.",
+    "aviso": "Revisá la hora de actualización y la cobertura antes de interpretar la imagen."
   }
 }
