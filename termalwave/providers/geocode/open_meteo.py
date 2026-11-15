@@ -9,8 +9,7 @@ from termalwave.model import Place, utc_now
 from termalwave.providers._fixture import load_json_fixture
 from termalwave.providers.http import build_url, http_get_json
 from termalwave.providers.rate_limit import wait_from_meta
-from termalwave.providers.request_cache import get_json, put_json
-from termalwave.runtime_config import REPO_ROOT
+from termalwave.providers.request_cache import RequestCache
 
 
 class OpenMeteoGeocode:
@@ -25,6 +24,7 @@ class OpenMeteoGeocode:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.kind_cfg = kind_cfg
@@ -32,7 +32,7 @@ class OpenMeteoGeocode:
         self.offline = offline
         self.fixtures_dir = fixtures_dir
         self.endpoints = endpoints
-        self.cache_root = REPO_ROOT / "data" / "cache"
+        self.cache = cache
 
     def search(self, query: str, *, limit: int = 5) -> list[Place]:
         product = str(self.meta.get("product", "open-meteo-geocoding"))
@@ -57,18 +57,18 @@ class OpenMeteoGeocode:
             self.endpoints.get(self.name)
             or "https://geocoding-api.open-meteo.com/v1/search"
         )
-        cache_key = f"search:{q}:{limit}"
-        cached = get_json(self.cache_root, self.name, cache_key, max_age_s=7 * 86400)
-        if cached is None:
+
+        def load() -> Any:
             wait_from_meta(self.name, self.meta, self.kind_cfg)
             url = build_url(
                 base,
                 {"name": q, "count": str(limit), "language": "es"},
             )
-            cached = http_get_json(url)
-            put_json(self.cache_root, self.name, cache_key, cached)
+            return http_get_json(url)
+
+        data = self.cache.fetch(self.name, f"search:{q}:{limit}", load)
         return _places_from_payload(
-            cached,
+            data,
             source=self.name,
             product=product,
             license_name=license_name,

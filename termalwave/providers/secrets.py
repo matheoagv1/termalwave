@@ -38,6 +38,7 @@ def load_credentials(repo_root: Path, apis: dict[str, Any]) -> dict[str, str]:
         "GOOGLE_MAPS_API_KEY",
         "GOOGLE_MAPS_SERVER_API_KEY",
         "CESIUM_ION_TOKEN",
+        "CARTO_BASEMAPS_API_KEY",
     ):
         val = os.environ.get(env_name, "").strip()
         if val:

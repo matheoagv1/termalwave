@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from termalwave.model import AOI, Period
+from termalwave.providers.request_cache import RequestCache
 from termalwave.providers.secrets import require_credential
 
 
@@ -21,6 +22,7 @@ class OpenSky:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.credentials = credentials

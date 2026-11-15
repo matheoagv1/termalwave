@@ -9,8 +9,7 @@ from termalwave.model import Place, utc_now
 from termalwave.providers._fixture import load_json_fixture
 from termalwave.providers.http import build_url, http_get_json
 from termalwave.providers.rate_limit import wait_from_meta
-from termalwave.providers.request_cache import get_json, put_json
-from termalwave.runtime_config import REPO_ROOT
+from termalwave.providers.request_cache import RequestCache
 
 
 class PhotonGeocode:
@@ -25,6 +24,7 @@ class PhotonGeocode:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.kind_cfg = kind_cfg
@@ -32,7 +32,7 @@ class PhotonGeocode:
         self.offline = offline
         self.fixtures_dir = fixtures_dir
         self.endpoints = endpoints
-        self.cache_root = REPO_ROOT / "data" / "cache"
+        self.cache = cache
 
     def search(self, query: str, *, limit: int = 5) -> list[Place]:
         product = str(self.meta.get("product", "photon"))
@@ -54,15 +54,14 @@ class PhotonGeocode:
             )
 
         base = self.endpoints.get(self.name) or "https://photon.komoot.io/api/"
-        cache_key = f"search:{q}:{limit}"
-        cached = get_json(self.cache_root, self.name, cache_key, max_age_s=7 * 86400)
-        if cached is None:
+
+        def load() -> Any:
             wait_from_meta(self.name, self.meta, self.kind_cfg)
-            url = build_url(base.rstrip("/") + "/", {"q": q, "limit": str(limit)})
-            cached = http_get_json(url)
-            put_json(self.cache_root, self.name, cache_key, cached)
+            return http_get_json(build_url(base.rstrip("/") + "/", {"q": q, "limit": str(limit)}))
+
+        data = self.cache.fetch(self.name, f"search:{q}:{limit}", load)
         return _places_from_geojson(
-            cached,
+            data,
             source=self.name,
             product=product,
             license_name=license_name,
@@ -89,15 +88,14 @@ class PhotonGeocode:
             return places[0] if places else None
 
         base = self.endpoints.get(f"{self.name}_reverse") or "https://photon.komoot.io/reverse"
-        cache_key = f"reverse:{lat:.5f},{lon:.5f}"
-        cached = get_json(self.cache_root, self.name, cache_key, max_age_s=7 * 86400)
-        if cached is None:
+
+        def load() -> Any:
             wait_from_meta(self.name, self.meta, self.kind_cfg)
-            url = build_url(base, {"lat": str(lat), "lon": str(lon)})
-            cached = http_get_json(url)
-            put_json(self.cache_root, self.name, cache_key, cached)
+            return http_get_json(build_url(base, {"lat": str(lat), "lon": str(lon)}))
+
+        data = self.cache.fetch(self.name, f"reverse:{lat:.5f},{lon:.5f}", load)
         places = _places_from_geojson(
-            cached,
+            data,
             source=self.name,
             product=product,
             license_name=license_name,

@@ -26,13 +26,18 @@ web_dist_config_out = "web/dist/app-config.json"
 
 [hdf5]
 raster_candidates = [
+  "/science/LSAR/GCOV/grids/frequencyA/HHHH",
   "/science/LSAR/RSLC/swaths/frequencyA/HH/amplitude",
   "/science/LSAR/RSLC/swaths/frequencyA/HH",
   "/data/amplitude",
   "/amplitude",
   "amplitude",
 ]
-raster_name_hints = ["amplitude", "intensity", "sigma0", "data", "raster"]
+raster_name_hints = ["hhhh", "amplitude", "intensity", "sigma0", "data", "raster"]
+# how each dataset name maps to radar power before going to dB:
+# power = already linear power (gcov gamma0 covariance terms), amplitude = |a|^2;
+# complex samples are always |z|^2
+power_names = ["hhhh", "hvhv", "vhvh", "vvvv", "intensity", "sigma0", "gamma0"]
 latitude_candidates = ["/latitude", "latitude", "/data/latitude"]
 longitude_candidates = ["/longitude", "longitude", "/data/longitude"]
 geotransform_attr_keys = ["geotransform", "GeoTransform", "geo_transform"]
@@ -66,6 +71,11 @@ id = "incendios"
 label = "Incendios"
 
 [colormap]
+# fixed db window so two dates share one colour scale (gamma0, semi-arid land)
+scale = "db_fixed"
+db_min = -25.0
+db_max = 0.0
+# only used when scale = "percentile" (quick look of an unknown product)
 percentile_low = 2.0
 percentile_high = 98.0
 alpha_positive = 200

@@ -1,0 +1,1 @@
+HANDOFF vps→carne escena espacio. Merge a work/carne: space/* + maplibre-scene mountSpace + main.tsx + public/sky|satellites. UI toggles ES-AR-SGO. Seguir t10 buscador+glitches; quitar % suelo UI. Vivo tras deploy Worker+app-config [space] (vps). Demo t7 cuando limpio. Origen código: worktree -vps-space.

@@ -8,6 +8,10 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+from _sandbox import sandbox_root  # noqa: E402
 
 
 class PipelineSmokeTests(unittest.TestCase):
@@ -21,12 +25,13 @@ class PipelineSmokeTests(unittest.TestCase):
         from termalwave.process.config import load_config
         from termalwave.process.pipeline import run_pipeline
 
-        config_path = default_site_config()
-        cfg = load_config(config_path, REPO)
+        tmp = sandbox_root(self)
+        config_path = tmp / default_site_config().relative_to(REPO)
+        cfg = load_config(config_path, tmp)
         result = run_pipeline(
             config_path=config_path,
             offline=True,
-            repo_root=REPO,
+            repo_root=tmp,
         )
         png = Path(result["png"])
         sidecar = Path(result["sidecar"])
@@ -39,6 +44,7 @@ class PipelineSmokeTests(unittest.TestCase):
         stem = cfg["product"]["output_stem"]
         mirrors = [Path(p) for p in cfg["paths"]["overlay_mirrors"]]
         self.assertTrue(any((m / f"{stem}.png").is_file() for m in mirrors))
+        self.assertTrue(png.is_relative_to(tmp), msg=str(png))
         web_cfg = Path(cfg["paths"]["web_config_out"])
         self.assertTrue(web_cfg.is_file())
         app = json.loads(web_cfg.read_text(encoding="utf-8"))

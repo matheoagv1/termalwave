@@ -1,0 +1,79 @@
+# Layer taxonomy for TermalWave. Consumed by pipeline → app-config/dataset.
+# Core = NASA Space Apps 2026 "Dancing with the SARs" (NISAR SAR surface change).
+# Rubro presets may not disable core layers.
+
+[policy]
+challenge = "Dancing with the SARs"
+challenge_year = 2026
+core_always_on = true
+
+[[layers]]
+id = "radar"
+category = "data"
+core = true
+label = "Radar NISAR"
+notes = "Always on. NISAR SAR / surface change. Challenge core."
+
+[[layers]]
+id = "suelo"
+category = "inference"
+core = false
+label = "Estado del suelo"
+notes = "Derived/inferred from SAR + context; not a lab measurement."
+
+[[layers]]
+id = "contaminacion"
+category = "inference"
+core = false
+label = "Contaminacion"
+notes = "Index / inference; not concentration."
+
+[[layers]]
+id = "incendios"
+category = "data"
+core = false
+label = "Incendios"
+notes = "FIRMS thermal hotspots; optional overlay."
+
+# Preset stubs: enable lists only; core radar stays on.
+[[presets]]
+id = "emergencias"
+trade = "Gestión de emergencias"
+enable = ["incendios", "radar"]
+# radar redundant but documents intent; UI ignores disable of core
+
+[[presets]]
+id = "agricultura"
+trade = "Agricultura"
+enable = ["suelo", "radar"]
+
+[[presets]]
+id = "ambiente"
+trade = "Ambiente y conservación"
+enable = ["suelo", "incendios", "radar"]
+
+[[presets]]
+id = "ganaderia"
+trade = "Ganadería y pasturas"
+enable = ["suelo", "radar"]
+
+[[presets]]
+id = "agua"
+trade = "Gestión del agua"
+enable = ["suelo", "radar"]
+
+# no extra layers beyond radar core (empty enable = core only)
+[[presets]]
+id = "ordenamiento"
+trade = "Ordenamiento territorial"
+enable = ["radar"]
+
+[[presets]]
+id = "infraestructura"
+trade = "Infraestructura"
+enable = ["radar"]
+
+[[presets]]
+id = "ciencia"
+trade = "Ciencia y educación"
+enable = ["radar"]

@@ -10,6 +10,7 @@ from typing import Any
 from termalwave.model import AOI, DailyWeather, Period, utc_now
 from termalwave.providers._fixture import load_json_fixture
 from termalwave.providers.http import http_get_json
+from termalwave.providers.request_cache import RequestCache
 from termalwave.providers.secrets import require_credential
 
 
@@ -25,6 +26,7 @@ class Meteomatics:
         offline: bool,
         fixtures_dir: Path,
         endpoints: dict[str, str],
+        cache: RequestCache,
     ) -> None:
         self.meta = meta
         self.kind_cfg = kind_cfg
