@@ -1,0 +1,28 @@
+{
+  "buscador": {
+    "etiqueta": "Buscar un lugar o coordenadas",
+    "placeholder": "Lugar o coordenadas, por ejemplo: -27.79, -64.26",
+    "sinResultados": "No encontramos resultados. Probá con otro nombre o coordenadas.",
+    "errorRed": "No pudimos consultar la búsqueda. Revisá tu conexión e intentá de nuevo.",
+    "google": "Fuente: Google",
+    "openstreetmap": "Fuente: OpenStreetMap",
+    "openMeteo": "Fuente: Open-Meteo",
+    "coordenadas": "Fuente: coordenadas ingresadas"
+  },
+  "mapaBase": {
+    "sentinel2": "Sentinel-2: mosaico óptico con nubes reducidas. Puede reunir observaciones de distintas fechas; consultá la fuente para conocer su período.",
+    "blueMarble": "NASA Blue Marble: imagen de referencia del planeta. No representa condiciones actuales.",
+    "modisViirs": "MODIS o VIIRS: imagen diaria cuando está disponible. Puede tener nubes y huecos entre pasadas; revisá la fecha y el sensor."
+  },
+  "cielo": {
+    "estrellas": "Estrellas",
+    "constelaciones": "Constelaciones",
+    "aclaracion": "Referencias visuales del cielo."
+  },
+  "satelites": {
+    "titulo": "Satélites",
+    "cobertura": "Cobertura representada",
+    "campoVision": "Campo de visión",
+    "aclaracion": "La cobertura depende de la órbita, el instrumento y la fecha. Una representación en pantalla no confirma una observación disponible."
+  }
+}
