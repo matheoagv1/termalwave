@@ -49,3 +49,12 @@ references/gods-eye-view/
 references/SgoLinea/
 preview/node_modules/
 config/google/
+
+# Local agent/tooling state (per worktree, never committed)
+.tw/
+.cursor/mcp.json
+.pytest_cache/
+
+# Local backups left by tooling
+comms.worktree-bak-*/
+*.carne-bak
