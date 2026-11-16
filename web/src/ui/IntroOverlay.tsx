@@ -73,6 +73,11 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
     onDone(n, selectedTrade);
   };
 
+  const skipGuest = (): void => {
+    if (sound) Sfx.ok();
+    onDone(intro.guest, "");
+  };
+
   return (
     <div
       role="dialog"
@@ -162,6 +167,17 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
             <Primary onClick={nextFromName} disabled={!name.trim()}>
               {intro.continue}
             </Primary>
+          )}
+          {(step === "hola" || step === "nombre") && (
+            <button
+              type="button"
+              onClick={skipGuest}
+              style={s(
+                "height:40px;padding:0 14px;border:1px solid var(--line2);background:transparent;color:var(--fg);cursor:pointer;font:13px var(--sans)",
+              )}
+            >
+              {intro.skip}
+            </button>
           )}
           {step === "rubro" && (
             <Primary
