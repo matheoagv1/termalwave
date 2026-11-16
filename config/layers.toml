@@ -11,29 +11,101 @@ core_always_on = true
 id = "radar"
 category = "data"
 core = true
-label = "Radar NISAR"
-notes = "Always on. NISAR SAR / surface change. Challenge core."
+label = "Radar"
+label_en = "Radar"
+label_es = "Radar"
+unit = "dB"
+range = [-30.0, -5.0]
+product = "NISAR_L2_GCOV"
+formula = "dB = 10*log10(gamma0)"
+what_en = "L-band radar backscatter from NISAR, in decibels."
+what_es = "Retrodispersión de radar en banda L de NISAR, en decibelios."
+decision_en = "Compare two dates to see where the surface got brighter or darker."
+decision_es = "Compará dos fechas para ver dónde la superficie se aclara o se oscurece."
+nodata_en = "No radar value in this pixel."
+nodata_es = "Este píxel no tiene valor de radar."
+caveats_en = "Years before 2025 are examples. NISAR started measuring in 2025. HV is -30 to -5 dB and HH is -25 to 0 dB."
+caveats_es = "Los años anteriores a 2025 son ejemplos. NISAR empezó a medir en 2025. HV va de -30 a -5 dB y HH de -25 a 0 dB."
+notes = "Always on. NISAR SAR / surface change."
+
+[[layers.ramp]]
+at = 0.0
+color = "#0c1622"
+
+[[layers.ramp]]
+at = 0.35
+color = "#24476a"
+
+[[layers.ramp]]
+at = 0.7
+color = "#6fa3c4"
+
+[[layers.ramp]]
+at = 1.0
+color = "#e2f1f8"
 
 [[layers]]
 id = "suelo"
 category = "inference"
 core = false
-label = "Estado del suelo"
-notes = "Derived/inferred from SAR + context; not a lab measurement."
+label = "Suelo"
+label_en = "Soil"
+label_es = "Suelo"
+unit = ""
+range = [0.0, 1.0]
+product = ""
+formula = ""
+what_en = "A picture of soil condition drawn from the radar. It is not a lab measurement of moisture."
+what_es = "Una imagen del estado del suelo a partir del radar. No es una medición de humedad en laboratorio."
+decision_en = "Use it to notice a change, then check the place on the ground."
+decision_es = "Usala para notar un cambio y después revisá el lugar en el terreno."
+nodata_en = "No soil value here."
+nodata_es = "Acá no hay valor de suelo."
+caveats_en = "Example illustration until a soil product is ingested."
+caveats_es = "Ilustración de ejemplo hasta que haya un producto de suelo."
+notes = "Not a lab measurement."
 
 [[layers]]
 id = "contaminacion"
 category = "inference"
 core = false
 label = "Contaminacion"
-notes = "Index / inference; not concentration."
+label_en = "Contamination"
+label_es = "Contaminación"
+unit = "index"
+range = [0.0, 1.0]
+product = ""
+formula = ""
+what_en = "An index of how unusual the radar return is. It is not a concentration."
+what_es = "Un índice de cuán rara es la señal de radar. No es una concentración."
+decision_en = "A high index is a place to inspect. It is not proof of pollution."
+decision_es = "Un índice alto es un lugar para revisar. No es una prueba de contaminación."
+nodata_en = "No index in this pixel."
+nodata_es = "Este píxel no tiene índice."
+caveats_en = "Example picture. It does not measure chemicals."
+caveats_es = "Imagen de ejemplo. No mide sustancias químicas."
+notes = "Index, not concentration."
 
 [[layers]]
 id = "incendios"
 category = "data"
 core = false
 label = "Incendios"
-notes = "FIRMS thermal hotspots; optional overlay."
+label_en = "Fires"
+label_es = "Incendios"
+unit = ""
+range = [0.0, 1.0]
+product = "FIRMS"
+formula = ""
+what_en = "Satellite thermal detections (FIRMS) when that feed has points."
+what_es = "Detecciones térmicas de satélite (FIRMS) cuando ese servicio trae puntos."
+decision_en = "A detection is a hot spot to check. It is not a burned area."
+decision_es = "Una detección es un foco para revisar. No es un área quemada."
+nodata_en = "No detection on this date."
+nodata_es = "No hay detección en esta fecha."
+caveats_en = "The painted frame is an example unless a FIRMS record is attached."
+caveats_es = "El cuadro pintado es un ejemplo, salvo que haya un registro de FIRMS."
+notes = "FIRMS thermal detections when the feed has them."
 
 # Preset stubs: enable lists only; core radar stays on.
 [[presets]]
