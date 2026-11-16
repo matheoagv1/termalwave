@@ -7,7 +7,6 @@ import type { View } from "../app/view";
 import { BasemapPicker } from "./basemap/BasemapPicker";
 import { Icon } from "./icons";
 import { layerCopy } from "./layers/layer-copy";
-import type { Tier } from "./layers/layer-model";
 import { LayerPanel } from "./layers/LayerPanel";
 import { HonestyBadge } from "./layers/LayerRow";
 
@@ -19,8 +18,6 @@ const GLASS = "background:var(--tw-glass-bg,var(--panel));border:1px solid var(-
 
 const LEFT: Array<{ id: Exclude<RailL, "">; icon: keyof typeof Icon }> = [
   { id: "data", icon: "railData" },
-  { id: "inference", icon: "railInference" },
-  { id: "models", icon: "railModels" },
   { id: "utilities", icon: "railUtilities" },
   { id: "annotate", icon: "railAnnotate" },
   { id: "visual", icon: "railVisual" },
@@ -34,12 +31,11 @@ const RIGHT: Array<{ id: Exclude<RailR, "">; icon: keyof typeof Icon }> = [
   { id: "inspect", icon: "inspect" },
 ];
 
-// the three layer rails open the same panel, scrolled to their category
-const TIER_OF: Partial<Record<RailL, Tier>> = { data: "raw", inference: "processed", models: "prediction" };
+// one button opens the shared layer menu; the three categories stay inside that panel
+const LAYER_RAIL: Partial<Record<RailL, true>> = { data: true, inference: true, models: true };
 
 function railLabel(v: View, a: App, id: Exclude<RailL, "">): string {
-  const tier = TIER_OF[id];
-  return tier ? layerCopy(a.state.lang).tier[tier] : v.t.rail[id];
+  return LAYER_RAIL[id] ? layerCopy(a.state.lang).panelTitle : v.t.rail[id];
 }
 
 function glyph(name: keyof typeof Icon, size = 18): React.ReactElement {
@@ -74,8 +70,8 @@ export function LeftRail({ v, a }: P): React.ReactElement {
         })}
       </div>
       {v.railL && (
-        <div style={s(`pointer-events:auto;width:min(${TIER_OF[v.railL] ? 320 : 280}px,calc(100vw - 88px));max-height:100%;overflow:auto;${GLASS}`)}>
-          <RailHead title={TIER_OF[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
+        <div style={s(`pointer-events:auto;width:min(${LAYER_RAIL[v.railL] ? 320 : 280}px,calc(100vw - 88px));max-height:100%;overflow:auto;${GLASS}`)}>
+          <RailHead title={LAYER_RAIL[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
           {v.showBasemap && <BasemapList v={v} />}
           {v.showAnnotate && <p style={s("margin:0;padding:12px;font:13px/1.45 var(--sans);color:var(--fg2)")}>{t.state.annotate}</p>}
           {v.showVisual && (
@@ -86,7 +82,7 @@ export function LeftRail({ v, a }: P): React.ReactElement {
               </button>
             </div>
           )}
-          {TIER_OF[v.railL] && <LayerPanel v={v} a={a} focus={TIER_OF[v.railL]} />}
+          {LAYER_RAIL[v.railL] && <LayerPanel v={v} a={a} />}
         </div>
       )}
     </div>
@@ -154,11 +150,11 @@ export function MobileSheet({ v, a }: P): React.ReactElement | null {
   const { t } = v;
   return (
     <div style={s(`position:absolute;left:0;right:0;bottom:52px;max-height:56%;overflow:auto;pointer-events:auto;z-index:23;${GLASS}`)}>
-      <RailHead title={TIER_OF[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
+      <RailHead title={LAYER_RAIL[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
       {v.showBasemap && <BasemapList v={v} />}
       {v.showAnnotate && <p style={s("margin:0;padding:12px;color:var(--fg2)")}>{t.state.annotate}</p>}
       {v.showVisual && <p style={s("margin:0;padding:12px;color:var(--fg2)")}>{t.state.visual}</p>}
-      {TIER_OF[v.railL] && <LayerPanel v={v} a={a} focus={TIER_OF[v.railL]} />}
+      {LAYER_RAIL[v.railL] && <LayerPanel v={v} a={a} />}
     </div>
   );
 }
