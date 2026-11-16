@@ -9,6 +9,7 @@ core_always_on = true
 
 [[layers]]
 id = "radar"
+tier = "raw"
 category = "data"
 core = true
 label = "Radar"
@@ -46,6 +47,7 @@ color = "#e2f1f8"
 
 [[layers]]
 id = "suelo"
+tier = "processed"
 category = "inference"
 core = false
 label = "Suelo"
@@ -67,6 +69,7 @@ notes = "Not a lab measurement."
 
 [[layers]]
 id = "contaminacion"
+tier = "processed"
 category = "inference"
 core = false
 label = "Contaminacion"
@@ -88,6 +91,7 @@ notes = "Index, not concentration."
 
 [[layers]]
 id = "incendios"
+tier = "raw"
 category = "data"
 core = false
 label = "Incendios"

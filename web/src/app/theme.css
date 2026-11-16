@@ -292,7 +292,6 @@ body {
   outline: 2px solid #fff !important;
   outline-offset: 2px;
 }
-@keyframes tw-tipfill { from { width: 0 } to { width: 100% } }
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib a { color: #fff !important; }
 .maplibregl-ctrl-attrib.maplibregl-compact-show { max-width: calc(100vw - 24px); }
 @media (max-width: 759px) { .maplibregl-ctrl-attrib-inner { font-size: 10px; } }

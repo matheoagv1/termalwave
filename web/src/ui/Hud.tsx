@@ -8,16 +8,18 @@ import { InspectBody, LeftRail, MobileBar, MobileSheet, RightRail } from "./rail
 import { MonigoteBuddy } from "./MonigoteBuddy";
 import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
+import { hudCopy } from "./hud/copy";
+import "./hud/hud.css";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
 
 const wordmarks = import.meta.glob("../context/brand/Wordmark.tsx", { eager: true }) as Record<
   string,
-  { Wordmark?: React.ComponentType }
+  { Wordmark?: React.ComponentType<{ compact?: boolean }> }
 >;
 const Wordmark = Object.values(wordmarks)
   .map((mod) => mod.Wordmark)
-  .find((Cmp): Cmp is React.ComponentType => !!Cmp);
+  .find((Cmp): Cmp is React.ComponentType<{ compact?: boolean }> => !!Cmp);
 
 const PANEL = "background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px)";
 const PRIMARY = "border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600";
@@ -27,7 +29,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
   const { t, lay } = v;
   return (
     <div style={s("position:absolute;inset:0;pointer-events:none;z-index:20")}>
-      <TopBar v={v} a={a} />
+      {!v.immersive && <TopBar v={v} a={a} />}
       {v.orbitLegend && (
         <div style={s(`position:absolute;left:${lay.pad};bottom:${v.frameBottom};display:flex;align-items:center;gap:8px;pointer-events:none;z-index:18;font:11px var(--sans);color:var(--fg2)`)}>
           <span style={s("width:22px;height:0;border-top:1px solid var(--tw-radar)")} />
@@ -93,7 +95,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         </button>
       )}
       {v.introOpen && (
-        <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} />
+        <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} app={a} />
       )}
 
       {v.moniOn && (
@@ -106,6 +108,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           onToggle={a.toggleMoni}
           onClose={a.closeMoni}
           onSoundToggle={a.toggleSound}
+          onSetup={a.openSetup}
           soundLabel={v.soundOn ? v.t.moni.soundOn : v.t.moni.soundOff}
           closeLabel={v.t.moni.close}
           buddyLabel={v.t.moni.buddy}
@@ -319,16 +322,12 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
 
       <div
         style={s(
-          `position:absolute;left:50%;transform:translateX(-50%);top:${lay.labelT};width:max-content;max-width:calc(100% - 24px);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center`,
+          v.isM
+            ? "position:absolute;left:8px;right:60px;top:54px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left"
+            : `position:absolute;left:50%;transform:translateX(-50%);top:${lay.labelT};width:max-content;max-width:min(760px,calc(100% - 760px));min-width:min(420px,calc(100% - 24px));display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center`,
         )}
       >
-        <div
-          role="status"
-          aria-live="polite"
-          style={s(`display:${v.labelDisplay};padding:6px 12px;font:11px var(--mono);letter-spacing:0.02em;${PANEL}`)}
-        >
-          {v.mapLabel}
-        </div>
+        <StatusStrip v={v} a={a} />
         {v.compareOn && (
           <div style={s(`padding:3px 10px;font:11px var(--mono);${PANEL}`)}>{v.compareBanner}</div>
         )}
@@ -411,79 +410,49 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
 
       <TipLayer onLong={a.showHelpText} />
 
-      {v.help && (
-        <div
-          onClick={() => a.set({ help: false })}
-          style={s("position:absolute;inset:0;pointer-events:auto;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center")}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t.help.title}
-            onClick={(e) => e.stopPropagation()}
-            style={s("width:min(420px,calc(100% - 24px));background:var(--panel-solid);border:1px solid var(--line2);padding:16px;display:flex;flex-direction:column;gap:12px")}
-          >
-            <div style={s("display:flex;align-items:center")}>
-              <h2 style={s("margin:0;flex:1;font:500 15px var(--sans)")}>{t.help.title}</h2>
-              <button onClick={() => a.set({ help: false })} style={s(`height:${lay.hit};padding:0 12px;${SECONDARY}`)}>
-                {t.help.close}
-              </button>
-            </div>
-            <div style={s("display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font:12px var(--sans)")}>
-              {v.helpKeys.map((k) => (
-                <React.Fragment key={k.k}>
-                  <span style={s("font:11px var(--mono);color:var(--acc-fg)")}>{k.k}</span>
-                  <span>{k.d}</span>
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {v.help && <About v={v} a={a} />}
     </div>
   );
 }
 
 function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t, lay } = v;
+  const c = hudCopy(a.state.lang);
   return (
     <div
+      className="tw-top"
       style={s(
-        `position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};display:flex;gap:8px;align-items:flex-start;pointer-events:auto;z-index:21`,
+        `position:absolute;left:${lay.pad};right:${lay.pad};top:${lay.pad};height:40px;display:flex;gap:8px;align-items:center;padding:0 6px 0 8px;pointer-events:auto;z-index:21`,
       )}
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      <span style={s("pointer-events:none;height:40px;display:flex;align-items:center;padding:0 8px;font-size:8px;color:var(--acc-fg)")}>
-        {Wordmark ? <Wordmark /> : <span className="tw-pixel">{t.wordmark}</span>}
-      </span>
-      {!v.isM && (v.railsOn || v.dockOn) && (
-        <button
-          type="button"
-          className="tw-hov"
-          onClick={a.toOrbit}
-          title={`${t.camera.reset} (O)`}
-          aria-label={t.camera.reset}
-          style={s(`pointer-events:auto;height:40px;padding:0 10px;${PANEL};cursor:pointer;font:12px var(--sans);color:var(--fg);flex:none`)}
-        >
-          {t.camera.reset}
-        </button>
+      {!(v.isM && v.searchField) && (
+        <span style={s("flex:none;display:flex;align-items:center;color:var(--acc-fg)")}>
+          {Wordmark ? <Wordmark compact /> : <span className="tw-pixel" style={s("font-size:8px")}>{t.wordmark}</span>}
+        </span>
       )}
+      {!v.isM && <span className="tw-top-tag">{c.tagline}</span>}
       {v.searchField && (
-        <div style={s("pointer-events:auto;flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative")}>
+        <div style={s("flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative")}>
+          <span aria-hidden="true" style={s("position:absolute;left:8px;top:0;height:100%;display:flex;align-items:center;color:var(--fg3);pointer-events:none")}>
+            <Icon.search size={14} strokeWidth={2.25} />
+          </span>
           <input
+            type="search"
             value={v.q}
             onChange={(e) => a.onQ(e.target.value)}
             onKeyDown={(e) => a.onQKey(e.key)}
             placeholder={t.top.search}
             aria-label={t.top.search}
             autoComplete="off"
+            autoFocus={v.isM}
             style={s(
-              `width:100%;height:40px;padding:0 12px;border:1px solid var(--line);background:var(--panel-solid);color:var(--fg);font:13px var(--sans);border-radius:0;touch-action:manipulation`,
+              `width:100%;height:${v.isM ? "36px" : "28px"};padding:0 10px 0 28px;border:1px solid var(--line2);background:var(--panel-solid);color:var(--fg);font:13px var(--sans);border-radius:0;touch-action:manipulation`,
             )}
           />
           {v.showResults && (
-            <div role="listbox" style={s("position:absolute;left:0;right:0;top:44px;background:var(--panel-solid);border:1px solid var(--line2)")}>
+            <div role="listbox" aria-label={t.top.search} style={s("position:absolute;left:0;right:0;top:calc(100% + 6px);max-height:50vh;overflow-y:auto;background:var(--panel-solid);border:1px solid var(--line2)")}>
               {v.results.map((r) => (
                 <button
                   key={r.label}
@@ -491,80 +460,179 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
                   role="option"
                   aria-selected={false}
                   onClick={r.go}
-                  style={s(`display:block;width:100%;text-align:left;padding:0 12px;height:${lay.hit};border:0;background:transparent;cursor:pointer;font:13px var(--sans)`)}
+                  style={s(`display:block;width:100%;text-align:left;padding:0 12px;height:${lay.hit};border:0;background:transparent;cursor:pointer;font:13px var(--sans);overflow:hidden;text-overflow:ellipsis`)}
                 >
                   {r.label}
                 </button>
               ))}
-              {v.noResults && <div style={s("padding:10px 12px;color:var(--fg2)")}>{v.noResultsText}</div>}
+              {v.noResults && <div style={s("padding:10px 12px;font:12px var(--sans);color:var(--fg2);text-wrap:pretty")}>{v.noResultsText}</div>}
             </div>
           )}
         </div>
       )}
-      {v.searchBtn && (
-        <button
-          onClick={() => a.set({ searchOpen: true, q: "", results: [] })}
-          aria-label={t.top.searchOpen}
-          style={s(`pointer-events:auto;width:40px;height:40px;margin-left:auto;display:flex;align-items:center;justify-content:center;${PANEL};cursor:pointer`)}
-        >
-          <span style={s("width:12px;height:12px;border:2px solid currentColor;border-radius:50%")} />
-        </button>
-      )}
       {v.searchClose && (
         <button
+          type="button"
+          className="tw-hov tw-top-btn"
           onClick={() => a.set({ searchOpen: false, q: "", results: [] })}
           aria-label={t.top.searchClose}
-          style={s(`pointer-events:auto;width:40px;height:40px;${PANEL};cursor:pointer;flex:none`)}
+          title={t.top.searchClose}
+          style={s("flex:none")}
         >
           <Icon.close size={16} strokeWidth={2.25} aria-hidden />
         </button>
       )}
       {v.brandOn && (
-        <div style={s(`pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 0 0 10px;margin-right:calc(-1 * ${lay.pad});${PANEL};flex:none`)}>
-          {v.chipLabel && (
-            <span title={v.chipTitle || v.chipLabel} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--tw-h-ejemplo);color:var(--fg)")}>
-              {v.chipLabel}
-            </span>
-          )}
-          {v.mock && (
-            <span title={t.mock.detail} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
-              {t.mock.tag}
-            </span>
-          )}
-          <span title={v.statusDetail} style={s("display:flex;gap:6px;align-items:center;font:11px var(--mono);color:var(--fg2)")}>
-            <span style={s(`width:8px;height:8px;background:${v.statusColor}`)} />
-            {v.showStatusText && <span style={s("color:var(--fg)")}>{v.statusText}</span>}
-          </span>
-          {v.noTerrain && (
-            <span title={t.status.terrainOffDetail} style={s("font:11px var(--mono);color:var(--warn)")}>
-              {t.status.terrainOff}
-            </span>
-          )}
-          {v.hudToggleOn && (
+        <div style={s("margin-left:auto;display:flex;align-items:center;gap:6px;flex:none")}>
+          {v.searchBtn && (
             <button
-              className="tw-hov"
-              onClick={a.toggleImmersive}
-              aria-label={v.hudToggleLabel}
-              title={`${v.hudToggleLabel} (H)`}
-              style={s("width:28px;height:28px;border:1px solid var(--line2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center")}
+              type="button"
+              className="tw-hov tw-top-btn"
+              onClick={() => a.set({ searchOpen: true, q: "", results: [] })}
+              aria-label={t.top.searchOpen}
+              title={t.top.searchOpen}
             >
-              <span style={s("display:block;width:12px;height:12px;border:2px solid currentColor;position:relative")}>
-                <span style={s("position:absolute;left:1px;right:1px;bottom:1px;height:3px;background:currentColor")} />
-              </span>
+              <Icon.search size={16} strokeWidth={2.25} aria-hidden />
             </button>
           )}
           <LangSwitch v={v} a={a} />
+          {v.hudToggleOn && !v.isM && (
+            <button
+              type="button"
+              className="tw-hov tw-top-btn"
+              onClick={a.toggleImmersive}
+              aria-label={v.hudToggleLabel}
+              title={`${v.hudToggleLabel} (H)`}
+            >
+              <Icon.eyeOff size={14} strokeWidth={2.25} aria-hidden />
+            </button>
+          )}
           <button
-            className="tw-hov"
+            type="button"
+            className="tw-hov tw-top-btn"
             onClick={() => a.set({ help: !a.state.help })}
-            aria-label={t.top.help}
-            title={t.top.help}
-            style={s("width:28px;height:28px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:600 13px var(--mono)")}
+            aria-haspopup="dialog"
+            aria-expanded={v.help}
+            aria-label={c.about}
+            title={`${c.about} (?)`}
           >
-            ?
+            {v.isM ? "?" : c.about}
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// What is on screen, in one row: view, date, kind of data, and whether the sources answered.
+function StatusStrip({ v, a }: { v: View; a: App }): React.ReactElement | null {
+  const { t } = v;
+  const c = hudCopy(a.state.lang);
+  const okN = v.sources.filter((g) => g.statusColor !== "var(--warn)").length;
+  const srcColor = okN === v.sources.length ? "var(--ok)" : "var(--warn)";
+  if (!v.mapLabel && !v.chipLabel) return null;
+  return (
+    <div className="tw-strip" role="status" aria-live="polite">
+      {v.mapLabel && (
+        <span>
+          <span className="tw-strip-k">{c.view}</span>
+          {v.mapLabel}
+        </span>
+      )}
+      {v.momentName && v.railsOn && (
+        <span>
+          <span className="tw-strip-k">{c.date}</span>
+          {v.momentName}
+        </span>
+      )}
+      {v.chipLabel && v.railsOn && (
+        <span title={v.chipTitle || v.chipLabel}>
+          <span className="tw-strip-k">{c.data}</span>
+          <span aria-hidden="true" style={s(`width:8px;height:8px;flex:none;background:${v.chipTitle ? "var(--tw-h-ejemplo)" : "var(--tw-h-medido)"}`)} />
+          {v.chipLabel}
+        </span>
+      )}
+      {v.railsOn && v.sources.length > 0 && (
+        <button type="button" className="tw-hov" onClick={() => a.set({ railR: "sources" })} title={c.openSources} aria-label={`${c.sourcesShort}: ${c.sourcesOk(okN, v.sources.length)}. ${c.openSources}`}>
+          <span className="tw-strip-k">{c.sourcesShort}</span>
+          <span aria-hidden="true" style={s(`width:8px;height:8px;flex:none;background:${srcColor}`)} />
+          {c.sourcesOk(okN, v.sources.length)}
+        </button>
+      )}
+      {v.statusText === t.status.offline && (
+        <span title={v.statusDetail} style={s("color:var(--warn)")}>
+          <span aria-hidden="true" style={s("width:8px;height:8px;flex:none;background:var(--warn)")} />
+          {v.statusText}
+        </span>
+      )}
+      {v.noTerrain && v.railsOn && (
+        <span title={t.status.terrainOffDetail} style={s("color:var(--warn)")}>
+          {t.status.terrainOff}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function About({ v, a }: { v: View; a: App }): React.ReactElement {
+  const { t, lay } = v;
+  const c = hudCopy(a.state.lang);
+  const tone: Record<string, string> = { measured: "var(--tw-h-medido)", derived: "var(--tw-h-derivado)", example: "var(--tw-h-ejemplo)" };
+  return (
+    <div
+      onClick={() => a.set({ help: false })}
+      style={s("position:absolute;inset:0;z-index:40;pointer-events:auto;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center")}
+    >
+      <div role="dialog" aria-modal="true" aria-label={c.aboutTitle} className="tw-about" onClick={(e) => e.stopPropagation()}>
+        <div style={s("display:flex;align-items:center;gap:8px")}>
+          <h2 style={s("margin:0;flex:1;font:500 16px var(--sans)")}>{c.aboutTitle}</h2>
+          <button autoFocus type="button" className="tw-hov" onClick={() => a.set({ help: false })} style={s(`height:${lay.hit};padding:0 12px;${SECONDARY}`)}>
+            {t.help.close}
+          </button>
+        </div>
+        <p>{c.what}</p>
+        <p style={s("color:var(--fg2)")}>{c.why}</p>
+        <section>
+          <h3>{c.honestyTitle}</h3>
+          <dl>
+            {c.honesty.map(([id, name, text]) => (
+              <React.Fragment key={id}>
+                <dt style={s("display:flex;align-items:center;gap:6px;color:var(--fg)")}>
+                  <span aria-hidden="true" style={s(`width:8px;height:8px;background:${tone[id ?? ""] ?? "var(--fg3)"}`)} />
+                  {name}
+                </dt>
+                <dd style={s("color:var(--fg2)")}>{text}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
+        </section>
+        <section>
+          <h3>{c.sourcesTitle}</h3>
+          <dl>
+            {c.sources.map(([k, d]) => (
+              <React.Fragment key={k}>
+                <dt>{k}</dt>
+                <dd>{d}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
+          <p style={s("margin-top:8px;font-size:12px;color:var(--fg2)")}>{c.sourcesNote}</p>
+        </section>
+        {!v.isM && (
+          <section>
+            <h3>{c.keysTitle}</h3>
+            <dl>
+              {v.helpKeys.map((k) => (
+                <React.Fragment key={k.k}>
+                  <dt style={s("font:11px var(--mono);color:var(--acc-fg)")}>{k.k}</dt>
+                  <dd>{k.d}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </section>
+        )}
+        <p style={s("padding-top:10px;border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg2)")}>{c.entry}</p>
+      </div>
     </div>
   );
 }
@@ -678,7 +746,7 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         title={t.camera.tiltUp}
         style={s(btn)}
       >
-        <Icon.zoomIn size={16} strokeWidth={2.25} aria-hidden />
+        <span aria-hidden="true">▲</span>
       </button>
       <div
         title={v.tiltTitle}
@@ -694,7 +762,7 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         title={t.camera.tiltDown}
         style={s(btn)}
       >
-        <Icon.zoomOut size={16} strokeWidth={2.25} aria-hidden />
+        <span aria-hidden="true">▼</span>
       </button>
       <button
         className="tw-hov"
@@ -779,6 +847,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                 {v.railsOn ? <Icon.close size={16} strokeWidth={2.25} aria-hidden /> : v.cardToggleGlyph}
               </button>
             </div>
+            {v.cardOpen && !v.legendOn && <Facts v={v} a={a} />}
             {v.cardOpen && !v.legendOn && (
               <div
                 role="tabpanel"
@@ -788,7 +857,6 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                 {v.isTabArea && (
                   <>
                     <div>
-                      <div style={s("font:500 15px var(--sans)")}>{v.areaName}</div>
                       <div style={s("font:11px var(--mono);color:var(--fg2)")}>{v.boundsText}</div>
                       {v.areaSurface ? <div style={s("font:11px var(--mono);color:var(--fg2)")}>{v.areaSurface}</div> : null}
                     </div>
@@ -807,9 +875,6 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       {t.entry.backToArea}
                     </button>
                     <div>
-                      <div style={s("font:11px var(--mono);color:var(--fg2)")}>
-                        {v.layerName} · {v.momentName}
-                      </div>
                       {v.noSeries ? (
                         <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{t.card.noSeries}</div>
                       ) : v.areaValueHint ? (
@@ -926,7 +991,7 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
           )}
         >
           <div style={s("display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--fg2)")}>
-            <span className="tw-pixel" style={s("font-size:8px;line-height:1.5")}>
+            <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg3)")}>
               {t.legend.title}
             </span>
             <span style={s(`font:11px var(--mono);${leg.example ? "white-space:normal;text-align:right" : "white-space:nowrap"}`)}>
@@ -946,18 +1011,33 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
   );
 }
 
+// Same four facts on every inspector tab: what, where, when, and how far to trust it.
+function Facts({ v, a }: { v: View; a: App }): React.ReactElement | null {
+  const c = hudCopy(a.state.lang);
+  const on = v.layerItems.find((l) => l.on);
+  const honesty = v.leg.example ? v.t.honesty.example : on?.honestyLabel ?? "";
+  if (!v.layerName && !v.areaName) return null;
+  return (
+    <dl className="tw-facts">
+      {v.layerName && (<><dt>{c.facts.what}</dt><dd>{v.layerName}</dd></>)}
+      {v.areaName && (<><dt>{c.facts.where}</dt><dd>{v.areaName}</dd></>)}
+      {v.momentName && (<><dt>{c.facts.when}</dt><dd>{v.momentName}</dd></>)}
+      {honesty && (
+        <><dt>{c.facts.honesty}</dt><dd style={s(`font:11px var(--mono);color:${v.leg.example ? "var(--tw-h-ejemplo)" : "var(--fg)"}`)}>{honesty}</dd></>
+      )}
+    </dl>
+  );
+}
+
 function LangSwitch({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t } = v;
   const lang = a.state.lang;
-  const seg = (on: boolean): string =>
-    `height:28px;min-width:32px;padding:0 6px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:11px var(--mono);color:${on ? "var(--acc-fg)" : "var(--fg2)"}`;
   return (
-    <div role="group" aria-label={t.lang.label} style={s("display:flex;align-items:center;gap:4px")}>
-      <Icon.languages size={16} strokeWidth={2.25} aria-hidden />
-      <button type="button" className="tw-hov" aria-pressed={lang === "en"} onClick={() => a.setLang("en")} style={s(seg(lang === "en"))}>
+    <div role="group" aria-label={t.lang.label} style={s("display:flex;align-items:center")}>
+      <button type="button" className="tw-hov tw-top-btn" lang="en" aria-pressed={lang === "en"} onClick={() => a.setLang("en")}>
         {t.lang.en}
       </button>
-      <button type="button" className="tw-hov" aria-pressed={lang === "es"} onClick={() => a.setLang("es")} style={s(seg(lang === "es"))}>
+      <button type="button" className="tw-hov tw-top-btn" lang="es" aria-pressed={lang === "es"} onClick={() => a.setLang("es")} style={s("margin-left:-1px")}>
         {t.lang.es}
       </button>
     </div>

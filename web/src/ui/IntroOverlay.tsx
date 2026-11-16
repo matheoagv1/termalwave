@@ -1,244 +1,264 @@
 import React from "react";
-import { s } from "../app/css";
-import { useLang, type Lang } from "../app/i18n";
-import { themeChoices, writeIntroPrefs } from "./intro-prefs";
+import type { App } from "../app/App";
+import { useLang } from "../app/i18n";
+import type { SearchResult } from "../tw/contract";
+import { readIntroPrefs, writeIntroPrefs } from "./intro-prefs";
+import { setupCopy } from "./setup/copy";
+import { MISSIONS, PLACES, type Mission, type SetupPlace, type SetupResult } from "./setup/missions";
+import "./setup/setup.css";
 import { Sfx } from "./sfx";
 
-const MONI = "./brand/monigote-si.png";
-const MONI_FALLBACK = "./brand/monigote.png";
-const PANEL = "background:var(--panel-solid);border:1px solid var(--line2)";
-const NONE = "none";
+// layers drawn on the whole globe; the rest only exist where the dataset has frames
+const GLOBAL_IDS = ["clouds", "firms", "wind"];
+const FOCUSABLE = "button:not(:disabled),input:not(:disabled),[href]";
 
 type P = {
   sound: boolean;
   reduced: boolean;
-  onDone: (name: string, trade: string) => void;
+  onDone: (name: string, trade: string, setup?: SetupResult) => void;
+  // optional so the overlay still mounts if the host passes nothing: search and the area name need it
+  app?: App;
 };
 
-type Step = "hola" | "nombre" | "rubro" | "listo";
-
-export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement {
+export function IntroOverlay({ sound, onDone, app }: P): React.ReactElement {
   const { lang, setLang, copy } = useLang();
-  const intro = copy.intro;
-  const [step, setStep] = React.useState<Step>("hola");
-  const [name, setName] = React.useState("");
-  const [trade, setTrade] = React.useState("");
-  const [typed, setTyped] = React.useState("");
-  const themes = [...themeChoices()];
-  const choices = [...themes.map((t) => ({ id: t.id, label: t.label })), { id: NONE, label: intro.other }];
-  const line =
-    step === "hola"
-      ? intro.hola
-      : step === "nombre"
-        ? intro.askName
-        : step === "rubro"
-          ? intro.askTheme
-          : intro.ready(name.trim() || intro.guest);
-
-  React.useEffect(() => {
-    if (reduced) {
-      setTyped(line);
-      return;
-    }
-    setTyped("");
-    let i = 0;
-    const id = window.setInterval(() => {
-      i += 1;
-      setTyped(line.slice(0, i));
-      if (i >= line.length) window.clearInterval(id);
-    }, 24);
-    return () => window.clearInterval(id);
-  }, [line, reduced, step]);
+  const c = setupCopy(lang);
+  const [mission, setMission] = React.useState<Mission | null>(null);
+  const [q, setQ] = React.useState("");
+  const [results, setResults] = React.useState<SearchResult[] | null>(null);
+  const cardRef = React.useRef<HTMLElement>(null);
+  const headRef = React.useRef<HTMLHeadingElement>(null);
+  const ds = app?.state.ds ?? null;
+  const step = mission ? 2 : 1;
 
   const ping = (): void => {
     if (sound) Sfx.step();
   };
 
-  const nextFromHola = (): void => {
-    ping();
-    setStep("nombre");
-  };
+  // Skipping keeps whatever was chosen before and changes nothing on the globe.
+  const skip = React.useCallback((): void => {
+    const p = readIntroPrefs();
+    writeIntroPrefs({ done: true });
+    onDone(p.name, p.trade);
+  }, [onDone]);
 
-  const nextFromName = (): void => {
-    if (!name.trim()) return;
-    ping();
-    setStep("rubro");
-  };
-
-  const finish = (): void => {
-    const n = name.trim() || intro.guest;
-    const selectedTrade = trade === NONE ? "" : trade;
-    writeIntroPrefs({ done: true, name: n, trade: selectedTrade, sound });
+  const finish = (m: Mission, place?: SetupPlace): void => {
+    const p = readIntroPrefs();
+    const trade = m.topic || p.trade;
+    const known = ds ? [...GLOBAL_IDS, ...ds.layers.map((l) => l.id)] : null;
+    const extras = m.id === "explore" ? undefined : m.extras.filter((id) => !known || known.includes(id));
+    writeIntroPrefs({ done: true, trade });
     if (sound) Sfx.ok();
-    onDone(n, selectedTrade);
+    onDone(p.name, trade, { extras, place });
   };
 
-  const skipGuest = (): void => {
-    if (sound) Sfx.ok();
-    onDone(intro.guest, "");
+  const pick = (m: Mission): void => {
+    ping();
+    if (m.id === "explore") finish(m);
+    else setMission(m);
   };
+
+  // each step starts at its heading so a screen reader hears the new question
+  React.useEffect(() => {
+    headRef.current?.focus();
+  }, [step]);
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        skip();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const card = cardRef.current;
+      if (!card) return;
+      const els = Array.from(card.querySelectorAll<HTMLElement>(FOCUSABLE));
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (!first || !last) return;
+      const cur = document.activeElement as HTMLElement | null;
+      const inside = !!cur && card.contains(cur);
+      if (e.shiftKey && (!inside || cur === first || cur === headRef.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || cur === last)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [skip]);
+
+  React.useEffect(() => {
+    const text = q.trim();
+    if (!text) {
+      setResults(null);
+      return;
+    }
+    let live = true;
+    const id = window.setTimeout(async () => {
+      const r = app?.provider ? await app.provider.search(text).catch(() => []) : [];
+      if (live) setResults(r);
+    }, 200);
+    return () => {
+      live = false;
+      window.clearTimeout(id);
+    };
+  }, [q, app]);
+
+  const tag = (m: Mission): React.ReactNode => {
+    // a mock dataset means the radar frames themselves are example data
+    const h = m.id === "cambio" && ds?.isMock ? "example" : m.honesty;
+    return h ? <span className={`tw-setup-tag tw-setup-tag-${h}`}>{c.tags[h]}</span> : null;
+  };
+
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={intro.title}
-      style={s("position:absolute;inset:0;pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px;z-index:40")}
-    >
-      <div
-        style={s(
-          "position:absolute;inset:0;background:rgba(4,8,16,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)",
-        )}
-      />
-      <section
-        style={s(
-          `position:relative;width:min(440px,100%);${PANEL};padding:20px 18px 16px;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 40px rgba(0,0,0,.35)`,
-        )}
-      >
-        <img
-          className={reduced ? undefined : "tw-bob"}
-          src={MONI}
-          onError={(e) => {
-            if (!e.currentTarget.src.endsWith("monigote.png")) e.currentTarget.src = MONI_FALLBACK;
-          }}
-          alt=""
-          aria-hidden="true"
-          decoding="async"
-          style={s("align-self:center;height:128px;width:auto;image-rendering:pixelated")}
-        />
-        <div className="tw-pixel" style={s("font-size:8px;line-height:1.6;color:var(--acc-fg);text-align:center")}>
-          {intro.kicker}
-        </div>
-        <IntroLang lang={lang} setLang={setLang} label={copy.lang.label} en={copy.lang.en} es={copy.lang.es} />
-        <p aria-hidden="true" style={s("margin:0;min-height:3.2em;font:15px/1.45 var(--sans);color:var(--fg);text-wrap:pretty")}>{typed}</p>
-        <p role="status" style={s("position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0")}>{line}</p>
+    <div className="tw-setup" role="dialog" aria-modal="true" aria-labelledby="tw-setup-h" aria-describedby="tw-setup-lead">
+      <div className="tw-setup-scrim" />
+      <section ref={cardRef} className="tw-setup-card">
+        <header className="tw-setup-head">
+          <div>
+            <span className="tw-setup-kicker">{c.kicker}</span>
+            <span className="tw-setup-step">{c.step(step, 2)}</span>
+          </div>
+          <div className="tw-setup-lang" role="group" aria-label={copy.lang.label}>
+            <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>{copy.lang.en}</button>
+            <button type="button" aria-pressed={lang === "es"} onClick={() => setLang("es")}>{copy.lang.es}</button>
+          </div>
+        </header>
+        <h2 id="tw-setup-h" ref={headRef} tabIndex={-1}>{mission ? c.h2 : c.h1}</h2>
+        <p id="tw-setup-lead" className="tw-setup-lead">
+          {mission ? c.lead2(c.missions[mission.id].title) : c.lead}
+        </p>
 
-        {step === "nombre" && (
-          <input
-            aria-label={intro.askName}
-            maxLength={48}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && nextFromName()}
-            placeholder={intro.namePh}
-            autoComplete="nickname"
-            autoFocus
-            style={s(
-              "height:40px;padding:0 12px;border:1px solid var(--line2);background:var(--bg);color:var(--fg);font:14px var(--sans)",
-            )}
-          />
-        )}
-
-        {step === "rubro" && (
-          <div
-            role="radiogroup"
-            aria-label={intro.askTheme}
-            style={s("display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto")}
-          >
-            {choices.map((ch) => {
-              const on = ch.id === trade;
-              return (
-                <label
-                  key={ch.id}
-                  style={s(
-                    `display:flex;align-items:center;gap:7px;white-space:normal;text-align:left;min-height:44px;padding:6px 10px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--sans)`,
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="trade"
-                    value={ch.id}
-                    checked={on}
-                    onChange={() => { setTrade(ch.id); ping(); }}
-                    style={s("accent-color:var(--acc)")}
-                  />
-                  {ch.label}
-                </label>
-              );
-            })}
+        {!mission && (
+          <div className="tw-setup-body">
+            <div className="tw-setup-label" id="tw-setup-topics">{c.pickTopic}</div>
+            <div className="tw-setup-list" role="group" aria-labelledby="tw-setup-topics">
+              {MISSIONS.map((m) => {
+                const mc = c.missions[m.id];
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`tw-setup-tile${m.id === "explore" ? " tw-setup-tile-plain" : ""}`}
+                    onClick={() => pick(m)}
+                  >
+                    <span className="tw-setup-glyph" aria-hidden="true">{m.glyph}</span>
+                    <span className="tw-setup-tile-text">
+                      <span className="tw-setup-tile-title">{mc.title}{tag(m)}</span>
+                      <span className="tw-setup-tile-sub">{mc.sub}</span>
+                      {mc.on && <span className="tw-setup-tile-on">{c.turnsOn}: {mc.on}</span>}
+                    </span>
+                    <span className="tw-setup-arrow" aria-hidden="true">→</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="tw-setup-note">{c.radarAlways} {c.nisar2025}</p>
           </div>
         )}
 
-        <div style={s("display:flex;gap:8px;flex-wrap:wrap;margin-top:4px")}>
-          {step === "hola" && (
-            <Primary onClick={nextFromHola}>{intro.continue}</Primary>
-          )}
-          {step === "nombre" && (
-            <Primary onClick={nextFromName} disabled={!name.trim()}>
-              {intro.continue}
-            </Primary>
-          )}
-          {(step === "hola" || step === "nombre") && (
-            <button
-              type="button"
-              onClick={skipGuest}
-              style={s(
-                "height:40px;padding:0 14px;border:1px solid var(--line2);background:transparent;color:var(--fg);cursor:pointer;font:13px var(--sans)",
-              )}
-            >
-              {intro.skip}
-            </button>
-          )}
-          {step === "rubro" && (
-            <Primary
-              disabled={!trade}
-              onClick={() => {
-                ping();
-                setStep("listo");
+        {mission && (
+          <div className="tw-setup-body">
+            <div className="tw-setup-label">{c.demoArea}</div>
+            <div className="tw-setup-list">
+              <button type="button" className="tw-setup-tile" onClick={() => finish(mission, "area")}>
+                <span className="tw-setup-glyph" aria-hidden="true">◎</span>
+                <span className="tw-setup-tile-text">
+                  <span className="tw-setup-tile-title">
+                    {ds?.area.name ?? c.demoArea}
+                    <span className="tw-setup-tag tw-setup-tag-measured">{c.radarTag}</span>
+                    {ds?.isMock && <span className="tw-setup-tag tw-setup-tag-example">{c.tags.example}</span>}
+                  </span>
+                  <span className="tw-setup-tile-sub">{ds?.isMock ? c.demoSubMock : c.demoSub}</span>
+                </span>
+                <span className="tw-setup-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+
+            <div className="tw-setup-label" id="tw-setup-places">{c.examples}</div>
+            <div className="tw-setup-list" role="group" aria-labelledby="tw-setup-places">
+              {PLACES.map((p) => {
+                const pc = c.places[p.id];
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="tw-setup-tile"
+                    onClick={() => finish(mission, { kind: "coords", label: pc.label, lonlat: p.lonlat })}
+                  >
+                    <span className="tw-setup-glyph" aria-hidden="true">·</span>
+                    <span className="tw-setup-tile-text">
+                      <span className="tw-setup-tile-title">{pc.label}</span>
+                      <span className="tw-setup-tile-sub">{pc.sub}</span>
+                    </span>
+                    <span className="tw-setup-arrow" aria-hidden="true">→</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="tw-setup-note">{c.examplesNote}</p>
+
+            <label className="tw-setup-label" htmlFor="tw-setup-q" style={{ display: "block" }}>{c.search}</label>
+            <input
+              id="tw-setup-q"
+              className="tw-setup-search"
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => {
+                const first = results?.[0];
+                if (e.key === "Enter" && first) finish(mission, first);
               }}
-            >
-              {intro.continue}
-            </Primary>
+              placeholder={c.searchPh}
+              autoComplete="off"
+            />
+            <div className="tw-setup-list" style={{ marginTop: 6 }}>
+              {(results ?? []).slice(0, 4).map((r, i) => (
+                <button key={`${r.label}-${i}`} type="button" className="tw-setup-tile" onClick={() => finish(mission, r)}>
+                  <span className="tw-setup-glyph" aria-hidden="true">·</span>
+                  <span className="tw-setup-tile-text">
+                    <span className="tw-setup-tile-title">{r.label}</span>
+                  </span>
+                  <span className="tw-setup-arrow" aria-hidden="true">→</span>
+                </button>
+              ))}
+            </div>
+            <p className="tw-setup-note" role="status">
+              {results && results.length === 0 ? (ds ? c.searchNone : c.searchWait) : ""}
+            </p>
+
+            <div className="tw-setup-next">
+              <strong>{c.next}</strong>
+              <ul>
+                <li>{c.nextTimeline}</li>
+                <li>{c.nextLayers}</li>
+              </ul>
+            </div>
+            <p className="tw-setup-note">{c.nisar2025}</p>
+          </div>
+        )}
+
+        <div className="tw-setup-foot">
+          {mission ? (
+            <button type="button" className="tw-setup-btn" onClick={() => { ping(); setMission(null); }}>
+              ← {c.back}
+            </button>
+          ) : (
+            <span />
           )}
-          {step === "listo" && <Primary onClick={finish}>{intro.start}</Primary>}
+          <button type="button" className="tw-setup-btn" onClick={skip}>
+            {c.skip}
+            <span className="tw-setup-key" aria-hidden="true">{c.skipKey}</span>
+          </button>
         </div>
+        <p className="tw-setup-status">{c.tip}</p>
       </section>
     </div>
-  );
-}
-
-function IntroLang({
-  lang,
-  setLang,
-  label,
-  en,
-  es,
-}: {
-  lang: Lang;
-  setLang: (lang: Lang) => void;
-  label: string;
-  en: string;
-  es: string;
-}): React.ReactElement {
-  const seg = (on: boolean): string =>
-    `height:32px;min-width:40px;padding:0 8px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--mono)`;
-  return (
-    <div role="group" aria-label={label} style={s("display:flex;justify-content:center;gap:6px")}>
-      <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")} style={s(seg(lang === "en"))}>{en}</button>
-      <button type="button" aria-pressed={lang === "es"} onClick={() => setLang("es")} style={s(seg(lang === "es"))}>{es}</button>
-    </div>
-  );
-}
-
-function Primary({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-}): React.ReactElement {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={s(
-        "height:40px;padding:0 16px;border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600;font:13px var(--sans)",
-      )}
-    >
-      {children}
-    </button>
   );
 }
