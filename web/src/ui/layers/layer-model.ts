@@ -2,7 +2,7 @@ import React from "react";
 import type { App } from "../../app/App";
 import { fmtOf, type Copy, type Lang } from "../../app/i18n";
 import type { View } from "../../app/view";
-import { isExampleHonesty, isPlaceholderRange } from "../../data/radar-scale";
+import { isExampleHonesty } from "../../data/radar-scale";
 import type { LayerDef } from "../../tw/contract";
 import { BUNDLED_META, layerCopy, type LayerCopy, type MetaRow } from "./layer-copy";
 import { catalog, rampGradient, text as catText, useCatalogVersion } from "../../scene/catalog";
@@ -162,7 +162,7 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
     const frameNote = typeof frameMeta[`note_${lang}`] === "string" ? (frameMeta[`note_${lang}`] as string) : "";
     const on = item.on || item.core || S.extras.includes(item.id);
     const locked = !hasPlace ? C.needPlace : item.core ? C.lockedCore : item.on ? C.lockedReading : "";
-    const relative = honesty === "example" || isExampleHonesty(def.honesty) || isPlaceholderRange(def.range);
+    const relative = honesty === "example" || isExampleHonesty(def.honesty);
     const dec = def.decimals ?? 0;
     rows.push({
       key: item.id,
