@@ -228,11 +228,18 @@ body {
 }
 
 [data-tw-theme] .tw-tl {
-  transition: padding 0.2s ease;
+  max-height: 18vh;
+  overflow: auto;
+  transition: max-height 0.2s ease, padding 0.2s ease;
+}
+
+[data-tw-theme] .tw-tl:hover,
+[data-tw-theme] .tw-tl:focus-within {
+  max-height: min(46vh, 480px);
 }
 
 [data-tw-theme] .tw-tl--compact {
-  max-height: min(42vh, 220px);
+  max-height: min(18vh, 160px);
 }
 
 [data-tw-theme] .tw-tl-cmp-idle {

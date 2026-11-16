@@ -365,6 +365,10 @@ export const T = {
     loading: "Cargando línea de tiempo",
     missing: (list) => `Sin imagen: ${list}`,
     keysHint: "Flechas: punto a punto. Re Pág y Av Pág: tramo. Inicio y Fin: extremos.",
+    beforeNisar: "Antes de NISAR (≤ jul 2025)",
+  },
+  orbits: {
+    legend: "Pasadas de satélites SAR (órbitas)",
   },
 
   compare: {
