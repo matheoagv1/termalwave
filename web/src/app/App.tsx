@@ -1,6 +1,6 @@
 import React from "react";
 import { PRESETS } from "../data/layer-defaults";
-import { parsePasses } from "../data/nisar-passes";
+import { parsePasses, passFootprints } from "../data/nisar-passes";
 import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
@@ -345,7 +345,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     if (i >= 0 && i !== this.state.trade) this.setState({ trade: i });
   }
 
-  finishIntro = (name: string, trade: string): void => {
+  finishIntro = (name: string, trade: string, setup?: import("../ui/setup/missions").SetupResult): void => {
     writeIntroPrefs({ done: true, name, trade, sound: this.state.soundOn });
     this.setState({
       introOpen: false,
@@ -353,9 +353,23 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       userName: name,
       userTrade: trade,
       moniOpen: true,
+      extras: setup?.extras ?? this.state.extras,
     });
     this.applyUserTrade();
+    if (setup?.place) this.goSetupPlace(setup.place, 0);
   };
+
+  // the setup can finish before the dataset arrives: wait for it, then fly
+  goSetupPlace(place: import("../ui/setup/missions").SetupPlace, tries: number): void {
+    const ds = this.state.ds;
+    if (!ds || !this.scene) {
+      if (tries < 40) window.setTimeout(() => this.goSetupPlace(place, tries + 1), 300);
+      return;
+    }
+    this.goResult(place === "area" ? { kind: "area", label: ds.area.name, lonlat: ds.area.center } : place);
+  }
+
+  openSetup = (): void => this.setState({ introOpen: true, moniOpen: false, helpText: "" });
 
   toggleMoni = (): void => {
     const next = !this.state.moniOpen;
@@ -679,6 +693,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.nisarKey = key;
     const seq = ++this.nisarSeq;
     if (!key) {
+      this.scene?.setEntities?.("nisar", null);
       this.setState({ nisar: { status: "idle", count: 0, msg: "", passes: [] } });
       return;
     }
@@ -693,6 +708,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       .then((j) => {
         if (seq !== this.nisarSeq) return;
         const passes = parsePasses(j);
+        this.scene?.setEntities?.("nisar", passFootprints(passes));
         const n = typeof j.count === "number" ? j.count : passes.length;
         this.setState({ nisar: { status: n ? "ok" : "empty", count: n, msg: "", passes } });
       })

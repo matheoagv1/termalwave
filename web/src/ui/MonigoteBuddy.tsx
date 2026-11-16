@@ -1,5 +1,7 @@
 import React from "react";
 import { s } from "../app/css";
+import { useLang } from "../app/i18n";
+import { setupCopy } from "./setup/copy";
 
 const MONI = "./brand/monigote-si.png";
 const MONI_FALLBACK = "./brand/monigote.png";
@@ -13,6 +15,7 @@ type P = {
   onToggle: () => void;
   onClose: () => void;
   onSoundToggle: () => void;
+  onSetup?: () => void;
   soundLabel: string;
   closeLabel: string;
   buddyLabel: string;
@@ -27,6 +30,7 @@ export function MonigoteBuddy({
   onToggle,
   onClose,
   onSoundToggle,
+  onSetup,
   sound,
   soundLabel,
   closeLabel,
@@ -34,6 +38,7 @@ export function MonigoteBuddy({
   bottom,
 }: P): React.ReactElement {
   const greet = name ? `, ${name}` : "";
+  const { lang } = useLang();
   return (
     <div
       style={s(`position:absolute;right:0;bottom:${bottom};pointer-events:auto;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px`)}
@@ -46,13 +51,23 @@ export function MonigoteBuddy({
           )}
         >
           <p style={s("margin:0;font:13px/1.4 var(--sans);color:#0b1230;text-wrap:pretty")}>{tip}</p>
-          <div style={s("display:flex;gap:6px;justify-content:flex-end")}>
+          <div style={s("display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap")}>
+            {onSetup && (
+              <button
+                type="button"
+                className="tw-hov"
+                onClick={onSetup}
+                style={s("height:40px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--sans)")}
+              >
+                {setupCopy(lang).reopen}
+              </button>
+            )}
             <button
               type="button"
               className="tw-hov"
               onClick={onSoundToggle}
               aria-pressed={sound}
-              style={s("height:32px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--mono)")}
+              style={s("height:40px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--mono)")}
             >
               {soundLabel}
             </button>
@@ -60,7 +75,7 @@ export function MonigoteBuddy({
               type="button"
               className="tw-hov"
               onClick={onClose}
-              style={s("height:32px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--sans)")}
+              style={s("height:40px;padding:0 10px;border:2px solid #14257a;background:transparent;color:#0b1230;cursor:pointer;font:11px var(--sans)")}
             >
               {closeLabel}
             </button>

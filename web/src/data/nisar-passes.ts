@@ -6,7 +6,19 @@ export type NisarPass = {
   frame: string;
   pol: string;
   maturity: string;
+  footprint?: PassFootprint;
 };
+
+export type PassFootprint =
+  | { type: "Polygon"; coordinates: number[][][] }
+  | { type: "MultiPolygon"; coordinates: number[][][][] };
+
+function footprintOf(v: unknown): PassFootprint | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const g = v as { type?: unknown; coordinates?: unknown };
+  if ((g.type !== "Polygon" && g.type !== "MultiPolygon") || !Array.isArray(g.coordinates) || !g.coordinates.length) return undefined;
+  return g as PassFootprint;
+}
 
 function str(v: unknown): string {
   if (typeof v === "number" && Number.isFinite(v)) return String(v);
@@ -42,6 +54,31 @@ export function parsePasses(raw: Record<string, unknown>): NisarPass[] {
       frame: str(o.frame ?? o.frameNumber ?? o.frame_number),
       pol: str(o.pol ?? o.polarization ?? o.polarizations),
       maturity,
+      footprint: footprintOf(o.footprint ?? o.geometry),
     };
   });
+}
+
+export type FootprintCollection = {
+  type: "FeatureCollection";
+  features: Array<{ type: "Feature"; geometry: PassFootprint; properties: Record<string, string> }>;
+};
+
+// one outline per track and frame: repeat dates share the same ground, and
+// stacking them would only thicken the line
+export function passFootprints(passes: NisarPass[]): FootprintCollection | null {
+  const seen = new Set<string>();
+  const features: FootprintCollection["features"] = [];
+  for (const p of passes) {
+    if (!p.footprint) continue;
+    const key = p.track || p.frame ? `${p.track}/${p.frame}` : JSON.stringify(p.footprint.coordinates);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    features.push({
+      type: "Feature",
+      geometry: p.footprint,
+      properties: { track: p.track, frame: p.frame, direction: p.direction, date: p.date, maturity: p.maturity, pol: p.pol },
+    });
+  }
+  return features.length ? { type: "FeatureCollection", features } : null;
 }

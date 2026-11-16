@@ -142,7 +142,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 title={v.tlToggleLabel}
                 style={s(`width:${lay.hit};height:${lay.hit};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0`)}
               >
-                <img src={v.tlOpen ? "./ui/minus.png" : "./ui/plus.png"} alt="" aria-hidden="true" width={28} height={28} style={s("image-rendering:pixelated")} />
+                <span aria-hidden="true" style={s("width:20px;height:20px;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--mono);color:var(--fg2)")}>{v.tlOpen ? "–" : "+"}</span>
               </button>
               <button
                 className={v.compareOn ? "tw-hov tw-tl-cmp-on" : "tw-hov tw-tl-cmp-idle"}
@@ -184,19 +184,19 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span title={t.timeline.yearsHint} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:28px;box-sizing:border-box;border-style:solid;border-width:0 32px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 32px 0 32px stretch")}>
-                  <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
+                <div style={s("position:relative;flex:1;height:18px;box-sizing:border-box;border-left:1px solid var(--line2);border-right:1px solid var(--line2);background:linear-gradient(var(--line2),var(--line2)) left 50% / 100% 1px no-repeat")}>
+                  <div style={s("position:absolute;left:0;right:0;bottom:0;height:3px;display:flex;gap:2px")}>
                     {tl.real.map((r) => (
                       <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
                     ))}
                   </div>
-                  <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:4px;left:${tl.aLeft};width:20px;height:20px;margin-left:-10px;image-rendering:pixelated`)} />
+                  <span className="tw-tl-needle" aria-hidden="true" style={s(`position:absolute;top:0;bottom:0;left:${tl.aLeft};width:3px;margin-left:-1px;background:var(--acc)`)} />
                   {v.compareOn && (
-                    <img className="tw-tl-needle" src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:4px;left:${tl.bLeft};width:20px;height:20px;margin-left:-10px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
+                    <span className="tw-tl-needle" aria-hidden="true" style={s(`position:absolute;top:0;bottom:0;left:${tl.bLeft};width:3px;margin-left:-1px;background:var(--accB)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>
-                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ " + t.timeline.youAreHere + ": " + tl.name}</span>
+                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{t.timeline.youAreHere + ": " + tl.name}</span>
               </div>
               {v.compareOn && (
                 <div style={s("font:11px var(--sans);color:var(--fg2);line-height:1.35")}>{v.compareHint}</div>
@@ -208,8 +208,21 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
           {v.compareOn && v.tlOpen && (
             <div style={s("font:11px var(--sans);color:var(--fg2);padding:2px 0;line-height:1.35")}>{v.compareHint}</div>
           )}
-          {v.beforeNisar && (
-            <div style={s("font:11px var(--sans);color:var(--fg2)")}>{t.timeline.beforeNisar}</div>
+          {(v.beforeNisar || tl.hasExample) && v.tlOpen && (
+            <div style={s("display:flex;flex-wrap:wrap;gap:4px 14px;font:11px var(--sans);color:var(--fg2)")}>
+              {v.beforeNisar && (
+                <span style={s("display:flex;gap:6px;align-items:center")}>
+                  <span aria-hidden="true" style={s("width:12px;height:8px;border:1px solid var(--tw-radar);background:rgba(94,235,255,.14)")} />
+                  {t.timeline.beforeNisar}
+                </span>
+              )}
+              {tl.hasExample && (
+                <span style={s("display:flex;gap:6px;align-items:center")}>
+                  <span aria-hidden="true" style={s("width:12px;height:8px;border:1px dashed var(--tw-h-ejemplo)")} />
+                  {t.honesty.example}
+                </span>
+              )}
+            </div>
           )}
           {v.tlOpen && (
             <>
@@ -237,7 +250,6 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                         `height:18px;width:100%;display:flex;align-items:center;gap:6px;padding:0 4px;border:0;border-top:2px solid ${seg.tone};background:transparent;text-align:left;cursor:pointer;overflow:hidden;white-space:nowrap`,
                       )}
                     >
-                      <img src={`./ui/${seg.cal}.png`} alt="" aria-hidden="true" width={16} height={16} style={s("flex:none;image-rendering:pixelated")} />
                       {seg.showLabel && <span style={s("font:500 12px var(--sans);overflow:hidden;text-overflow:ellipsis")}>{seg.label}</span>}
                       {seg.showMeta && <span style={s("font:10px var(--mono);color:var(--fg3);overflow:hidden;text-overflow:ellipsis")}>{seg.meta}</span>}
                     </button>
@@ -265,7 +277,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                             title={tk.title}
                             aria-label={tk.title}
                             aria-current={tk.cur ? "true" : undefined}
-                            style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px solid ${tk.before ? "var(--tw-radar)" : "var(--line2)"};cursor:pointer;background:${tk.before && !tk.hot ? "rgba(94,235,255,.14)" : tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
+                            style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px ${tk.example ? "dashed" : "solid"} ${tk.example ? "var(--tw-h-ejemplo)" : tk.before ? "var(--tw-radar)" : "var(--line2)"};cursor:pointer;background:${tk.before && !tk.hot ? "rgba(94,235,255,.14)" : tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
                           >
                             {tk.title.split(" · ")[0].replace(/^Compuesto /, "")}
                           </button>
@@ -294,19 +306,19 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
                 <span title={t.timeline.yearsHint} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
-                <div style={s("position:relative;flex:1;height:34px;box-sizing:border-box;border-style:solid;border-width:0 38px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 38px 0 38px stretch")}>
-                  <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
+                <div style={s("position:relative;flex:1;height:18px;box-sizing:border-box;border-left:1px solid var(--line2);border-right:1px solid var(--line2);background:linear-gradient(var(--line2),var(--line2)) left 50% / 100% 1px no-repeat")}>
+                  <div style={s("position:absolute;left:0;right:0;bottom:0;height:3px;display:flex;gap:2px")}>
                     {tl.real.map((r) => (
                       <div key={r.id} style={s(`flex:${r.flex} 1 0;background:${r.tone}`)} />
                     ))}
                   </div>
-                  <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:5px;left:${tl.aLeft};width:24px;height:24px;margin-left:-12px;image-rendering:pixelated`)} />
+                  <span aria-hidden="true" style={s(`position:absolute;top:0;bottom:0;left:${tl.aLeft};width:3px;margin-left:-1px;background:var(--acc)`)} />
                   {v.compareOn && (
-                    <img src="./ui/diamond.png" alt="" aria-hidden="true" style={s(`position:absolute;top:5px;left:${tl.bLeft};width:24px;height:24px;margin-left:-12px;image-rendering:pixelated;filter:hue-rotate(160deg)`)} />
+                    <span aria-hidden="true" style={s(`position:absolute;top:0;bottom:0;left:${tl.bLeft};width:3px;margin-left:-1px;background:var(--accB)`)} />
                   )}
                 </div>
                 <span>{tl.y1}</span>
-                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ " + t.timeline.youAreHere + ": " + tl.name}</span>
+                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{t.timeline.youAreHere + ": " + tl.name}</span>
                 {v.isD && <span style={s("font:11px var(--sans);max-width:330px;line-height:1.25")}>{t.timeline.scaleNote}</span>}
               </div>
             </>

@@ -18,6 +18,7 @@ import type {
   SceneState,
   TimeTick,
 } from "../tw/contract";
+import { Layers3D } from "./layers3d";
 import { BodiesLayer } from "./space/bodies";
 import { CloudsLayer } from "./space/clouds";
 import { SpaceScene, type SpaceConfig } from "./space";
@@ -105,6 +106,11 @@ function boundsNear(a: Bounds, b: Bounds, eps = 0.08): boolean {
 
 export { cityBounds, placeFlyMs };
 
+// extra map layers some entity ids add next to their main one
+const ENTITY_EXTRA = ["-glow", "-line"] as const;
+// share of the shorter image side that fades out at each border
+const SOFT_EDGE_FRAC = 0.045;
+
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
     [b.west, b.north],
@@ -140,6 +146,11 @@ export class MapLibreScene implements SceneApi {
   private mapEl!: HTMLDivElement;
   private map!: maplibregl.Map;
   private space: SpaceScene | null = null;
+  // 3d marks (fire columns, swath curtains); holds its data until the space scene mounts it
+  private fx = new Layers3D();
+  private soft = new Map<string, Promise<string>>();
+  private extraSeq = new Map<string, number>();
+  private dead = false;
   private ready = false;
   private queue: Array<() => void> = [];
   private markers: Marker[] = [];
@@ -239,6 +250,7 @@ export class MapLibreScene implements SceneApi {
   }
 
   destroy(): void {
+    this.dead = true;
     cancelAnimationFrame(this.cmpRaf);
     this.markers.forEach((m) => m.remove());
     this.ring?.remove();
@@ -374,6 +386,7 @@ export class MapLibreScene implements SceneApi {
       paint: { "line-color": this.css("--scene-outline", "#f4f1e8"), "line-width": 1.2, "line-opacity": 0 },
     });
     map.addLayer({ id: "tw-curtain", type: "line", source: "tw-curtain", paint: { "line-color": this.css("--acc", "#f0a014"), "line-width": 2 } });
+    this.raiseEntities();
     this.refreshAoiMinZoom();
     this.applyFrame();
     this.applyCompare();
@@ -390,6 +403,10 @@ export class MapLibreScene implements SceneApi {
     set("tw-gap", "fill-color", this.css("--scene-hatch", "#ffb43a"));
     set("tw-area", "line-color", this.css("--scene-outline", "#f4f1e8"));
     set("tw-curtain", "line-color", this.css("--acc", "#f0a014"));
+    set("tw-ent-firms", "circle-color", this.css("--warn", "#ff7a1a"));
+    for (const id of ["tw-ent-nisar-glow", "tw-ent-nisar-line"]) set(id, "line-color", this.css("--accB", "#5eebff"));
+    set("tw-ent-nisar", "fill-color", this.css("--accB", "#5eebff"));
+    this.fx.refreshColors();
     map.setSky({
       "sky-color": this.css("--scene-sphere", "#082460"),
       "horizon-color": this.css("--scene-grid", "#2474ec"),
@@ -406,6 +423,8 @@ export class MapLibreScene implements SceneApi {
     try {
       await this.space.add(new SkyLayer({ labels: false }), true);
       await this.space.add(new BodiesLayer(), true);
+      this.fx.setReducedMotion(this.o.reducedMotion);
+      await this.space.add(this.fx, true);
       await this.space.add(
         new SatellitesLayer(aoi, { labels: true, swath: true, footprint: false, tracks: true }),
         true,
@@ -467,13 +486,16 @@ export class MapLibreScene implements SceneApi {
     const map = this.map;
     const srcId = `tw-ent-${id}`;
     const layerId = `tw-ent-${id}`;
+    const raw = data as { type?: string; features?: unknown[] } | null;
+    const ok = !!raw && raw.type === "FeatureCollection" && Array.isArray(raw.features);
+    if (data && !ok) return;
+    if (id === "firms") this.fx.setFires(data);
+    if (id === "nisar") this.fx.setSwaths(data);
     if (!data) {
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      for (const lid of [layerId, ...ENTITY_EXTRA.map((x) => layerId + x)]) if (map.getLayer(lid)) map.removeLayer(lid);
       if (map.getSource(srcId)) map.removeSource(srcId);
       return;
     }
-    const raw = data as { type?: string; features?: unknown[] };
-    if (!raw || raw.type !== "FeatureCollection" || !Array.isArray(raw.features)) return;
     const fc = data as GeoJSON.GeoJSON;
     const src = map.getSource(srcId) as GeoJSONSource | undefined;
     if (src) {
@@ -481,18 +503,107 @@ export class MapLibreScene implements SceneApi {
       return;
     }
     map.addSource(srcId, { type: "geojson", data: fc });
+    if (id === "nisar") {
+      // swath on the ground: faint fill, soft halo, thin bright edge. the curtain above it is drawn by fx
+      const cyan = this.css("--accB", "#5eebff");
+      map.addLayer({ id: layerId, type: "fill", source: srcId, paint: { "fill-color": cyan, "fill-opacity": 0.07 } });
+      map.addLayer({
+        id: `${layerId}-glow`,
+        type: "line",
+        source: srcId,
+        paint: { "line-color": cyan, "line-width": ["interpolate", ["linear"], ["zoom"], 0, 3, 6, 6, 10, 9], "line-blur": 5, "line-opacity": 0.4 },
+      });
+      map.addLayer({
+        id: `${layerId}-line`,
+        type: "line",
+        source: srcId,
+        paint: { "line-color": cyan, "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.8, 6, 1.2, 10, 1.6], "line-opacity": 0.95 },
+      });
+      this.syncSwaths();
+      return;
+    }
+    const fire = id === "firms";
     map.addLayer({
       id: layerId,
       type: "circle",
       source: srcId,
-      paint: {
-        "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.2, 3, 2.5, 6, 4.5, 10, 7],
-        "circle-color": this.css("--acc", "#ff6b35"),
-        "circle-opacity": 0.85,
-        "circle-stroke-width": 0.6,
-        "circle-stroke-color": this.css("--scene-outline", "#f4f1e8"),
-      },
+      paint: fire
+        ? {
+            // ember under the 3d column; blurred so it reads as light, and it carries the layer alone at street zoom
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 2.6, 6, 5, 10, 9],
+            "circle-color": this.css("--warn", "#ff7a1a"),
+            "circle-blur": 0.7,
+            "circle-opacity": 0.9,
+          }
+        : {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.2, 3, 2.5, 6, 4.5, 10, 7],
+            "circle-color": this.css("--acc", "#ff6b35"),
+            "circle-opacity": 0.85,
+            "circle-stroke-width": 0.6,
+            "circle-stroke-color": this.css("--scene-outline", "#f4f1e8"),
+          },
     });
+  }
+
+  // swaths belong to the radar layer: they follow its toggle
+  private syncSwaths(): void {
+    const on = this.radarOn();
+    this.fx.setSwathsVisible(on);
+    if (!this.ready) return;
+    for (const lid of ["tw-ent-nisar", "tw-ent-nisar-glow", "tw-ent-nisar-line"]) {
+      if (this.map.getLayer(lid)) this.map.setLayoutProperty(lid, "visibility", on ? "visible" : "none");
+    }
+  }
+
+  // entity marks stay above the dataset rasters, which are added later than them
+  private raiseEntities(): void {
+    const map = this.map;
+    for (const l of map.getStyle().layers ?? []) {
+      if (l.id === "tw-ent-nisar" || l.id === "tw-ent-nisar-glow" || l.id === "tw-ent-nisar-line") map.moveLayer(l.id);
+    }
+    for (const l of map.getStyle().layers ?? []) {
+      if (l.id.startsWith("tw-ent-") && !l.id.startsWith("tw-ent-nisar")) map.moveLayer(l.id);
+    }
+  }
+
+  // image with its border faded to transparent, so a draped raster reads as
+  // data inside a swath and not as a pasted rectangle. falls back to the url
+  private softEdge(url: string): Promise<string> {
+    if (url.startsWith("data:")) return Promise.resolve(url);
+    const hit = this.soft.get(url);
+    if (hit) return hit;
+    const p = this.loadImage(url)
+      .then((img) => {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if (w < 8 || h < 8 || w * h > 4096 * 4096) return url;
+        const cv = document.createElement("canvas");
+        cv.width = w;
+        cv.height = h;
+        const ctx = cv.getContext("2d");
+        if (!ctx) return url;
+        ctx.drawImage(img, 0, 0);
+        const e = Math.max(2, Math.round(Math.min(w, h) * SOFT_EDGE_FRAC));
+        ctx.globalCompositeOperation = "destination-in";
+        const gx = ctx.createLinearGradient(0, 0, w, 0);
+        gx.addColorStop(0, "rgba(0,0,0,0)");
+        gx.addColorStop(e / w, "rgba(0,0,0,1)");
+        gx.addColorStop(1 - e / w, "rgba(0,0,0,1)");
+        gx.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gx;
+        ctx.fillRect(0, 0, w, h);
+        const gy = ctx.createLinearGradient(0, 0, 0, h);
+        gy.addColorStop(0, "rgba(0,0,0,0)");
+        gy.addColorStop(e / h, "rgba(0,0,0,1)");
+        gy.addColorStop(1 - e / h, "rgba(0,0,0,1)");
+        gy.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gy;
+        ctx.fillRect(0, 0, w, h);
+        return cv.toDataURL("image/png");
+      })
+      .catch(() => url);
+    this.soft.set(url, p);
+    return p;
   }
 
   // Si fallan teselas o relieve se sigue con lo que haya, sin romper la escena.
@@ -544,6 +655,7 @@ export class MapLibreScene implements SceneApi {
       const onOrbit = c === "orbit" && !!this.ds;
       this.ring.getElement().style.display = onOrbit || (gate && c === "approach") ? "block" : "none";
     }
+    this.syncSwaths();
     this.syncAoiOverlays();
   }
 
@@ -677,7 +789,12 @@ export class MapLibreScene implements SceneApi {
         map.addSource(lid, { type: "image", url: BLANK, coordinates: coordsOf(fr.bounds) });
         map.addLayer({ id: lid, type: "raster", source: lid, paint: { "raster-opacity": 0, "raster-fade-duration": 0 } }, "tw-cmp");
       }
-      (map.getSource(lid) as ImageSource).updateImage({ url: absolute(fr.url), coordinates: coordsOf(fr.bounds) });
+      const seq = (this.extraSeq.get(lid) ?? 0) + 1;
+      this.extraSeq.set(lid, seq);
+      void this.softEdge(absolute(fr.url)).then((u) => {
+        if (this.extraSeq.get(lid) !== seq || this.dead) return;
+        (map.getSource(lid) as ImageSource | undefined)?.updateImage({ url: u, coordinates: coordsOf(fr.bounds) });
+      });
       this.setOpacity(lid, fr.quality === "partial" ? 0.6 : 0.8);
     }
   }
@@ -727,9 +844,13 @@ export class MapLibreScene implements SceneApi {
       this.pending = null;
       commit();
     };
-    this.pending = onData;
-    map.on("sourcedata", onData);
-    (map.getSource(slot.src) as ImageSource).updateImage({ url, coordinates: coords });
+    void this.softEdge(url).then((u) => {
+      if (mine !== this.token || this.dead) return;
+      // listen only once the new image is on its way, so an older load cannot commit this frame
+      this.pending = onData;
+      map.on("sourcedata", onData);
+      (map.getSource(slot.src) as ImageSource | undefined)?.updateImage({ url: u, coordinates: coords });
+    });
   }
 
   // comparar (cortina)
@@ -1247,6 +1368,7 @@ export class MapLibreScene implements SceneApi {
 
   setReducedMotion(on: boolean): void {
     this.o.reducedMotion = on;
+    this.fx.setReducedMotion(on);
   }
 
   project(ll: [number, number]): { x: number; y: number } | null {
