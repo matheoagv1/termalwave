@@ -42,7 +42,7 @@ Delegar: `notify`. Cerrar: `task set` + `archive`.
 
 - Mapa **MapLibre GL** + barra de anos tipo Timelapse + capas `radar`, `suelo`, `contaminacion`, `incendios`.
 - Scaffold VPS ya deja mapa + scrub + datos en `web/` / `web/dist/` y `app-config.json` con `timeline.frames`.
-- Referencias de patron (solo mirar): `references/SgoLinea/`, `references/gods-eye-view/`.
+- Referencias de patron (solo mirar): `references/SgoLinea/`.
 
 ## Tu trabajo de producto
 

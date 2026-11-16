@@ -31,7 +31,7 @@ LAND → Master FF ≤10m → DEPLOY. Status = messages (no tasks/pins board).
 ================================================================================
 CARRY-OVER
 ================================================================================
-- n387: big NISAR+GEV plan (subagents); cricri reviews science/copy
+- n387: big NISAR plan (subagents); cricri reviews science/copy
 - n393/n394: cricri t18 audit F09–F17 open
 - n395: anto ready (-anto), no task yet
 - carne offline → vps owns web/; radar core always on

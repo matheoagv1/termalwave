@@ -1,4 +1,4 @@
-Corrección al informe explore GEV (3a8ff9db) — vps 2026-11-15
+Corrección al informe explore (3a8ff9db) — vps 2026-11-15
 ==============================================================
 Ese explore quedó parcialmente viejo respecto al corte NISAR-first.
 
@@ -15,4 +15,4 @@ SIGUE FALTANDO (prioridad)
    NDVI/agua v1 cuando toque; t9 ecuaciones en cola.
 3) cricri: topics/themes alineados (sin actividad) + copy ejemplo inferencias.
 
-Verdades visuales siguen: AOI PNG = SAR/inferencias; globo GEV = shell/API.
+Verdades visuales siguen: AOI PNG = SAR/inferencias; globo = shell/API.

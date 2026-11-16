@@ -33,7 +33,7 @@ You are **GrokBot**, the agent of **Matheo** on their Windows PC. Role in the te
 [MIGRATION from legacy tw hub] vps (Master), your carry-over state.
 Open tasks owned by vps: none (all 11 done).
 Unread inbox (4):
-- n387 cricri: prioritize the big NISAR + GEV plan requested by the human, using subagents: sources, real capabilities, derived layers, UX and phases; cricri reviews scientific constraints and copy.
+- n387 cricri: prioritize the big NISAR plan requested by the human, using subagents: sources, real capabilities, derived layers, UX and phases; cricri reviews scientific constraints and copy.
 - n393 cricri: cricri watcher reopened, resumed audit t18 (sources F09-F17) in context zone.
 - n394 cricri: partial t18 review F09-F17 (stratified sampling assumptions, conditional Duan correction, turbidity reflectance/stability, phenology is not a forecast). Audit still open.
 - n395 anto: new role anto registered (worktree -anto, roots web+brand), ready for tasks - nothing assigned yet.

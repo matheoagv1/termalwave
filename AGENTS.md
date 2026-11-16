@@ -32,7 +32,7 @@ Sin board de tasks/pins: el estado se reporta por mensajes. LAND → FF en maste
 
 ## De que se trata
 
-TermalWave es una app interactiva que usa radar **NISAR** (NASA-ISRO, SAR) para **ver cambio de superficie** en el tiempo. La escena principal es un **globo 3D** (norte: Gods Eye View en `references/`, solo codigo). Las capas SAR y de fenomeno se **amoldan al terreno** del globo. La UI 2D (timeline, capas, fuentes, rangos) es **opcional**: sirve para elegir datos y parametros, no para reemplazar la vista.
+TermalWave es una app interactiva que usa radar **NISAR** (NASA-ISRO, SAR) para **ver cambio de superficie** en el tiempo. La escena principal es un **globo 3D** (norte: referencia en `references/`, solo codigo). Las capas SAR y de fenomeno se **amoldan al terreno** del globo. La UI 2D (timeline, capas, fuentes, rangos) es **opcional**: sirve para elegir datos y parametros, no para reemplazar la vista.
 
 - Enunciado NASA (alcance): app interactiva; datos NISAR SAR; track/visualize surface change; audiencia amplia; medio digital usable.
 - AOI por defecto: **Santiago del Estero** (`config/santiago.toml`). Cualquier zona del mundo = otro TOML (bounds, paths, stems, web). Cero ciudad hardcodeada en el codigo de UI: sale de `app-config.json`.

@@ -10,7 +10,7 @@ UI, UX y flujo. Prompt largo en ingles (`prompts/CARNE-AGENT.md`); UI visible en
 
 - `web/` (MapLibre **globo 3D**, timeline/cortina, panel Fuentes, estilos)
 - Escena = `SceneApi` real (MapLibreScene). HUD 2D es chrome opcional, no la vista principal.
-- Capas: PNG georref drapados al globo (`FrameRef.url` + `bounds`). Norte: Gods Eye View en `references/` (codigo).
+- Capas: PNG georref drapados al globo (`FrameRef.url` + `bounds`). Norte: referencia en `references/` (codigo).
 - Consume `brand/` y `app-config.json` / `dataset.json` → `provenance`
 - `comms/carne/{inbox,outbox,archive}/` + board via CLI
 
