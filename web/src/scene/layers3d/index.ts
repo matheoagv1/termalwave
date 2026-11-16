@@ -1,18 +1,18 @@
 import type { SpaceView } from "../space/camera";
 import type { SpaceHost, SpaceLayer } from "../space/types";
 
-// data marks drawn as 3d objects around the globe: fire columns with a glow at
-// the base and light curtains rising from the nisar swath outlines. one webgl2
-// canvas over the map, additive, in the same ecef frame as the other space layers.
-// maplibre leaves the globe matrix near zoom 11, so everything fades out before
-// that and the draped map layers take over.
+// data marks drawn around the globe: fire glow sprites and light curtains rising
+// from the nisar swath outlines. one webgl2 canvas over the map, in the same ecef
+// frame as the other space layers. maplibre leaves the globe matrix near zoom 11,
+// so everything fades out before that and the draped map layers take over.
+// a program that fails to compile only drops its own marks, never the globe.
 
 const DEG = Math.PI / 180;
 const MAX_FIRES = 24_000;
 const MAX_WALL_SEGMENTS = 20_000;
 const FADE_FROM = 9.5;
 const FADE_TO = 11;
-const FIRE_STRIDE = 5;
+const FIRE_STRIDE = 4;
 const WALL_STRIDE = 4;
 
 const COMMON = `#version 300 es
@@ -35,71 +35,60 @@ float visible(vec3 p) {
 }
 `;
 
+// glow sprite per hotspot: core size and colour follow fire radiative power on a
+// six stop ramp (ember to white hot), half size 8..28 css px in 2 px steps.
+// unknown power: the smallest size in the theme heat colour, nothing made up
 const FIRE_VS = `${COMMON}
 layout(location = 0) in vec2 a_c;
 layout(location = 1) in vec3 a_pos;
-layout(location = 2) in vec2 a_iv;
+layout(location = 2) in float a_frp;
 uniform vec2 u_res;
-uniform float u_h;
-uniform float u_px;
-uniform float u_wpx;
-uniform float u_time;
-uniform float u_mode;
+uniform float u_scale;
+uniform vec3 u_unk;
 out vec2 v_c;
+out vec3 v_col;
+vec3 ramp(float f) {
+  if (f >= 300.0) return vec3(1.0, 0.953, 0.690);
+  if (f >= 100.0) return vec3(0.992, 0.784, 0.290);
+  if (f >= 50.0) return vec3(0.984, 0.604, 0.180);
+  if (f >= 20.0) return vec3(0.941, 0.416, 0.157);
+  if (f >= 5.0) return vec3(0.824, 0.251, 0.122);
+  return vec3(0.620, 0.165, 0.106);
+}
 void main() {
   v_c = a_c;
-  float pulse = 0.88 + 0.12 * sin(u_time * 2.4 + a_iv.y * 6.2832);
   vec3 base = a_pos * (1.0 + LIFT);
   vec4 cb = u_vp * vec4(base, 1.0);
   if (visible(base) < 0.5 || cb.w <= 0.0) {
+    v_col = vec3(0.0);
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  if (u_mode < 0.5) {
-    // glow: screen facing sprite, size in pixels
-    v_c = vec2(a_c.x, a_c.y * 2.0 - 1.0);
-    vec2 off = v_c * u_px * (0.7 + 0.6 * a_iv.x) * pulse;
-    cb.xy += off / u_res * 2.0 * cb.w;
-    gl_Position = cb;
-  } else {
-    // column: from the ground straight up, widened across its screen direction
-    vec3 top = a_pos * (1.0 + LIFT + u_h * (0.3 + 0.7 * a_iv.x) * pulse);
-    vec4 ct = u_vp * vec4(top, 1.0);
-    if (ct.w <= 0.0) {
-      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-      return;
-    }
-    vec2 d = (ct.xy / ct.w - cb.xy / cb.w) * u_res;
-    vec2 n = normalize(vec2(-d.y, d.x) + vec2(1e-5, 0.0));
-    vec4 p = mix(cb, ct, a_c.y);
-    p.xy += n * a_c.x * u_wpx / u_res * 2.0 * p.w;
-    gl_Position = p;
+  float core = 8.0;
+  v_col = u_unk;
+  if (a_frp >= 0.0) {
+    core = clamp(floor((8.0 + sqrt(a_frp) * 2.0) * 0.5 + 0.5) * 2.0, 8.0, 28.0);
+    v_col = ramp(a_frp);
   }
+  cb.xy += a_c * core * u_scale / u_res * 2.0 * cb.w;
+  gl_Position = cb;
 }`;
 
 const FIRE_FS = `#version 300 es
 precision mediump float;
 in vec2 v_c;
-uniform vec3 u_col;
-// shared with the vertex stage: precision must match or the link fails
-uniform highp float u_mode;
+in vec3 v_col;
 uniform float u_gain;
 out vec4 o;
 void main() {
-  vec3 hot = vec3(1.0, 0.93, 0.76);
-  vec3 col;
-  if (u_mode < 0.5) {
-    float d2 = dot(v_c, v_c);
-    if (d2 > 1.0) discard;
-    float edge = 1.0 - d2;
-    col = (u_col * exp(-d2 * 5.0) * 0.55 + hot * exp(-d2 * 40.0) * 0.8) * edge;
-  } else {
-    float x = 1.0 - abs(v_c.x);
-    float y = 1.0 - v_c.y;
-    col = mix(u_col, hot, y * y * x) * x * x * pow(y, 1.5) * 0.9;
-  }
-  col *= u_gain;
-  o = vec4(col, max(col.r, max(col.g, col.b)) * 0.3);
+  float r = length(v_c);
+  if (r >= 1.0) discard;
+  vec4 c;
+  if (r < 0.25) c = mix(vec4(1.0, 1.0, 0.922, 0.95), vec4(v_col, 0.9), r / 0.25);
+  else if (r < 0.55) c = mix(vec4(v_col, 0.9), vec4(v_col, 0.35), (r - 0.25) / 0.3);
+  else c = mix(vec4(v_col, 0.35), vec4(v_col, 0.0), (r - 0.55) / 0.45);
+  float a = c.a * u_gain;
+  o = vec4(c.rgb * a, a);
 }`;
 
 const WALL_VS = `${COMMON}
@@ -114,21 +103,18 @@ void main() {
   gl_Position = u_vp * vec4(p, 1.0);
 }`;
 
+// still light, like a path line: bright at the ground edge, gone at the top
 const WALL_FS = `#version 300 es
 precision mediump float;
 in float v_t;
 in float v_vis;
 uniform vec3 u_col;
 uniform float u_gain;
-uniform highp float u_time;
 out vec4 o;
 void main() {
   if (v_vis < 0.5) discard;
   float up = 1.0 - v_t;
-  float a = up * up * 0.34 + smoothstep(0.94, 1.0, up) * 0.5;
-  // slow band climbing the curtain, like a scan
-  float band = 1.0 - abs(fract(v_t - u_time * 0.12) * 2.0 - 1.0);
-  a += smoothstep(0.9, 1.0, band) * up * 0.12;
+  float a = up * up * 0.22 + smoothstep(0.94, 1.0, up) * 0.6;
   vec3 col = u_col * a * u_gain;
   o = vec4(col, max(col.r, max(col.g, col.b)) * 0.25);
 }`;
@@ -139,22 +125,10 @@ function num(v: unknown): number {
   return NaN;
 }
 
-// 0..1 strength of a hotspot from what the feed really carries; NaN when it has nothing
-function fireStrength(p: Record<string, unknown>): number {
+// fire radiative power in MW, or -1 when the feed does not carry it
+function fireFrp(p: Record<string, unknown>): number {
   const frp = num(p.frp ?? p.frp_mw);
-  if (Number.isFinite(frp) && frp > 0) return Math.min(1, Math.log10(1 + frp) / 2.7);
-  const k = num(p.brightness ?? p.bright_ti4 ?? p.bright_t31);
-  if (Number.isFinite(k) && k >= 250) return Math.min(1, Math.max(0, (k - 300) / 100));
-  const conf = p.confidence;
-  const c = num(conf);
-  if (Number.isFinite(c)) return Math.min(1, Math.max(0, c / 100));
-  if (typeof conf === "string") {
-    const s = conf.trim().toLowerCase();
-    if (s.startsWith("h")) return 0.9;
-    if (s.startsWith("n")) return 0.55;
-    if (s.startsWith("l")) return 0.25;
-  }
-  return NaN;
+  return Number.isFinite(frp) && frp >= 0 ? frp : -1;
 }
 
 function parseColor(css: string, fallback: [number, number, number]): [number, number, number] {
@@ -168,34 +142,44 @@ function parseColor(css: string, fallback: [number, number, number]): [number, n
   return fallback;
 }
 
-function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram | null {
+// null on any failure, logged once per program; callers skip that mark kind
+function compile(gl: WebGL2RenderingContext, name: string, vs: string, fs: string): WebGLProgram | null {
   const make = (type: number, src: string): WebGLShader | null => {
     const sh = gl.createShader(type);
     if (!sh) return null;
     gl.shaderSource(sh, src);
     gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      console.warn("layers3d shader:", gl.getShaderInfoLog(sh));
+      console.warn(`layers3d ${name} shader:`, gl.getShaderInfoLog(sh));
       gl.deleteShader(sh);
       return null;
     }
     return sh;
   };
-  const a = make(gl.VERTEX_SHADER, vs);
-  const b = make(gl.FRAGMENT_SHADER, fs);
-  const prog = gl.createProgram();
-  if (!a || !b || !prog) return null;
-  gl.attachShader(prog, a);
-  gl.attachShader(prog, b);
-  gl.linkProgram(prog);
-  gl.deleteShader(a);
-  gl.deleteShader(b);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.warn("layers3d link:", gl.getProgramInfoLog(prog));
-    gl.deleteProgram(prog);
+  try {
+    const a = make(gl.VERTEX_SHADER, vs);
+    const b = make(gl.FRAGMENT_SHADER, fs);
+    const prog = a && b ? gl.createProgram() : null;
+    if (!a || !b || !prog) {
+      if (a) gl.deleteShader(a);
+      if (b) gl.deleteShader(b);
+      return null;
+    }
+    gl.attachShader(prog, a);
+    gl.attachShader(prog, b);
+    gl.linkProgram(prog);
+    gl.deleteShader(a);
+    gl.deleteShader(b);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.warn(`layers3d ${name} link:`, gl.getProgramInfoLog(prog));
+      gl.deleteProgram(prog);
+      return null;
+    }
+    return prog;
+  } catch (e) {
+    console.warn(`layers3d ${name}:`, e);
     return null;
   }
-  return prog;
 }
 
 type Uniforms = Record<string, WebGLUniformLocation | null>;
@@ -229,15 +213,20 @@ export class Layers3D implements SpaceLayer {
   private wallsDirty = false;
   private visible = true;
   private swathsOn = true;
-  private reduced = false;
   private cleared = true;
   private fireCol: [number, number, number] = [1, 0.48, 0.1];
-  private swathCol: [number, number, number] = [0.37, 0.92, 1];
+  private swathCol: [number, number, number] = [0.31, 0.85, 1];
   private readonly eye = new Float32Array(3);
   private readonly onLost = (e: Event) => {
     e.preventDefault();
+    // every gl object dies with the context; init makes new ones on restore
     this.fireProg = null;
     this.wallProg = null;
+    this.fireVao = null;
+    this.wallVao = null;
+    this.quadBuf = null;
+    this.fireBuf = null;
+    this.wallBuf = null;
   };
   private readonly onRestored = () => {
     this.init();
@@ -251,10 +240,12 @@ export class Layers3D implements SpaceLayer {
     host.front.appendChild(c);
     this.canvas = c;
     this.gl = c.getContext("webgl2", { alpha: true, antialias: true, premultipliedAlpha: true, depth: false, stencil: false });
-    if (!this.gl) return;
+    if (!this.gl) {
+      console.warn("layers3d: webgl2 unavailable, 3d marks off");
+      return;
+    }
     c.addEventListener("webglcontextlost", this.onLost);
     c.addEventListener("webglcontextrestored", this.onRestored);
-    this.reduced = this.reduced || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
     this.refreshColors();
     this.init();
   }
@@ -264,9 +255,8 @@ export class Layers3D implements SpaceLayer {
     if (this.canvas) this.canvas.style.display = on ? "" : "none";
   }
 
-  setReducedMotion(on: boolean): void {
-    this.reduced = on || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-  }
+  /** Kept for the scene API; nothing here animates any more. */
+  setReducedMotion(_on: boolean): void {}
 
   setSwathsVisible(on: boolean): void {
     if (on === this.swathsOn) return;
@@ -275,16 +265,16 @@ export class Layers3D implements SpaceLayer {
     this.host?.invalidate();
   }
 
-  /** Theme tokens: --warn for heat, --accB for radar swaths. */
+  /** Theme tokens: --warn for heat without a power value, --accB for radar swaths. */
   refreshColors(): void {
     if (!this.host) return;
     const cs = getComputedStyle(this.host.map.getContainer());
     this.fireCol = parseColor(cs.getPropertyValue("--warn"), [1, 0.48, 0.1]);
-    this.swathCol = parseColor(cs.getPropertyValue("--accB"), [0.37, 0.92, 1]);
+    this.swathCol = parseColor(cs.getPropertyValue("--accB"), [0.31, 0.85, 1]);
     this.host.invalidate();
   }
 
-  /** Point features (FIRMS hotspots); null clears. Height follows frp, brightness or confidence when present. */
+  /** Point features (FIRMS hotspots); null clears. Size and colour follow frp when present. */
   setFires(fc: unknown | null): void {
     const feats = (fc as { features?: unknown[] } | null)?.features;
     const list = Array.isArray(feats) ? feats : [];
@@ -299,14 +289,11 @@ export class Layers3D implements SpaceLayer {
       const lon = xy[0] * DEG;
       const lat = xy[1] * DEG;
       const cl = Math.cos(lat);
-      const s = fireStrength(f.properties ?? {});
       const o = k * FIRE_STRIDE;
       this.fires[o] = cl * Math.cos(lon);
       this.fires[o + 1] = cl * Math.sin(lon);
       this.fires[o + 2] = Math.sin(lat);
-      // no strength in the feed: one common height, nothing made up per point
-      this.fires[o + 3] = Number.isFinite(s) ? s : 0.45;
-      this.fires[o + 4] = (Math.sin(xy[0] * 12.9898 + xy[1] * 78.233) * 43758.5453) % 1;
+      this.fires[o + 3] = fireFrp(f.properties ?? {});
       k++;
     }
     this.fireCount = k;
@@ -380,7 +367,7 @@ export class Layers3D implements SpaceLayer {
   frame(view: SpaceView, _now: Date): void {
     const gl = this.gl;
     const c = this.canvas;
-    if (!gl || !c || !this.host || !this.visible || !this.fireProg || !this.wallProg || gl.isContextLost()) return;
+    if (!gl || !c || !this.host || !this.visible || (!this.fireProg && !this.wallProg) || gl.isContextLost()) return;
     const pr = Math.min(view.pixelRatio, 2);
     const w = Math.max(1, Math.round(view.width * pr));
     const h = Math.max(1, Math.round(view.height * pr));
@@ -392,8 +379,9 @@ export class Layers3D implements SpaceLayer {
     this.upload(gl);
     const zoom = this.host.map.getZoom();
     const fade = 1 - Math.min(1, Math.max(0, (zoom - FADE_FROM) / (FADE_TO - FADE_FROM)));
-    const wallVerts = this.swathsOn ? this.wallVerts : 0;
-    const any = (this.fireCount > 0 || wallVerts > 0) && fade > 0.01;
+    const wallVerts = this.swathsOn && this.wallProg ? this.wallVerts : 0;
+    const fireCount = this.fireProg ? this.fireCount : 0;
+    const any = (fireCount > 0 || wallVerts > 0) && fade > 0.01;
     if (!any) {
       if (!this.cleared) {
         gl.viewport(0, 0, w, h);
@@ -410,50 +398,43 @@ export class Layers3D implements SpaceLayer {
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
 
     this.eye[0] = view.eye[0];
     this.eye[1] = view.eye[1];
     this.eye[2] = view.eye[2];
-    // heights follow the camera distance, so marks keep a readable size on screen
     const dist = Math.max(0.0005, Math.hypot(view.eye[0], view.eye[1], view.eye[2]) - 1);
-    const time = this.reduced ? 0 : (performance.now() / 1000) % 3600;
     const vp = view.viewProj as Float32Array;
 
     if (wallVerts > 0) {
       const u = this.wallU;
+      gl.blendFunc(gl.ONE, gl.ONE);
       gl.useProgram(this.wallProg);
       gl.uniformMatrix4fv(u.u_vp, false, vp);
       gl.uniform3fv(u.u_eye, this.eye);
-      gl.uniform1f(u.u_h, Math.min(0.06, dist * 0.035));
+      // height follows the camera distance, so the curtain keeps a readable size on screen
+      gl.uniform1f(u.u_h, Math.min(0.05, dist * 0.03));
       gl.uniform3f(u.u_col, this.swathCol[0], this.swathCol[1], this.swathCol[2]);
       gl.uniform1f(u.u_gain, fade);
-      gl.uniform1f(u.u_time, time);
       gl.bindVertexArray(this.wallVao);
       gl.drawArrays(gl.TRIANGLES, 0, wallVerts);
     }
 
-    if (this.fireCount > 0) {
+    if (fireCount > 0) {
       const u = this.fireU;
+      // translucent over, as glow sprites; additive burned dense regions to white
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.useProgram(this.fireProg);
       gl.uniformMatrix4fv(u.u_vp, false, vp);
       gl.uniform3fv(u.u_eye, this.eye);
       gl.uniform2f(u.u_res, w, h);
-      gl.uniform1f(u.u_h, Math.min(0.05, dist * 0.03));
-      gl.uniform1f(u.u_px, (5 + 1.4 * zoom) * pr);
-      gl.uniform1f(u.u_wpx, (1.3 + 0.3 * zoom) * pr);
-      gl.uniform1f(u.u_time, time);
-      gl.uniform3f(u.u_col, this.fireCol[0], this.fireCol[1], this.fireCol[2]);
-      // far out the hotspots pile up; lower gain keeps dense regions from burning to white
-      gl.uniform1f(u.u_gain, fade * (0.4 + 0.6 * Math.min(1, Math.max(0, (zoom - 2) / 4))));
+      // whole-globe views shrink the sprites so a fire season reads as heat, not a blob
+      gl.uniform1f(u.u_scale, pr * Math.min(1, Math.max(0.35, 0.35 + (0.65 * (zoom - 1)) / 3)));
+      gl.uniform3f(u.u_unk, this.fireCol[0], this.fireCol[1], this.fireCol[2]);
+      gl.uniform1f(u.u_gain, fade);
       gl.bindVertexArray(this.fireVao);
-      gl.uniform1f(u.u_mode, 0);
-      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.fireCount);
-      gl.uniform1f(u.u_mode, 1);
-      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.fireCount);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, fireCount);
     }
     gl.bindVertexArray(null);
-    if (!this.reduced) this.host.invalidate();
   }
 
   destroy(): void {
@@ -484,20 +465,19 @@ export class Layers3D implements SpaceLayer {
   private init(): void {
     const gl = this.gl;
     if (!gl) return;
-    this.fireProg = compile(gl, FIRE_VS, FIRE_FS);
-    this.wallProg = compile(gl, WALL_VS, WALL_FS);
-    if (!this.fireProg || !this.wallProg) return;
-    this.fireU = uniforms(gl, this.fireProg, ["u_vp", "u_eye", "u_res", "u_h", "u_px", "u_wpx", "u_time", "u_mode", "u_col", "u_gain"]);
-    this.wallU = uniforms(gl, this.wallProg, ["u_vp", "u_eye", "u_h", "u_col", "u_gain", "u_time"]);
+    this.fireProg = compile(gl, "fires", FIRE_VS, FIRE_FS);
+    this.wallProg = compile(gl, "swaths", WALL_VS, WALL_FS);
+    if (this.fireProg) this.fireU = uniforms(gl, this.fireProg, ["u_vp", "u_eye", "u_res", "u_scale", "u_unk", "u_gain"]);
+    if (this.wallProg) this.wallU = uniforms(gl, this.wallProg, ["u_vp", "u_eye", "u_h", "u_col", "u_gain"]);
 
-    this.quadBuf = gl.createBuffer();
-    this.fireBuf = gl.createBuffer();
-    this.wallBuf = gl.createBuffer();
+    this.quadBuf ??= gl.createBuffer();
+    this.fireBuf ??= gl.createBuffer();
+    this.wallBuf ??= gl.createBuffer();
 
-    this.fireVao = gl.createVertexArray();
+    this.fireVao ??= gl.createVertexArray();
     gl.bindVertexArray(this.fireVao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.fireBuf);
@@ -505,10 +485,10 @@ export class Layers3D implements SpaceLayer {
     gl.vertexAttribPointer(1, 3, gl.FLOAT, false, FIRE_STRIDE * 4, 0);
     gl.vertexAttribDivisor(1, 1);
     gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, FIRE_STRIDE * 4, 12);
+    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, FIRE_STRIDE * 4, 12);
     gl.vertexAttribDivisor(2, 1);
 
-    this.wallVao = gl.createVertexArray();
+    this.wallVao ??= gl.createVertexArray();
     gl.bindVertexArray(this.wallVao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.wallBuf);
     gl.enableVertexAttribArray(0);

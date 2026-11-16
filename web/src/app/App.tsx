@@ -5,6 +5,7 @@ import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, t
 
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
 import { longHelp } from "../ui/tip-help";
+import { saveBasemap, savedBasemap } from "../ui/basemap/basemaps";
 import type {
   BasemapOption,
   Dataset,
@@ -61,7 +62,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     explore: false,
     status: { online: true, terrain: true, basemap: true },
     dockOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
-    basemap: this.props.basemaps?.[0]?.id ?? "",
+    basemap: savedBasemap(this.props.basemaps),
     tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     immersive: false,
     introOpen: !intro0.done,
@@ -811,6 +812,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const o = this.basemaps.find((x) => x.id === id);
     if (!o) return;
     this.setState({ basemap: id });
+    saveBasemap(id);
     this.scene?.setBasemap?.(o);
   };
 

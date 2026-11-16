@@ -142,7 +142,7 @@ export function buildView(m: Model) {
   const results = S.results.map((r) => ({ label: r.label, go: () => m.goResult(r) }));
   const st = S.status;
 
-  // capas — headings por tema (GEV); badge de categoría como secundario
+  // capas — headings por tema; badge de categoría como secundario
   const CAT_ORDER = ["data", "prediction", "inference"];
   const CAT_LABEL: Record<string, string> = {
     data: T.layers.catData,
@@ -217,7 +217,7 @@ export function buildView(m: Model) {
       go: () => m.setLayer(l.id),
     };
   });
-  // capas globales (GEV): un interruptor cada una, dentro de su tema
+  // capas globales: un interruptor cada una, dentro de su tema
   const GLOBALS = [
     { id: "clouds", theme: "clima", bucket: "models" as const, label: T.globals.clouds, note: T.globals.cloudsNote },
     { id: "wind", theme: "clima", bucket: "models" as const, label: T.globals.wind, note: T.globals.windNote },
@@ -492,6 +492,9 @@ export function buildView(m: Model) {
             hot,
             before,
             example: isExampleHonesty((f0 as { honesty?: string } | null)?.honesty),
+            name: T.tickName(seg.kind, tk.label),
+            gap,
+            honesty: (f0 as { honesty?: string } | null)?.honesty ?? "",
             h: hot ? 28 : 26,
             ring: hot ? `inset 0 0 0 2px ${isA ? "var(--acc-fg)" : "var(--accB)"}` : "none",
             bg: layersBg.length ? layersBg.join(",") + "," + base : base,

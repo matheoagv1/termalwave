@@ -62,7 +62,7 @@ export const T = {
     close: "Cerrar",
     soundOn: "Sonido on",
     soundOff: "Sonido off",
-    welcome: (n) => `Hola, ${n}. Tocá Entrar al área o Explorar el mundo cuando quieras.`,
+    welcome: (n) => `Hola, ${n}. Explorá el mundo cuando quieras.`,
     territory: "Usa la línea de tiempo para comparar fechas. Las flechas mueven punto a punto.",
     gap: "Sin imagen en este punto. Revisa otra fecha o cambiá de capa.",
     noSeries: "Sin dato numérico en la ficha. La capa igual se ve en el mapa.",

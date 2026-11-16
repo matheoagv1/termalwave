@@ -1,4 +1,4 @@
-// FIRMS hotspots as GeoJSON for globe entities (GEV-style points, not timeline PNGs)
+// FIRMS hotspots as GeoJSON for globe entities (points, not timeline PNGs)
 import { edgeJson, json } from "./edge-cache.js";
 
 const EDGE = "https://edge.termalwave/firms";

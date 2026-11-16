@@ -61,7 +61,19 @@ export class SpaceScene implements SpaceHost {
 
   async add(layer: SpaceLayer, on = true): Promise<void> {
     this.layers.set(layer.id, { layer, on });
-    await layer.mount(this);
+    try {
+      await layer.mount(this);
+    } catch (e) {
+      // a layer that cannot start (shader, webgl, assets) drops out alone; the globe and the rest keep drawing
+      console.warn(`space layer ${layer.id} off:`, e);
+      this.layers.delete(layer.id);
+      try {
+        layer.destroy();
+      } catch {
+        /* half built */
+      }
+      return;
+    }
     layer.setVisible(on);
     this.invalidate();
   }

@@ -11,6 +11,7 @@ import type { SpaceConfig } from "./scene/space";
 import { MockProvider } from "./tw/mock-provider.js";
 import { MockScene } from "./tw/mock-scene.js";
 import type { BasemapOption, DataProvider, SceneApi, SceneOptions } from "./tw/contract";
+import { pickBasemaps } from "./ui/basemap/basemaps";
 
 // Modo demo: #mock=1 o cualquier #escenario=... usa los datos de ejemplo.
 // Sin eso la app lee el backend (dataset.json o app-config.json).
@@ -113,7 +114,7 @@ function basemapOptions(cfg: BmCfg | undefined, proxied: boolean): BasemapOption
     });
   const first = list.findIndex((o) => o.id === cfg?.default);
   if (first > 0) list.unshift(...list.splice(first, 1));
-  return list;
+  return pickBasemaps(list);
 }
 
 type AoiCfg = { west: number; east: number; south: number; north: number };

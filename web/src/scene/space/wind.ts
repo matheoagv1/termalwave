@@ -2,7 +2,7 @@ import type { SpaceView } from "./camera";
 import { lonLatToEcef, projectPoint } from "./camera";
 import type { SpaceHost, SpaceLayer } from "./types";
 
-// particle wind field over the globe (GEV-like): advect in lon/lat, hide behind earth,
+// particle wind field over the globe: advect in lon/lat, hide behind earth,
 // fade out at study zoom so terrain stays readable
 
 export interface WindSample {

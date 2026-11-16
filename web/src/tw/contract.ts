@@ -25,7 +25,7 @@ export interface LayerDef {
   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
   category?: "data" | "prediction" | "inference";
   core?: boolean;
-  /** Agrupa el panel Capas (GEV-style headings) */
+  /** Agrupa el panel Capas por tema */
   theme?: string;
 }
 

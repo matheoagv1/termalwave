@@ -9,6 +9,7 @@ import { MonigoteBuddy } from "./MonigoteBuddy";
 import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
 import { hudCopy } from "./hud/copy";
+import { AboutMore } from "./about/AboutMore";
 import "./hud/hud.css";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
@@ -80,20 +81,6 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         </section>
       )}
 
-      {(v.showEntry || v.showExplore) && !v.noDs && (
-        <button
-          type="button"
-          className="tw-hov tw-pixbtn"
-          onClick={a.enter}
-          onPointerDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          style={s(
-            `position:absolute;left:50%;transform:translateX(-50%);bottom:${v.frameBottom};max-width:calc(100% - 24px);pointer-events:auto;z-index:21;height:${lay.hit};padding:0 18px;touch-action:manipulation;${PRIMARY}`,
-          )}
-        >
-          {t.entry.backToArea}
-        </button>
-      )}
       {v.introOpen && (
         <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} app={a} />
       )}
@@ -539,7 +526,7 @@ function StatusStrip({ v, a }: { v: View; a: App }): React.ReactElement | null {
           {v.mapLabel}
         </span>
       )}
-      {v.momentName && v.railsOn && (
+      {v.momentName && v.railsOn && !(v.tlOn && v.tlReady) && (
         <span>
           <span className="tw-strip-k">{c.date}</span>
           {v.momentName}
@@ -631,6 +618,7 @@ function About({ v, a }: { v: View; a: App }): React.ReactElement {
             </dl>
           </section>
         )}
+        <AboutMore lang={a.state.lang} />
         <p style={s("padding-top:10px;border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg2)")}>{c.entry}</p>
       </div>
     </div>
@@ -866,14 +854,6 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       </div>
                     )}
                     {v.passesPending ? <div style={s("font:12px var(--sans);color:var(--fg2)")}>{t.nisar.pending}</div> : null}
-                    <button
-                      type="button"
-                      className="tw-hov"
-                      onClick={a.enter}
-                      style={s(`height:${lay.hit};padding:0 12px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
-                    >
-                      {t.entry.backToArea}
-                    </button>
                     <div>
                       {v.noSeries ? (
                         <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{t.card.noSeries}</div>

@@ -69,7 +69,7 @@ export const T = {
     close: "Close",
     soundOn: "Sound on",
     soundOff: "Sound off",
-    welcome: (n: string): string => `Hi, ${n}. Tap Frame this area, or explore the globe, whenever you want.`,
+    welcome: (n: string): string => `Hi, ${n}. Explore the globe whenever you want.`,
     territory: "Use the timeline to compare dates. The arrows move one step at a time.",
     gap: "No image at this step. Try another date or switch layers.",
     noSeries: "No number on this card. The layer is still drawn on the map.",

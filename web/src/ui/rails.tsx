@@ -1,8 +1,10 @@
 import React from "react";
 import type { App } from "../app/App";
 import { s } from "../app/css";
+import { copyOf, type Lang } from "../app/i18n";
 import type { RailL, RailR } from "../app/types";
 import type { View } from "../app/view";
+import { BasemapPicker } from "./basemap/BasemapPicker";
 import { Icon } from "./icons";
 import { layerCopy } from "./layers/layer-copy";
 import type { Tier } from "./layers/layer-model";
@@ -172,29 +174,9 @@ function RailHead({ title, onClose, closeLabel }: { title: string; onClose: () =
   );
 }
 
-function BasemapList({ v }: { v: View }): React.ReactElement {
-  const { t, lay } = v;
-  return (
-    <div role="radiogroup" aria-label={t.layers.basemap} style={s("display:flex;flex-direction:column;gap:4px;padding:10px")}>
-      <div style={s("display:flex;align-items:center;gap:6px;color:var(--fg2);font:11px var(--sans)")}>
-        <Icon.map size={14} strokeWidth={2.25} aria-hidden />
-        {t.layers.basemap}
-      </div>
-      {v.basemapItems.map((bm) => (
-        <button
-          key={bm.id}
-          type="button"
-          role="radio"
-          aria-checked={bm.on}
-          className="tw-hov"
-          onClick={bm.go}
-          style={s(`height:${lay.hit};padding:0 10px;text-align:left;border:1px solid ${bm.on ? "var(--acc)" : "var(--line2)"};background:${bm.on ? "var(--sel)" : "transparent"};cursor:pointer;font:12px var(--sans);color:var(--fg)`)}
-        >
-          {bm.label}
-        </button>
-      ))}
-    </div>
-  );
+function BasemapList({ v }: { v: View }): React.ReactElement | null {
+  const lang: Lang = v.t === copyOf("es") ? "es" : "en";
+  return <BasemapPicker items={v.basemapItems} lang={lang} title={v.t.layers.basemap} />;
 }
 
 export function InspectBody({ v }: { v: View }): React.ReactElement {

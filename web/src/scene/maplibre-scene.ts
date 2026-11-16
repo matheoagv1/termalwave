@@ -51,16 +51,17 @@ const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
 const URBAN_ZOOM = 1.85;
 const URBAN_DETAIL = 1.35;
 const URBAN_PITCH = 6;
-// busqueda de lugar desde orbita; duracion y zoom tipo gev
+// busqueda de lugar desde orbita; duracion y zoom cortos
 const PLACE_FLY_MS = 3000;
-const PLACE_FLY_MS_MIN = 2800;
-const PLACE_FLY_MS_MAX = 7500;
-const PLACE_FLY_KM = 0.45;
+const PLACE_FLY_MS_MIN = 2200;
+const PLACE_FLY_MS_MAX = 4000;
+const PLACE_FLY_KM = 0.2;
 const PLACE_ZOOM = 10;
 const PLACE_FLY_CURVE = 1.12;
 const CITY_HALF_DEG = 0.75;
 // wide view keeps the configured area in front; the fallback is only used when app-config has no aoi
 const GLOBE_ZOOM = 1.6;
+const MIN_GLOBE_SHARE = 0.3;
 const ORBIT_ALTITUDE_ZOOM = 1.1;
 const ASCEND_MS = 2800;
 const SETTLE_MS = 1800;
@@ -214,6 +215,10 @@ export class MapLibreScene implements SceneApi {
       transformRequest: tileCacheTransformRequest,
     });
     this.map.touchZoomRotate.disableRotation();
+    // a long soft coast after a drag, like a spun globe, instead of a short stop
+    this.map.dragPan.enable({ linearity: 0.25, easing: (t: number) => 1 - Math.pow(1 - t, 3), deceleration: 1600, maxSpeed: 1400 });
+    this.limitZoomOut();
+    this.map.on("resize", () => this.limitZoomOut());
     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     if (this.o.space) this.space = new SpaceScene(this.map, this.o.space);
 
@@ -286,21 +291,27 @@ export class MapLibreScene implements SceneApi {
       projection: { type: "globe" },
       sources,
       layers,
-      // space: soft limb like gev orbit; fades out as you enter study zoom
-      sky: this.o.space
-        ? {
-            "sky-color": "#02060f",
-            "horizon-color": "#1a3a6e",
-            "fog-color": "#6ec8ff",
-            "fog-ground-blend": 0.65,
-            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 4, 0.55, 7, 0.08, 9, 0],
-          }
-        : {
-            "sky-color": this.css("--scene-sphere", "#082460"),
-            "horizon-color": this.css("--scene-grid", "#2474ec"),
-            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-          },
+      sky: this.skySpec(),
     } as StyleSpecification;
+  }
+
+  // space: a thin dim limb, desaturated so data colours win (the reference runs its
+  // atmosphere at about a third of the engine default light, saturation -12 %,
+  // brightness -8 %); fades out as you enter study zoom
+  private skySpec(): Record<string, unknown> {
+    return this.o.space
+      ? {
+          "sky-color": "#010409",
+          "horizon-color": "#1b355c",
+          "fog-color": "#6fb2dc",
+          "fog-ground-blend": 0.7,
+          "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 4, 0.4, 7, 0.06, 9, 0],
+        }
+      : {
+          "sky-color": this.css("--scene-sphere", "#082460"),
+          "horizon-color": this.css("--scene-grid", "#2474ec"),
+          "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
+        };
   }
 
   setBasemap(bt: BasemapLayers): void {
@@ -403,15 +414,26 @@ export class MapLibreScene implements SceneApi {
     set("tw-gap", "fill-color", this.css("--scene-hatch", "#ffb43a"));
     set("tw-area", "line-color", this.css("--scene-outline", "#f4f1e8"));
     set("tw-curtain", "line-color", this.css("--acc", "#f0a014"));
-    set("tw-ent-firms", "circle-color", this.css("--warn", "#ff7a1a"));
+    if (map.getLayer("tw-ent-firms")) map.setPaintProperty("tw-ent-firms", "circle-color", this.fireColor());
     for (const id of ["tw-ent-nisar-glow", "tw-ent-nisar-line"]) set(id, "line-color", this.css("--accB", "#5eebff"));
     set("tw-ent-nisar", "fill-color", this.css("--accB", "#5eebff"));
     this.fx.refreshColors();
-    map.setSky({
-      "sky-color": this.css("--scene-sphere", "#082460"),
-      "horizon-color": this.css("--scene-grid", "#2474ec"),
-      "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-    } as never);
+    map.setSky(this.skySpec() as never);
+  }
+
+  // hotspot ground dot in the same frp ramp as the glow sprites; theme heat colour when frp is missing
+  private fireColor(): unknown[] {
+    return [
+      "step",
+      ["to-number", ["coalesce", ["get", "frp"], ["get", "frp_mw"], -1], -1],
+      this.css("--warn", "#ff7a1a"),
+      0, "#9e2a1b",
+      5, "#d2401f",
+      20, "#f06a28",
+      50, "#fb9a2e",
+      100, "#fdc84a",
+      300, "#fff3b0",
+    ];
   }
 
   private spaceMounted = false;
@@ -531,7 +553,7 @@ export class MapLibreScene implements SceneApi {
         ? {
             // ember under the 3d column; blurred so it reads as light, and it carries the layer alone at street zoom
             "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 2.6, 6, 5, 10, 9],
-            "circle-color": this.css("--warn", "#ff7a1a"),
+            "circle-color": this.fireColor() as unknown as string,
             "circle-blur": 0.7,
             "circle-opacity": 0.9,
           }
@@ -1054,6 +1076,7 @@ export class MapLibreScene implements SceneApi {
         duration: dur,
         essential: true,
         curve: PLACE_FLY_CURVE,
+        easing: easeInOutCubic,
       };
       if (opt.fly && dur > 0) map.flyTo(opts);
       else map.easeTo(opts);
@@ -1077,7 +1100,7 @@ export class MapLibreScene implements SceneApi {
     const cam = this.territoryCam();
     if (!cam) return;
     this.territoryZoom = cam.zoom;
-    const opts = { ...cam, padding: ZERO, duration: dur, essential: true };
+    const opts = { ...cam, padding: ZERO, duration: dur, essential: true, easing: easeInOutCubic };
     if (opt.fly) map.flyTo(opts);
     else map.easeTo(opts);
   }
@@ -1143,6 +1166,15 @@ export class MapLibreScene implements SceneApi {
     window.setTimeout(() => el.remove(), 650);
   }
 
+  // the farthest a hand can zoom out keeps the globe at least MIN_GLOBE_SHARE of
+  // the screen height across, so it never shrinks to a speck among the stars
+  private limitZoomOut(): void {
+    const h = this.mapEl?.clientHeight || this.host?.clientHeight || 0;
+    if (!h) return;
+    const z = Math.log2((MIN_GLOBE_SHARE * h * Math.PI) / 512);
+    this.map.setMinZoom(clamp(z, 0, GLOBE_ZOOM - 0.3));
+  }
+
   private globeCenter(): [number, number] {
     const a = this.o.aoi;
     if (!a) return GLOBE_FALLBACK;
@@ -1200,6 +1232,7 @@ export class MapLibreScene implements SceneApi {
         bearing: 0,
         duration: ASCEND_MS,
         curve: 1.6,
+        easing: easeInOutCubic,
         essential: true,
       });
       map.once("moveend", () => {
