@@ -82,10 +82,12 @@
     },
     {
       "id": "rvi",
-      "label": "RVI",
-      "label_en": "RVI",
-      "label_es": "RVI",
-      "unit": "",
+      "label": "Vegetation index",
+      "label_en": "Vegetation index",
+      "label_es": "Índice de vegetación",
+      "unit": "index",
+      "note": "4*HV/(HH+HV)",
+      "decimals": 2,
       "range": [
         0,
         1

@@ -849,7 +849,12 @@ export class MapLibreScene implements SceneApi {
     const map = this.map;
     const want = this.extras.filter((id) => id !== this.s.layer);
     const known = new Set((map.getStyle().layers ?? []).map((l) => l.id).filter((id) => id.startsWith("tw-x-")));
-    for (const id of known) if (!want.includes(id.slice(5))) this.setOpacity(id, 0);
+    for (const id of known) {
+      if (want.includes(id.slice(5))) continue;
+      // drop a load that is still in flight, or it paints the layer back on
+      this.extraSeq.set(id, (this.extraSeq.get(id) ?? 0) + 1);
+      this.setOpacity(id, 0);
+    }
     for (const id of want) {
       const lid = `tw-x-${id}`;
       const fr = this.ticks[this.s.tickId]?.frames[id];
@@ -865,7 +870,9 @@ export class MapLibreScene implements SceneApi {
       this.extraSeq.set(lid, seq);
       void this.softEdge(absolute(fr.url)).then((u) => {
         if (this.extraSeq.get(lid) !== seq || this.dead) return;
+        if ((this.intendedOpacity.get(lid) ?? 0) <= 0) return;
         (map.getSource(lid) as ImageSource | undefined)?.updateImage({ url: u, coordinates: coordsOf(fr.bounds) });
+        this.setOpacity(lid, this.intendedOpacity.get(lid) ?? 0);
       });
       this.setOpacity(lid, fr.quality === "partial" ? 0.6 : 0.8);
     }
@@ -874,7 +881,9 @@ export class MapLibreScene implements SceneApi {
   private setOpacity(layer: string, v: number): void {
     this.intendedOpacity.set(layer, v);
     if (!this.map.getLayer(layer)) return;
-    this.map.setPaintProperty(layer, "raster-opacity", this.aoiOverlaysVisible() ? v : 0);
+    const show = this.aoiOverlaysVisible() && v > 0;
+    this.map.setLayoutProperty(layer, "visibility", show ? "visible" : "none");
+    this.map.setPaintProperty(layer, "raster-opacity", show ? v : 0);
   }
 
   private applyFrame(): void {

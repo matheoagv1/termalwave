@@ -194,6 +194,7 @@ export class CatalogRenderer {
   private show(e: CatalogEntry): void {
     const date = entryDate(e, catalog.timelineDate(), new Date(), catalog.dailyDate());
     if (e.min_zoom != null && this.map.getZoom() < e.min_zoom) {
+      this.hide(e.id);
       catalog.setStatus(e.id, { state: "empty", reason: "zoom", date });
       return;
     }
@@ -234,7 +235,8 @@ export class CatalogRenderer {
     );
     // fade the whole layer in once it exists
     requestAnimationFrame(() => {
-      if (map.getLayer(src)) map.setPaintProperty(src, "raster-opacity", e.opacity ?? 0.75);
+      if (!catalog.isOn(e.id) || !map.getLayer(src)) return;
+      map.setPaintProperty(src, "raster-opacity", e.opacity ?? 0.75);
     });
     // status last: it re-enters sync, which must already see the source
     catalog.setStatus(e.id, { state: "loading", reason: "", date, count: 0 });

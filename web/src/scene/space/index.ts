@@ -74,7 +74,9 @@ export class SpaceScene implements SpaceHost {
       }
       return;
     }
-    layer.setVisible(on);
+    // a toggle during mount wins over the flag this call started with
+    const want = this.layers.get(layer.id)?.on ?? on;
+    layer.setVisible(want);
     this.invalidate();
   }
 
