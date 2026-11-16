@@ -371,6 +371,9 @@ export function buildView(m: Model) {
       if (fr.resolutionM != null) imgRows.push({ k: T.card.resolution, v: T.card.meters(fr.resolutionM) });
       if (fr.source) imgRows.push({ k: T.card.source, v: fr.source });
       if (fr.quality) imgRows.push({ k: T.card.quality, v: fr.quality === "ok" ? T.card.qualityOk : T.card.qualityPartial });
+      const frRow = fr as { note_en?: string; note_es?: string };
+      const frNote = S.lang === "es" ? frRow.note_es || frRow.note_en : frRow.note_en || frRow.note_es;
+      if (frNote) imgRows.push({ k: T.honesty.example, v: frNote });
       if (fr.bytes != null) imgRows.push({ k: T.card.size, v: F.bytes(fr.bytes) });
     } else imgRows = [{ k: T.card.image, v: T.map.gap(L.label) }];
   }
