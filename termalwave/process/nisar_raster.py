@@ -405,17 +405,15 @@ def epsg_from_utm_zone(handle: h5py.File) -> int | None:
 
 def resolve_epsg(handle: h5py.File, data: h5py.Dataset) -> int | None:
     parent = data.parent
-    proj = parent.get("projection") if parent is not None else None
-    if not isinstance(proj, h5py.Dataset):
-        for freq in ("frequencyA", "frequencyB"):
-            path = f"/science/LSAR/GCOV/grids/{freq}/projection"
-            if path in handle:
-                proj = handle[path]
-                break
-    if isinstance(proj, h5py.Dataset):
-        code = epsg_from_projection(proj)
-        if code:
-            return code
+    while parent is not None:
+        proj = parent.get("projection")
+        if isinstance(proj, h5py.Dataset):
+            code = epsg_from_projection(proj)
+            if code:
+                return code
+        if parent.name == "/":
+            break
+        parent = parent.parent
     return epsg_from_utm_zone(handle)
 
 
@@ -474,17 +472,19 @@ def _pol_dataset(handle: h5py.File, suffix: str) -> h5py.Dataset | None:
 
 def _axes(data: h5py.Dataset, handle: h5py.File) -> tuple[h5py.Dataset | None, h5py.Dataset | None]:
     parent = data.parent
-    x_ds = parent.get("xCoordinates") if parent is not None else None
-    y_ds = parent.get("yCoordinates") if parent is not None else None
-    if not isinstance(x_ds, h5py.Dataset):
-        x_ds = parent.get("xCoordinate") if parent is not None else None
-    if not isinstance(y_ds, h5py.Dataset):
-        y_ds = parent.get("yCoordinate") if parent is not None else None
-    if not isinstance(x_ds, h5py.Dataset):
-        x_ds = _dataset_by_suffix(handle, "xCoordinates")
-    if not isinstance(y_ds, h5py.Dataset):
-        y_ds = _dataset_by_suffix(handle, "yCoordinates")
-    return x_ds if isinstance(x_ds, h5py.Dataset) else None, y_ds if isinstance(y_ds, h5py.Dataset) else None
+    while parent is not None:
+        x_ds = parent.get("xCoordinates")
+        y_ds = parent.get("yCoordinates")
+        if not isinstance(x_ds, h5py.Dataset):
+            x_ds = parent.get("xCoordinate")
+        if not isinstance(y_ds, h5py.Dataset):
+            y_ds = parent.get("yCoordinate")
+        if isinstance(x_ds, h5py.Dataset) and isinstance(y_ds, h5py.Dataset):
+            return x_ds, y_ds
+        if parent.name == "/":
+            break
+        parent = parent.parent
+    return None, None
 
 
 def read_grid(path: str, suffix: str, *, linear_power: bool) -> tuple[GeoGrid, int | None]:

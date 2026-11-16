@@ -54,7 +54,8 @@ function dailyMaxFfwi(hourly) {
 function daysSinceRain(daily, date) {
   for (let k = 0; k <= DRY_LOOKBACK; k++) {
     const p = sumDays(daily, "precipitation_sum", addDays(date, -k), addDays(date, -k));
-    if (p != null && p >= RAIN_DAY_MM) return k;
+    if (p == null) return null;
+    if (p >= RAIN_DAY_MM) return k;
   }
   return DRY_LOOKBACK + 1;
 }
@@ -74,7 +75,7 @@ export async function fireWeather(cells, bbox, date) {
         ffwi: round(v, 1),
         danger_class: ffwiClass(v),
         days_since_rain: daysSinceRain(rain[i].daily, date),
-        rain_30d_mm: round(sumDays(rain[i].daily, "precipitation_sum", from, date), 1),
+        rain_30d_mm: round(sumDays(rain[i].daily, "precipitation_sum", addDays(date, -29), date), 1),
       }),
     );
   });

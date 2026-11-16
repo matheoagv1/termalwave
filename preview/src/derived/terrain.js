@@ -117,7 +117,7 @@ export async function flood3d(cells, bbox, terr, rain) {
   const features = [];
   cells.forEach((c, i) => {
     const t = terr[i];
-    if (!Number.isFinite(t.elev_m) || perDay[i].some((p) => p == null)) return;
+    if (!Number.isFinite(t.elev_m) || !Number.isFinite(t.slope_deg) || perDay[i].some((p) => p == null)) return;
     const p72 = perDay[i].reduce((a, b) => a + b, 0);
     // low = below the mean of the viewed area, in standard deviations; flat = gentle slope
     const lowness = clamp(0.5 + (mean - t.elev_m) / (4 * sd));

@@ -31,20 +31,13 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
   const [drag, setDrag] = React.useState(false);
   const last = React.useRef(-1);
 
-  const ticks: Tick[] = tl.segs.flatMap((sg) => sg.ticks);
+  const ticks: Tick[] = tl.segs.flatMap((sg) => sg.ticks).sort((a, b) => a.order - b.order);
   const n = ticks.length;
   const cur = Math.max(0, Math.min(n - 1, tl.idx));
   const curTk = ticks[cur];
   const bIdx = v.compareOn ? ticks.findIndex((tk) => tk.hot && !tk.cur) : -1;
   const latest = n > 0 && cur === n - 1;
 
-  // Where one segment ends and the next starts: a divider halfway between.
-  const divs: number[] = [];
-  let acc = 0;
-  tl.segs.slice(0, -1).forEach((sg) => {
-    acc += sg.ticks.length;
-    if (acc > 0 && acc < n) divs.push((at(acc - 1, n) + at(acc, n)) / 2);
-  });
   const pre = ticks.map((tk, i) => (tk.before ? i : -1)).filter((i) => i >= 0);
 
   const idxAt = (x: number): number => {
@@ -168,9 +161,6 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 />
               )}
               <span className="tw-tlb-fill" style={s(`width:${at(cur, n) * 100}%`)} />
-              {divs.map((d) => (
-                <span key={d} className="tw-tlb-div" style={s(`left:${d * 100}%`)} />
-              ))}
               {ticks.map((tk, i) => (
                 <span
                   key={tk.key}

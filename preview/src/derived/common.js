@@ -110,7 +110,7 @@ async function openMeteoElevation(chunk) {
   const lon = chunk.map((p) => p[1].toFixed(5)).join(",");
   const raw = await getJson(`${ELEVATION}?latitude=${lat}&longitude=${lon}`);
   if (!Array.isArray(raw?.elevation) || raw.elevation.length !== chunk.length) throw new Error("elevation shape");
-  return raw.elevation.map(Number);
+  return raw.elevation.map((v) => (Number.isFinite(v) ? v : NaN));
 }
 
 async function srtmElevation(chunk) {
@@ -122,16 +122,19 @@ async function srtmElevation(chunk) {
 
 /** sum of a daily series over [from, to] inclusive */
 export function sumDays(daily, key, from, to) {
+  const expected = (Date.parse(to) - Date.parse(from)) / DAY_MS + 1;
+  if (!Number.isInteger(expected) || expected < 1) return null;
   let total = 0;
-  let seen = 0;
-  (daily?.time || []).forEach((t, i) => {
-    const v = Number(daily[key]?.[i]);
-    if (t >= from && t <= to && Number.isFinite(v)) {
-      total += v;
-      seen++;
-    }
-  });
-  return seen ? total : null;
+  const seen = new Set();
+  for (let i = 0; i < (daily?.time?.length || 0); i++) {
+    const t = daily.time[i];
+    if (t < from || t > to) continue;
+    const v = daily[key]?.[i];
+    if (!Number.isFinite(v) || seen.has(t)) return null;
+    seen.add(t);
+    total += v;
+  }
+  return seen.size === expected ? total : null;
 }
 
 /**
@@ -144,8 +147,48 @@ export function featureCollection(meta, features) {
   return { type: "FeatureCollection", attribution: ATTRIBUTION, ...meta, count: features.length, features };
 }
 
+const pending = new Map();
+const MAX_ATTEMPTS = 3;
+const MAX_RETRY_MS = 2000;
+
 async function getJson(url) {
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
-  return res.json();
+  if (pending.has(url)) return pending.get(url);
+  const request = fetchJson(url);
+  pending.set(url, request);
+  try {
+    return await request;
+  } finally {
+    pending.delete(url);
+  }
 }
+
+async function fetchJson(url) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    let response;
+    try {
+      response = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(10000),
+        cf: { cacheTtlByStatus: { "200-299": 300, "400-599": -1 } },
+      });
+    } catch (err) {
+      if (attempt === MAX_ATTEMPTS - 1) throw err;
+      await pause(250 * 2 ** attempt);
+      continue;
+    }
+    if (response.ok) return response.json();
+    const error = new Error(`${new URL(url).host} ${response.status}`);
+    const retryable = response.status === 429 || response.status >= 500;
+    const retryAfter = response.headers.get("retry-after");
+    const seconds = retryAfter == null ? NaN : Number(retryAfter);
+    const requested = Number.isFinite(seconds)
+      ? seconds * 1000
+      : retryAfter ? Date.parse(retryAfter) - Date.now() : NaN;
+    const delay = Number.isFinite(requested) ? Math.max(0, requested) : 250 * 2 ** attempt;
+    await response.body?.cancel();
+    if (!retryable || attempt === MAX_ATTEMPTS - 1 || delay > MAX_RETRY_MS) throw error;
+    await pause(delay);
+  }
+}
+
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
