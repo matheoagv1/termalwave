@@ -296,13 +296,14 @@ quality_rank = 30
 [basemaps]
 # daily gibs mosaics have black gaps between orbits; default must be gap-free
 default = "eox_s2cloudless_2025"
-# Streets = CARTO (OSM) raster — OpenFreeMap vector needs MapLibre style swap (carne).
+# Street raster is OSM. CARTO raster now returns an API-key image, so it is not a base.
+# OpenFreeMap is a vector style, not a raster tile template.
 # GIBS truecolor lags: VIIRS often ~10–14d behind; MODIS ~2–4d. date_lag_days per entry.
 list = [
   "gibs_modis_truecolor",
   "gibs_viirs_truecolor",
-  "carto_voyager",
-  "carto_dark_matter",
+  "osm_standard",
+  "esri_world_imagery",
   "openfreemap_liberty",
   "eox_s2cloudless_2025",
   "gibs_blue_marble",
@@ -354,31 +355,34 @@ time_dimension = false
 cache_policy = "archive"
 docs_url = "https://wiki.earthdata.nasa.gov/display/GIBS"
 
-[basemaps.entries.carto_voyager]
-id = "carto_voyager"
-label = "Calles (CARTO Voyager)"
+[basemaps.entries.osm_standard]
+id = "osm_standard"
+label = "Calles (OpenStreetMap)"
 kind = "raster"
-url_template = "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
-attribution = "© OpenStreetMap contributors · © CARTO"
-license = "ODbL / CARTO"
-max_zoom = 20
+url_template = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+attribution = "© OpenStreetMap contributors"
+license = "ODbL"
+max_zoom = 19
+tile_size = 256
 time_dimension = false
-docs_url = "https://carto.com/basemaps/"
+docs_url = "https://operations.osmfoundation.org/policies/tiles/"
 purpose = "streets"
-upstream_api_key = "CARTO_BASEMAPS_API_KEY"
+do_not_store_tiles = true
 
-[basemaps.entries.carto_dark_matter]
-id = "carto_dark_matter"
-label = "Calles oscuras (CARTO)"
+[basemaps.entries.esri_world_imagery]
+id = "esri_world_imagery"
+label = "Imagen Esri"
 kind = "raster"
-url_template = "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-attribution = "© OpenStreetMap contributors · © CARTO"
-license = "ODbL / CARTO"
-max_zoom = 20
+# Esri World Imagery is XYZ with row before column: {z}/{y}/{x}
+url_template = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+attribution = "Tiles © Esri, Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+license = "Esri"
+max_zoom = 19
+tile_size = 256
 time_dimension = false
-docs_url = "https://carto.com/basemaps/"
-purpose = "streets"
-upstream_api_key = "CARTO_BASEMAPS_API_KEY"
+docs_url = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+purpose = "imagery"
+do_not_store_tiles = true
 
 [basemaps.entries.openfreemap_liberty]
 id = "openfreemap_liberty"

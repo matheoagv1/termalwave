@@ -49,9 +49,10 @@ type BmCfg = {
 const BM_LABELS: Record<string, string> = {
   gibs_modis_truecolor: "NASA GIBS MODIS",
   gibs_viirs_truecolor: "NASA GIBS VIIRS",
-  carto_voyager: "Calles (CARTO Voyager)",
-  carto_dark_matter: "Calles oscuras (CARTO)",
+  osm_standard: "Calles (OpenStreetMap)",
+  esri_world_imagery: "Imagen Esri",
   eox_s2cloudless_2025: "Sentinel-2 sin nubes (EOX)",
+  gibs_blue_marble: "NASA Blue Marble",
 };
 
 // GIBS truecolor lags (VIIRS often ~14d). Prefer resolved_url from app-config.
