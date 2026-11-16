@@ -78,6 +78,8 @@ async function handle(request, env, ctx) {
 }
 
 const PUBLIC_API = new Set(["/api/search", "/api/ephemeris", "/api/satellites", "/api/firms", "/api/nisar/coverage", "/api/wind", "/api/clouds"]);
+// read-only data routes: derived layers, vegetation grids, catalog proxies, interferogram coverage
+const PUBLIC_API_PREFIX = ["/api/clouds/", "/api/derived/", "/api/veg/", "/api/catalog/", "/api/insar/"];
 
 /**
  * @param {Request} request
@@ -93,7 +95,7 @@ function isPublicRead(request, rawPath) {
   }
   if (p.includes("\\") || p.includes("\0") || p.includes("//") || p.split("/").includes("..")) return false;
   if (p === "/auth" || p.startsWith("/auth/")) return false;
-  if (p.startsWith("/api/")) return PUBLIC_API.has(p) || p.startsWith("/api/clouds/");
+  if (p.startsWith("/api/")) return PUBLIC_API.has(p) || PUBLIC_API_PREFIX.some((x) => p.startsWith(x));
   return true;
 }
 
