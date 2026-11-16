@@ -8,6 +8,7 @@ TOML rectangle pasted over the image.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -259,38 +260,145 @@ def _looks_geographic(x: np.ndarray, y: np.ndarray) -> bool:
     return bool(np.max(np.abs(x)) <= 180 and np.max(np.abs(y)) <= 90)
 
 
-def find_epsg(handle: h5py.File) -> int | None:
-    import re
+def _as_text(raw: Any) -> str:
+    if isinstance(raw, bytes):
+        return raw.decode("utf-8", "replace")
+    if isinstance(raw, str):
+        return raw
+    arr = np.asarray(raw)
+    if arr.dtype.kind in {"S", "O", "U"}:
+        parts = []
+        for item in arr.ravel()[:8]:
+            parts.append(item.decode("utf-8", "replace") if isinstance(item, bytes) else str(item))
+        return " ".join(parts)
+    return str(raw)
 
+
+def _code_in_text(text: str) -> int | None:
+    for match in re.finditer(r"EPSG[\"'\s,:]*(\d{4,5})", text, re.I):
+        code = int(match.group(1))
+        if code in (4326, 4269) or epsg_utm(code):
+            return code
+    for match in re.finditer(r"UTM zone (\d{1,2})\s*([NS])", text, re.I):
+        zone = int(match.group(1))
+        return (32600 if match.group(2).upper() == "N" else 32700) + zone
+    return None
+
+
+def _zone_to_epsg(raw: Any) -> int | None:
+    if isinstance(raw, (int, np.integer)):
+        zone = int(raw)
+        if 1 <= zone <= 60:
+            return 32700 + zone
+        return None
+    text = _as_text(raw).strip()
+    coded = _code_in_text(text)
+    if coded and epsg_utm(coded):
+        return coded
+    match = re.search(r"(\d{1,2})\s*([NSns])?", text)
+    if not match:
+        return None
+    zone = int(match.group(1))
+    if not 1 <= zone <= 60:
+        return None
+    hemi = (match.group(2) or "S").upper()
+    return (32600 if hemi == "N" else 32700) + zone
+
+
+def _usable_epsg(code: int) -> int | None:
+    if code in (4326, 4269) or epsg_utm(code):
+        return code
+    return None
+
+
+def epsg_from_projection(dataset: h5py.Dataset) -> int | None:
+    """NISAR stores the EPSG as the projection dataset value, plus epsg_code and spatial_ref."""
+    try:
+        raw = dataset[()]
+    except Exception:
+        raw = None
+    if raw is not None and _is_number(raw):
+        code = _usable_epsg(int(np.asarray(raw).reshape(-1)[0]))
+        if code:
+            return code
+    elif raw is not None:
+        coded = _code_in_text(_as_text(raw))
+        if coded:
+            return coded
+    for key in ("epsg_code", "EPSG_code", "epsg"):
+        if key not in dataset.attrs:
+            continue
+        try:
+            code = _usable_epsg(int(np.asarray(dataset.attrs[key]).reshape(-1)[0]))
+        except (TypeError, ValueError):
+            code = None
+        if code:
+            return code
+    for key in ("spatial_ref", "crs_wkt", "wkt", "crs"):
+        if key not in dataset.attrs:
+            continue
+        coded = _code_in_text(_as_text(dataset.attrs[key]))
+        if coded:
+            return coded
+    return None
+
+
+def _is_number(raw: Any) -> bool:
+    arr = np.asarray(raw)
+    return arr.dtype.kind in {"i", "u", "f"} and arr.size >= 1
+
+
+def epsg_from_utm_zone(handle: h5py.File) -> int | None:
+    """Last resort: granule metadata field utm_zone, for example 20S."""
     found: list[int] = []
 
-    def take(text: str) -> None:
-        for match in re.finditer(r"EPSG[\"']?\s*,?\s*[\"']?(\d{4,5})", text):
-            found.append(int(match.group(1)))
-        for match in re.finditer(r"UTM zone (\d{1,2})([NS])", text, re.I):
-            zone = int(match.group(1))
-            found.append((32600 if match.group(2).upper() == "N" else 32700) + zone)
+    def take(name: str, raw: Any) -> None:
+        if "utm" not in name.lower() or "zone" not in name.lower():
+            return
+        code = _zone_to_epsg(raw)
+        if code:
+            found.append(code)
 
     def walk(group: h5py.Group) -> None:
         for key, value in group.attrs.items():
-            take(str(value))
-            take(str(key))
+            take(str(key), value)
         for key, obj in group.items():
-            take(str(key))
-            if isinstance(obj, h5py.Dataset) and obj.dtype.kind in {"S", "O", "U"} and obj.size < 20:
+            if isinstance(obj, h5py.Dataset) and "utm" in key.lower() and "zone" in key.lower():
                 try:
-                    raw = obj[()]
-                    take(raw.decode() if isinstance(raw, bytes) else str(raw))
+                    take(key, obj[()])
                 except Exception:
                     continue
             elif isinstance(obj, h5py.Group):
                 walk(obj)
 
     walk(handle)
-    for code in found:
-        if code in (4326, 4269) or epsg_utm(code):
-            return code
     return found[0] if found else None
+
+
+def resolve_epsg(handle: h5py.File, data: h5py.Dataset) -> int | None:
+    parent = data.parent
+    proj = parent.get("projection") if parent is not None else None
+    if not isinstance(proj, h5py.Dataset):
+        for freq in ("frequencyA", "frequencyB"):
+            path = f"/science/LSAR/GCOV/grids/{freq}/projection"
+            if path in handle:
+                proj = handle[path]
+                break
+    if isinstance(proj, h5py.Dataset):
+        code = epsg_from_projection(proj)
+        if code:
+            return code
+    return epsg_from_utm_zone(handle)
+
+
+def find_epsg(handle: h5py.File) -> int | None:
+    for freq in ("frequencyA", "frequencyB"):
+        path = f"/science/LSAR/GCOV/grids/{freq}/projection"
+        if path in handle and isinstance(handle[path], h5py.Dataset):
+            code = epsg_from_projection(handle[path])
+            if code:
+                return code
+    return epsg_from_utm_zone(handle)
 
 
 def _dataset_by_suffix(handle: h5py.File, suffix: str) -> h5py.Dataset | None:
@@ -328,15 +436,37 @@ def list_datasets(handle: h5py.File) -> list[str]:
     return names
 
 
+def _pol_dataset(handle: h5py.File, suffix: str) -> h5py.Dataset | None:
+    for freq in ("frequencyA", "frequencyB"):
+        path = f"/science/LSAR/GCOV/grids/{freq}/{suffix}"
+        if path in handle and isinstance(handle[path], h5py.Dataset):
+            return handle[path]
+    return _dataset_by_suffix(handle, suffix)
+
+
+def _axes(data: h5py.Dataset, handle: h5py.File) -> tuple[h5py.Dataset | None, h5py.Dataset | None]:
+    parent = data.parent
+    x_ds = parent.get("xCoordinates") if parent is not None else None
+    y_ds = parent.get("yCoordinates") if parent is not None else None
+    if not isinstance(x_ds, h5py.Dataset):
+        x_ds = parent.get("xCoordinate") if parent is not None else None
+    if not isinstance(y_ds, h5py.Dataset):
+        y_ds = parent.get("yCoordinate") if parent is not None else None
+    if not isinstance(x_ds, h5py.Dataset):
+        x_ds = _dataset_by_suffix(handle, "xCoordinates")
+    if not isinstance(y_ds, h5py.Dataset):
+        y_ds = _dataset_by_suffix(handle, "yCoordinates")
+    return x_ds if isinstance(x_ds, h5py.Dataset) else None, y_ds if isinstance(y_ds, h5py.Dataset) else None
+
+
 def read_grid(path: str, suffix: str, *, linear_power: bool) -> tuple[GeoGrid, int | None]:
     """Read one 2D dataset plus its x/y axes, cropped later by the caller."""
     with h5py.File(path, "r") as handle:
-        data_ds = _dataset_by_suffix(handle, suffix)
+        data_ds = _pol_dataset(handle, suffix)
         if data_ds is None:
             names = "\n".join(list_datasets(handle)[:80])
             raise ValueError(f"{suffix} not found in {path}. First datasets:\n{names}")
-        x_ds = _dataset_by_suffix(handle, "xCoordinates") or _dataset_by_suffix(handle, "xCoordinate")
-        y_ds = _dataset_by_suffix(handle, "yCoordinates") or _dataset_by_suffix(handle, "yCoordinate")
+        x_ds, y_ds = _axes(data_ds, handle)
         if x_ds is None or y_ds is None:
             raise ValueError(f"{path} has {suffix} but no x/y coordinates")
         values = np.asarray(data_ds[...], dtype=np.float64)
@@ -344,7 +474,7 @@ def read_grid(path: str, suffix: str, *, linear_power: bool) -> tuple[GeoGrid, i
             values = values[0]
         x = np.asarray(x_ds[...], dtype=np.float64).reshape(-1)
         y = np.asarray(y_ds[...], dtype=np.float64).reshape(-1)
-        epsg = find_epsg(handle)
+        epsg = resolve_epsg(handle, data_ds)
     if linear_power:
         values = power_to_db(values)
     lon, lat = axes_to_lonlat(x, y, epsg)
@@ -367,15 +497,17 @@ def read_window(
 ) -> tuple[GeoGrid, int | None]:
     """Slice the AOI in the file. The full frame is not loaded."""
     with h5py.File(path, "r") as handle:
-        data_ds = _dataset_by_suffix(handle, suffix)
-        x_ds = _dataset_by_suffix(handle, "xCoordinates") or _dataset_by_suffix(handle, "xCoordinate")
-        y_ds = _dataset_by_suffix(handle, "yCoordinates") or _dataset_by_suffix(handle, "yCoordinate")
-        if data_ds is None or x_ds is None or y_ds is None:
+        data_ds = _pol_dataset(handle, suffix)
+        if data_ds is None:
+            names = "\n".join(list_datasets(handle)[:80])
+            raise ValueError(f"{suffix} missing in {path}. First datasets:\n{names}")
+        x_ds, y_ds = _axes(data_ds, handle)
+        if x_ds is None or y_ds is None:
             names = "\n".join(list_datasets(handle)[:80])
             raise ValueError(f"{suffix} or axes missing in {path}. First datasets:\n{names}")
         x = np.asarray(x_ds[...], dtype=np.float64).reshape(-1)
         y = np.asarray(y_ds[...], dtype=np.float64).reshape(-1)
-        epsg = find_epsg(handle)
+        epsg = resolve_epsg(handle, data_ds)
         lon, lat = axes_to_lonlat(x, y, epsg)
         west, south, east, north = bbox
         cols = np.flatnonzero((lon >= west) & (lon <= east))
@@ -398,17 +530,18 @@ def read_window(
 def linear_pol(path: str, pol: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, int | None]:
     suffix = "HHHH" if pol == "HH" else "HVHV"
     with h5py.File(path, "r") as handle:
-        data_ds = _dataset_by_suffix(handle, suffix)
-        x_ds = _dataset_by_suffix(handle, "xCoordinates")
-        y_ds = _dataset_by_suffix(handle, "yCoordinates")
-        if data_ds is None or x_ds is None or y_ds is None:
+        data_ds = _pol_dataset(handle, suffix)
+        if data_ds is None:
+            raise ValueError(f"missing {suffix} in {path}")
+        x_ds, y_ds = _axes(data_ds, handle)
+        if x_ds is None or y_ds is None:
             raise ValueError(f"missing {suffix} axes in {path}")
         values = np.asarray(data_ds[...], dtype=np.float64)
         if values.ndim > 2:
             values = values[0]
         x = np.asarray(x_ds[...]).reshape(-1)
         y = np.asarray(y_ds[...]).reshape(-1)
-        epsg = find_epsg(handle)
+        epsg = resolve_epsg(handle, data_ds)
     lon, lat = axes_to_lonlat(x, y, epsg)
     if values.shape == (lon.size, lat.size) and values.shape != (lat.size, lon.size):
         values = values.T

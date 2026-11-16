@@ -16,12 +16,15 @@ ensure_vendored()
 
 import numpy as np
 
+import h5py
+
 from termalwave.process.nisar_raster import (
     change_db,
     colorize,
     crop_lonlat,
     db_stats,
     los_mm,
+    read_window,
     rvi_linear,
     utm_to_lonlat,
 )
@@ -67,6 +70,52 @@ class RasterMathTests(unittest.TestCase):
         rgba = colorize(np.array([[-20.0, np.nan]]), -30.0, -5.0, ((0.0, (0, 0, 0)), (1.0, (255, 255, 255))))
         self.assertEqual(int(rgba[0, 1, 3]), 0)
         self.assertGreater(int(rgba[0, 0, 3]), 0)
+
+    def test_projection_dataset_value_is_epsg(self) -> None:
+        import tempfile
+
+        lons = np.array([-64.40, -64.30, -64.20, -64.10])
+        lats = np.array([-27.95, -27.85, -27.75, -27.65])
+        east = np.array([_forward_utm(float(lon), -27.80, 20, False)[0] for lon in lons])
+        north = np.array([_forward_utm(-64.25, float(lat), 20, False)[1] for lat in lats])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "gcov.h5"
+            with h5py.File(path, "w") as handle:
+                grid = handle.create_group("/science/LSAR/GCOV/grids/frequencyA")
+                grid.create_dataset("HVHV", data=np.arange(16, dtype=np.float32).reshape(4, 4))
+                grid.create_dataset("xCoordinates", data=east)
+                grid.create_dataset("yCoordinates", data=north)
+                proj = grid.create_dataset("projection", data=np.int32(32720))
+                proj.attrs["epsg_code"] = np.int32(32720)
+                proj.attrs["spatial_ref"] = b'PROJCS["WGS 84 / UTM zone 20S",AUTHORITY["EPSG","32720"]]'
+                other = handle.create_group("/science/LSAR/GCOV/grids/frequencyB")
+                other.create_dataset("projection", data=np.int32(32618))
+                meta = handle.create_group("/science/LSAR/GCOV/metadata")
+                meta.create_dataset("utm_zone", data=b"20N")
+            grid, epsg = read_window(str(path), "HVHV", (-64.35, -27.90, -64.16, -27.70), to_db=True)
+        self.assertEqual(epsg, 32720)
+        self.assertGreater(grid.values.size, 0)
+        self.assertLess(grid.bounds["west"], -64.16)
+        self.assertGreater(grid.bounds["east"], -64.35)
+
+    def test_utm_zone_metadata_when_projection_is_empty(self) -> None:
+        import tempfile
+
+        lons = np.array([-64.40, -64.20])
+        lats = np.array([-27.90, -27.70])
+        east = np.array([_forward_utm(float(lon), -27.80, 20, False)[0] for lon in lons])
+        north = np.array([_forward_utm(-64.25, float(lat), 20, False)[1] for lat in lats])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "gcov.h5"
+            with h5py.File(path, "w") as handle:
+                grid = handle.create_group("/science/LSAR/GCOV/grids/frequencyA")
+                grid.create_dataset("HVHV", data=np.ones((2, 2), dtype=np.float32))
+                grid.create_dataset("xCoordinates", data=east)
+                grid.create_dataset("yCoordinates", data=north)
+                grid.create_dataset("projection", data=np.int32(0))
+                handle.create_dataset("/science/LSAR/GCOV/metadata/utm_zone", data=b"20S")
+            _, epsg = read_window(str(path), "HVHV", (-64.35, -27.90, -64.16, -27.70), to_db=False)
+        self.assertEqual(epsg, 32720)
 
     def test_utm_roundtrip_near_santiago(self) -> None:
         lon0, lat0 = -64.25, -27.80

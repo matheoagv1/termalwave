@@ -66,10 +66,6 @@ RAW = _REPO / "data" / "raw"
 
 def main() -> int:
     token = os.environ.get("EARTHDATA_TOKEN", "").strip()
-    if not token:
-        print("EARTHDATA_TOKEN is not set. CMR search needs no token; the .h5 download does.", file=sys.stderr)
-        print("Export it in the shell and run this script again. Do not paste the token into git.", file=sys.stderr)
-        return 2
     RAW.mkdir(parents=True, exist_ok=True)
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -82,7 +78,8 @@ def main() -> int:
         path = download(item, token)
         print(f"h5 {path.name}")
         print_tree(path)
-        hv, _ = read_window(str(path), "HVHV", AOI, to_db=True)
+        hv, epsg = read_window(str(path), "HVHV", AOI, to_db=True)
+        print(f"  EPSG:{epsg}")
         hh, _ = read_window(str(path), "HHHH", AOI, to_db=True)
         hh_lin, _ = read_window(str(path), "HHHH", AOI, to_db=False)
         hv_lin, _ = read_window(str(path), "HVHV", AOI, to_db=False)
@@ -203,11 +200,28 @@ def h5_href(entry: dict) -> str:
     return ""
 
 
+def cached_h5(item: dict) -> Path | None:
+    key = str(item.get("title") or "").replace(".h5", "")
+    if not key or not RAW.is_dir():
+        return None
+    matches = [path for path in RAW.glob("*.h5") if key in path.name and path.stat().st_size > 1_000_000]
+    if not matches:
+        return None
+    matches.sort(key=lambda path: path.stat().st_size, reverse=True)
+    return matches[0]
+
+
 def download(item: dict, token: str) -> Path:
-    dest = RAW / f"{item['title']}.h5"
-    if dest.is_file() and dest.stat().st_size > 1_000_000:
+    dest = cached_h5(item)
+    if dest is not None:
         print(f"reuse {dest.name} ({dest.stat().st_size} bytes)")
         return dest
+    if not token:
+        raise SystemExit(
+            "EARTHDATA_TOKEN is not set and data/raw has no matching .h5. "
+            "Export the token to download. Do not paste it into git."
+        )
+    dest = RAW / f"{item['title'].replace('.h5', '')}.h5"
     request = urllib.request.Request(item["href"], headers={"Authorization": f"Bearer {token}"})
     opener = urllib.request.build_opener(_Redirect())
     print(f"download {item['title']}")
