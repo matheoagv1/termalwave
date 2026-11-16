@@ -1,0 +1,172 @@
+/* Top bar, status strip and About dialog. Tokens come from app/theme.css. */
+
+[data-tw-theme] .tw-top {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+
+[data-tw-theme] .tw-top-tag {
+  display: none;
+  font: 12px/1.2 var(--sans);
+  color: var(--fg2);
+  white-space: nowrap;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+
+@media (min-width: 1100px) {
+  [data-tw-theme] .tw-top-tag {
+    display: block;
+  }
+}
+
+[data-tw-theme] .tw-top-btn {
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  cursor: pointer;
+  font: 11px var(--mono);
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+[data-tw-theme] .tw-top-btn[aria-pressed="true"] {
+  border-color: var(--acc-fg);
+  background: var(--sel);
+  color: var(--acc-fg);
+}
+
+/* Touch targets grow on narrow screens; the bar stays one row. */
+@media (max-width: 759px) {
+  [data-tw-theme] .tw-top-btn {
+    height: 36px;
+    min-width: 36px;
+  }
+}
+
+[data-tw-theme] .tw-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  font: 11px/1.3 var(--mono);
+  color: var(--fg);
+  text-align: left;
+}
+
+[data-tw-theme] .tw-strip > * {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 10px;
+  box-shadow: inset 1px 0 0 var(--line);
+  min-width: 0;
+}
+
+[data-tw-theme] .tw-strip > :first-child {
+  box-shadow: none;
+}
+
+[data-tw-theme] .tw-strip-k {
+  color: var(--fg3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+[data-tw-theme] .tw-strip button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  font: inherit;
+}
+
+[data-tw-theme] .tw-about {
+  width: min(560px, calc(100% - 16px));
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) var(--panel-solid);
+  background: var(--panel-solid);
+  border: 1px solid var(--line2);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font: 13px/1.45 var(--sans);
+  color: var(--fg);
+}
+
+[data-tw-theme] .tw-about h3 {
+  margin: 0 0 6px;
+  font: 10px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+[data-tw-theme] .tw-about p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+[data-tw-theme] .tw-about dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  font-size: 12px;
+}
+
+[data-tw-theme] .tw-about dt {
+  color: var(--fg2);
+}
+
+[data-tw-theme] .tw-about dd {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  [data-tw-theme] .tw-about dl {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  [data-tw-theme] .tw-about dd {
+    margin-bottom: 6px;
+  }
+}
+
+[data-tw-theme] .tw-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3px 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  font: 12px/1.35 var(--sans);
+}
+
+[data-tw-theme] .tw-facts dt {
+  font: 10px/1.6 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+[data-tw-theme] .tw-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

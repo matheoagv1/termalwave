@@ -1,0 +1,85 @@
+# Machine-readable science defaults for TermalWave (F01–F17).
+# UI copy must not treat MNDWI or RVI_dual as soil moisture or [0,1] vegetation cover.
+
+[constants]
+nisar_l_band_hz = 1.257e9
+nisar_l_wavelength_m = 238.5
+dnbr_key_benson_scale = 1000.0
+fre_biomass_kg_per_mj = 0.368
+
+[indices]
+# F06: MNDWI = open water (optical); not F04 soil moisture
+mndwi_purpose = "open_water"
+# F03/F04: NDMI and W_t are canopy/soil proxies respectively; do not conflate
+ndmi_purpose = "canopy_water_stress"
+soil_moisture_metric = "W_t_or_wcm_inversion"
+
+[radar]
+# F01: aggregate in linear γ⁰ before dB
+aggregate_domain = "linear_power"
+colormap_scale = "db_fixed"
+
+[vegetation]
+# F03 dual HH/HV; valid range (0, 4), not [0, 1]
+rvi_dual_bounded_unit_interval = false
+
+[drought]
+# F02: merge weather has Tmax/Tmin/P only — default ET₀ path is Hargreaves; Penman needs R_n, u2, ea
+et0_default = "hargreaves"
+spi_thom_gamma = true
+
+[water_balance]
+# F05 FAO-56 root zone (p symbol renamed p_fao in code to avoid radar polarization p)
+p_fao_min = 0.1
+p_fao_max = 0.8
+
+[soil_wetness]
+# F04 W_t: unclipped ratio allowed outside [0,1] when dry/wet span is valid
+wetness_clip_product = false
+min_wet_dry_span_db = 0.001
+
+[cover]
+# F09
+olofsson_estimator = true
+
+[carbon]
+# F11 IPCC default carbon fraction
+ipcc_f_c = 0.47
+
+[turbidity]
+# F15 Dogliotti red/NIR switch thresholds (re-calibrate per sensor)
+red_clear_rho = 0.05
+red_turbid_rho = 0.07
+
+[fire]
+# F07 FRE trapezoid; biomass factor is site-calibrated (kg dry / MJ)
+fre_integration = "trapezoid"
+# F08 Key/Benson thresholds need dNBR * dnbr_key_benson_scale
+dnbr_scaled = true
+
+[phenology]
+# F10 simple GDD; yield models need local calibration
+gdd_method = "daily_simple"
+
+[erosion]
+# F12 RUSLE product; R (EI30) needs sub-hourly rain (often missing)
+require_subhourly_r = true
+
+[salinity]
+# F13 log-linear EC; apply Duan smearing on residuals
+retransform = "duan_smearing"
+
+[surface_temp]
+# F14 Landsat C2 ST_B10; not a NISAR product
+source = "landsat_c2_st_b10"
+
+[air]
+# F16 CAMS mass mixing: kg/m3 -> ug/m3 (*1e9)
+cams_kg_m3_to_ug_m3 = 1.0e9
+
+[deform]
+# F17 GUNW: +phase = +range (retreat); screen ionosphere before interpret
+gunw_positive_phase = "increasing_range"
+
+# checklist: every F01–F17 id must appear in this file (grep-friendly)
+# F01 F02 F03 F04 F05 F06 F07 F08 F09 F10 F11 F12 F13 F14 F15 F16 F17

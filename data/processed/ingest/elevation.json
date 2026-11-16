@@ -1,0 +1,32 @@
+{
+  "kind": "elevation",
+  "status": "ok",
+  "from_cache": false,
+  "tried": [
+    {
+      "provider": "open_meteo_elevation",
+      "ok": true,
+      "count": 1
+    }
+  ],
+  "records": [
+    {
+      "lat": -27.799999999999997,
+      "lon": -64.25,
+      "meters": 187.0,
+      "dem": "copernicus-glo90",
+      "resolution_m": 90.0,
+      "source": "open_meteo_elevation",
+      "product": "open-meteo-elevation",
+      "retrieved_at": "2026-11-15T18:29:48.957850+00:00",
+      "quality_rank": 10,
+      "license": "Open-Meteo / Copernicus DEM CC BY 4.0",
+      "disagree": false
+    }
+  ],
+  "selected_sources": [
+    "open_meteo_elevation"
+  ],
+  "strategy": "first_available_per_point",
+  "count": 1
+}

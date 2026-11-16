@@ -1,0 +1,272 @@
+# Vegetation analytics (owner: agent "veg"). Follows the label rules at the top of config/catalog.toml.
+# MODIS cells are precomputed by `python3 termalwave/veg/pipeline.py` (stdlib only, about 6 minutes per
+# bbox, cached under .tmp-veg/) into preview/src/veg/data/<region>.json; the Worker serves them at
+# /api/veg/<name>. Water layers are computed live from Open-Meteo on each request (edge cached 3 h).
+# Coverage today: Santiago del Estero, Argentina (-64.6,-28.2,-63.9,-27.4), 6x6 cells. Outside it the
+# MODIS endpoints answer an empty FeatureCollection with meta.note; that is a gap, not a zero.
+
+[[catalog]]
+id = "veg_ndvi_now"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/ndvi"
+time = "static"
+opacity = 0.7
+value_prop = "ndvi"
+unit = "NDVI"
+range = [0.0, 0.9]
+ramp = [["#8c5a2b", 0.0], ["#d9c27a", 0.3], ["#9cc95a", 0.55], ["#2f8f3a", 0.8], ["#0f5a23", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Greenness"
+label_es = "Verdor"
+what_en = "How green the vegetation is in each cell. Higher means more live leaves."
+what_es = "Qué tan verde está la vegetación en cada celda. Más alto significa más hojas vivas."
+decision_en = "Find fields and forest that are bare, stressed or in full leaf right now, and open a cell to see its last two years."
+decision_es = "Ubique campos y monte que hoy están pelados, estresados o con follaje pleno, y abra una celda para ver sus últimos dos años."
+nodata_en = "No cell: outside the precomputed area, or fewer than 30 percent of its pixels were clear in the composite."
+nodata_es = "Sin celda: fuera del área precalculada, o menos del 30 por ciento de sus píxeles estaban despejados en el compuesto."
+caveats_en = "Each cell is the mean of many 250 m pixels, so a small green field inside dry scrub is averaged away. The composite can be up to a month old."
+caveats_es = "Cada celda es el promedio de muchos píxeles de 250 m, así que un lote verde chico dentro de monte seco queda promediado. El compuesto puede tener hasta un mes."
+product = "MOD13Q1 v6.1 250m_16_days_NDVI"
+formula = "cell mean of valid pixels of NDVI = (NIR - red) / (NIR + red), scale 0.0001"
+attribution = "NASA LP DAAC MOD13Q1 (Didan, 2021, doi:10.5067/MODIS/MOD13Q1.061) via ORNL DAAC Land Product Subsets"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [{ name = "Vegetation index, 16 days, 250 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MOD13Q1 v6.1", url = "https://doi.org/10.5067/MODIS/MOD13Q1.061" }]
+method_en = "The MODIS Terra satellite measures red and near-infrared light. Healthy leaves reflect much more near-infrared than red, and NDVI is that difference over their sum. We take the latest 16-day composite and average the clear pixels inside each grid cell. The value goes from about 0 for bare soil to 0.9 for dense green canopy. The sparkline shows the last two years of composites."
+method_es = "El satélite MODIS Terra mide luz roja e infrarroja cercana. Las hojas sanas reflejan mucho más infrarrojo cercano que rojo, y el NDVI es esa diferencia sobre su suma. Tomamos el último compuesto de 16 días y promediamos los píxeles despejados de cada celda. El valor va de cerca de 0 en suelo desnudo a 0,9 en canopeo verde denso. La línea chica muestra los compuestos de los últimos dos años."
+
+[[catalog]]
+id = "veg_ndvi_anomaly"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/ndvi"
+time = "static"
+opacity = 0.7
+value_prop = "ndvi_anomaly"
+unit = "NDVI difference"
+range = [-0.2, 0.2]
+ramp = [["#8c3b1f", 0.0], ["#d9a35a", 0.3], ["#f2efe6", 0.5], ["#8cc66a", 0.7], ["#1f6e2e", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Greenness vs normal"
+label_es = "Verdor vs normal"
+what_en = "Whether each cell is greener or browner than usual for this same time of year, comparing with every past year since 2001."
+what_es = "Si cada celda está más verde o más seca que lo habitual para esta misma época del año, comparando con todos los años desde 2001."
+decision_en = "Brown cells point to drought, fire, clearing or a late season; green cells to a wet year or an early crop. Check brown cells first."
+decision_es = "Las celdas marrones señalan sequía, fuego, desmonte o una campaña atrasada; las verdes, un año húmedo o un cultivo temprano. Revise primero las marrones."
+nodata_en = "No cell: outside the precomputed area, no clear composite now, or fewer than 5 past years with a clear composite on the same dates."
+nodata_es = "Sin celda: fuera del área precalculada, sin compuesto despejado ahora, o menos de 5 años previos con compuesto despejado en las mismas fechas."
+caveats_en = "A change in land use, such as forest cleared for crops, shows as a lasting anomaly that is not a weather signal. Properties also carry the anomaly in standard deviations (ndvi_anomaly_z)."
+caveats_es = "Un cambio de uso del suelo, como monte desmontado para cultivo, aparece como una anomalía duradera que no es una señal del clima. Las propiedades también traen la anomalía en desvíos estándar (ndvi_anomaly_z)."
+product = "MOD13Q1 v6.1 250m_16_days_NDVI, 2001 to latest"
+formula = "anomaly = NDVI(latest composite) - mean NDVI(same composite day of year, all earlier years); z = anomaly / std"
+attribution = "NASA LP DAAC MOD13Q1 (Didan, 2021, doi:10.5067/MODIS/MOD13Q1.061) via ORNL DAAC Land Product Subsets"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [{ name = "Vegetation index, 16 days, 250 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MOD13Q1 v6.1", url = "https://doi.org/10.5067/MODIS/MOD13Q1.061" }]
+method_en = "MODIS composites always start on the same days of the year, so each year has a composite for these same dates. For each cell we average the NDVI of that composite over every earlier year since 2001. The layer shows this year's value minus that average. Zero means normal, below zero browner than normal, above zero greener."
+method_es = "Los compuestos de MODIS empiezan siempre en los mismos días del año, así que cada año tiene un compuesto para estas mismas fechas. Para cada celda promediamos el NDVI de ese compuesto en todos los años previos desde 2001. La capa muestra el valor de este año menos ese promedio. Cero es normal, debajo de cero más seco que lo normal, arriba más verde."
+
+[[catalog]]
+id = "veg_productivity"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/productivity"
+time = "static"
+opacity = 0.7
+value_prop = "productivity_class"
+unit = "class (0 low, 1 medium, 2 high)"
+range = [0, 2]
+ramp = [["#c2703d", 0.0], ["#e8d27a", 0.5], ["#2f8f3a", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Plant productivity"
+label_es = "Productividad vegetal"
+what_en = "How much carbon the plants in each cell fixed in the last full year, ranked low, medium or high against that same cell's own record. Farmland cells are flagged."
+what_es = "Cuánto carbono fijaron las plantas de cada celda en el último año completo, clasificado bajo, medio o alto frente al propio historial de esa celda. Las celdas agrícolas quedan marcadas."
+decision_en = "Spot farmland that had a weak year (low class with the cropland flag) to look at yield losses, insurance or water problems."
+decision_es = "Detecte zonas agrícolas con un año flojo (clase baja y marca de cultivo) para mirar pérdidas de rinde, seguros o problemas de agua."
+nodata_en = "No cell: outside the precomputed area, or fewer than 6 years of valid productivity data."
+nodata_es = "Sin celda: fuera del área precalculada, o menos de 6 años con datos de productividad válidos."
+caveats_en = "Classes are relative to each cell, so high in scrub is not the same amount as high in a soybean field. The economic link is only the cropland share from land cover: no keyless economic or yield dataset was reachable, so none is shown. The latest year can be one to two years behind."
+caveats_es = "Las clases son relativas a cada celda: alto en monte no es la misma cantidad que alto en un lote de soja. El vínculo económico es solo la proporción de cultivo según la cobertura del suelo: no encontramos datos económicos ni de rinde sin clave, así que no se muestran. El último año puede tener uno o dos años de atraso."
+product = "MOD17A3HGF v6.1 Npp_500m (annual); MCD12Q1 v6.1 LC_Type1 (IGBP)"
+formula = "class = 0 if NPP(latest) < p33(own years), 2 if > p67, else 1; cropland_share = (n IGBP 12 + 0.5 n IGBP 14) / n valid; cropland = share >= 0.25"
+attribution = "NASA LP DAAC MOD17A3HGF (Running and Zhao, 2021, doi:10.5067/MODIS/MOD17A3HGF.061) and MCD12Q1 (Friedl and Sulla-Menashe, 2022, doi:10.5067/MODIS/MCD12Q1.061) via ORNL DAAC"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [
+  { name = "Net primary productivity, yearly, 500 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MOD17A3HGF v6.1", url = "https://doi.org/10.5067/MODIS/MOD17A3HGF.061" },
+  { name = "Land cover type, yearly, 500 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MCD12Q1 v6.1", url = "https://doi.org/10.5067/MODIS/MCD12Q1.061" },
+]
+method_en = "MODIS estimates net primary productivity: the carbon plants keep after their own respiration, per square metre per year. For each cell we take the median of its pixels for every year since 2001. The latest year is ranked against that cell's own years: bottom third is low, top third is high. Land cover from the same satellite gives the share of pixels that are cropland, and cells with a quarter or more are flagged as farmland."
+method_es = "MODIS estima la productividad primaria neta: el carbono que las plantas guardan después de su propia respiración, por metro cuadrado y por año. Para cada celda tomamos la mediana de sus píxeles en cada año desde 2001. El último año se compara con los años de esa misma celda: el tercio inferior es bajo y el superior es alto. La cobertura del suelo del mismo satélite da la proporción de píxeles de cultivo, y las celdas con un cuarto o más quedan marcadas como agrícolas."
+
+[[catalog]]
+id = "veg_peak_season"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/peak"
+time = "static"
+opacity = 0.7
+value_prop = "peak_month"
+confidence_prop = "confidence"
+unit = "month (1 Jan to 12 Dec)"
+range = [1, 12]
+ramp = [["#2f8f3a", 0.0], ["#9cc95a", 0.2], ["#e8d27a", 0.4], ["#c2703d", 0.6], ["#6a5acd", 0.8], ["#2f8f3a", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Peak greenness"
+label_es = "Pico de verdor"
+what_en = "The month in which vegetation is usually at its greenest, and how often that same month repeats over the years."
+what_es = "El mes en que la vegetación suele estar más verde, y con qué frecuencia se repite ese mismo mes a lo largo de los años."
+decision_en = "Plan field visits, harvest timing or fire prevention around the usual peak; cells with low repeat share have an unstable season."
+decision_es = "Planifique recorridas, cosecha o prevención de incendios en torno al pico habitual; las celdas con baja repetición tienen una temporada inestable."
+nodata_en = "No cell: outside the precomputed area, or fewer than 5 complete seasons with clear data."
+nodata_es = "Sin celda: fuera del área precalculada, o menos de 5 temporadas completas con datos despejados."
+caveats_en = "In the southern hemisphere a season runs from July to June, so a peak in late December and one in early January are different months. Double-cropping fields can switch between two peaks."
+caveats_es = "En el hemisferio sur una temporada va de julio a junio, así que un pico a fines de diciembre y otro a principios de enero cuentan como meses distintos. Los lotes con doble cultivo pueden alternar entre dos picos."
+product = "MOD13Q1 v6.1 250m_16_days_NDVI, 2001 to latest"
+formula = "per season: month of max cell NDVI (composite mid-date); value = most frequent month; confidence = share of seasons with that month"
+attribution = "NASA LP DAAC MOD13Q1 (Didan, 2021, doi:10.5067/MODIS/MOD13Q1.061) via ORNL DAAC Land Product Subsets"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [{ name = "Vegetation index, 16 days, 250 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MOD13Q1 v6.1", url = "https://doi.org/10.5067/MODIS/MOD13Q1.061" }]
+method_en = "We read every 16-day greenness value for each cell since 2001. Within each complete season (July to June in the south, calendar year in the north) we find the composite with the highest value and note its month. The layer shows the month that wins most often. The confidence is the share of seasons that peaked in that month: 1 means every year, 0.3 means less than a third."
+method_es = "Leemos todos los valores de verdor de 16 días de cada celda desde 2001. En cada temporada completa (de julio a junio en el sur, año calendario en el norte) buscamos el compuesto más alto y anotamos su mes. La capa muestra el mes que gana más veces. La confianza es la proporción de temporadas con el pico en ese mes: 1 es todos los años, 0,3 es menos de un tercio."
+
+[[catalog]]
+id = "veg_greenup"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/greenup"
+time = "static"
+opacity = 0.7
+value_prop = "greenup_season_day"
+unit = "days after season start (1 Jul south, 1 Jan north)"
+range = [0, 240]
+ramp = [["#1f6e2e", 0.0], ["#9cc95a", 0.35], ["#e8d27a", 0.65], ["#c2703d", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Green-up"
+label_es = "Rebrote"
+what_en = "When vegetation started to green again in the latest season on record, and how many days after the rains started that happened."
+what_es = "Cuándo empezó a reverdecer la vegetación en la última temporada registrada, y cuántos días después del inicio de las lluvias ocurrió."
+decision_en = "Compare areas that respond fast to the first rains with those that lag; a long lag can mean degraded soil, a late sowing or a dry start."
+decision_es = "Compare zonas que responden rápido a las primeras lluvias con las que tardan; una demora larga puede indicar suelo degradado, siembra tardía o un arranque seco."
+nodata_en = "No cell: outside the precomputed area, or the satellite found no clear growth cycle in most of the cell."
+nodata_es = "Sin celda: fuera del área precalculada, o el satélite no encontró un ciclo de crecimiento claro en la mayor parte de la celda."
+caveats_en = "The latest season on record is one to two years old. Rain onset is a model rule on reanalysis rain at the cell centre, not a gauge. A negative lag means greening started before the rule's onset, for example from irrigation or groundwater."
+caveats_es = "La última temporada registrada tiene uno o dos años. El inicio de lluvias es una regla aplicada a lluvia de reanálisis en el centro de la celda, no un pluviómetro. Una demora negativa indica que el rebrote empezó antes del inicio según la regla, por ejemplo por riego o napa."
+product = "MCD12Q2 v6.1 Greenup.Num_Modes_01; Open-Meteo archive precipitation_sum (ERA5 family)"
+formula = "greenup = median of cell pixels; rain onset = first day from season start with 10-day rain >= 25 mm not followed by 20 days < 5 mm; lag = greenup - onset"
+attribution = "NASA LP DAAC MCD12Q2 (Friedl, Gray and Sulla-Menashe, 2022, doi:10.5067/MODIS/MCD12Q2.061) via ORNL DAAC; rain: Open-Meteo (CC BY 4.0)"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [
+  { name = "Land cover dynamics (phenology), yearly, 500 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MCD12Q2 v6.1", url = "https://doi.org/10.5067/MODIS/MCD12Q2.061" },
+  { name = "Daily rain, historical", agency = "Open-Meteo (ECMWF ERA5 based)", product = "archive-api precipitation_sum", url = "https://open-meteo.com/en/docs/historical-weather-api" },
+]
+method_en = "The MODIS phenology product marks, for each pixel and year, the day vegetation starts to green. We take the median of the pixels in each cell for the latest season. From the daily rain at the cell centre we find the rainy-season onset: the first day with 25 mm in 10 days that is not followed by 20 nearly dry days. The properties give the green-up date and the days between onset and green-up."
+method_es = "El producto de fenología de MODIS marca, para cada píxel y año, el día en que la vegetación empieza a reverdecer. Tomamos la mediana de los píxeles de cada celda en la última temporada. Con la lluvia diaria en el centro de la celda buscamos el inicio de la temporada de lluvias: el primer día con 25 mm en 10 días que no es seguido por 20 días casi secos. Las propiedades traen la fecha de rebrote y los días entre el inicio de lluvias y el rebrote."
+
+[[catalog]]
+id = "veg_greenup_next"
+tier = "prediction"
+kind = "geojson_grid"
+url = "/api/veg/greenup-next"
+time = "static"
+opacity = 0.7
+value_prop = "days_until"
+confidence_prop = "confidence"
+unit = "days from the selected date"
+range = [-60, 120]
+ramp = [["#1f6e2e", 0.0], ["#9cc95a", 0.33], ["#e8d27a", 0.6], ["#c2703d", 1.0]]
+honesty = "model"
+theme = "vegetacion"
+label_en = "Green-up forecast"
+label_es = "Pronóstico de rebrote"
+what_en = "When vegetation is expected to green again this season, as days from the selected date, with a likely window."
+what_es = "Cuándo se espera que la vegetación reverdezca esta temporada, en días desde la fecha elegida, con una ventana probable."
+decision_en = "Time sowing checks, grazing moves or fire-risk patrols to the expected window; trust cells with low confidence less."
+decision_es = "Ajuste controles de siembra, movimientos de hacienda o patrullas de fuego a la ventana esperada; confíe menos en las celdas de baja confianza."
+nodata_en = "No cell: outside the precomputed area, or fewer than 5 past seasons with a green-up date."
+nodata_es = "Sin celda: fuera del área precalculada, o menos de 5 temporadas previas con fecha de rebrote."
+caveats_en = "A statistical rule from past years, not a crop or weather model. Negative days mean the expected date has passed. If this season's rain onset is marked provisional, the dry-spell check after it is not complete yet."
+caveats_es = "Es una regla estadística sobre años pasados, no un modelo de cultivo ni de clima. Días negativos indican que la fecha esperada ya pasó. Si el inicio de lluvias de esta temporada figura como provisorio, todavía no se completó el control de veranillo posterior."
+product = "MCD12Q2 v6.1 Greenup.Num_Modes_01 history; Open-Meteo archive precipitation_sum"
+formula = "if onset(this season) known: date = onset + median(past lags), window = onset + [p25, p75] of lags; else date = season start + median(past green-up offsets); confidence = max(0, 1 - IQR/90 d) * min(1, years/10)"
+attribution = "NASA LP DAAC MCD12Q2 (doi:10.5067/MODIS/MCD12Q2.061) via ORNL DAAC; rain: Open-Meteo (CC BY 4.0)"
+source_url = "https://modis.ornl.gov/data/modis_webservice.html"
+inputs = [
+  { name = "Land cover dynamics (phenology), yearly, 500 m", agency = "NASA LP DAAC / ORNL DAAC", product = "MCD12Q2 v6.1", url = "https://doi.org/10.5067/MODIS/MCD12Q2.061" },
+  { name = "Daily rain, historical and this season", agency = "Open-Meteo (ECMWF ERA5 based)", product = "archive-api precipitation_sum", url = "https://open-meteo.com/en/docs/historical-weather-api" },
+]
+method_en = "For every past season we know the green-up date and the rain onset, so we know how many days each cell took to green after the rains. If the rains have already started this season, the expected date is this onset plus the usual delay (the median), and the window spans the middle half of past delays. If not, we use the usual green-up date of past seasons. Confidence is higher when past seasons agree closely and the record is long: a middle-half spread of 90 days or more gives zero."
+method_es = "Para cada temporada pasada conocemos la fecha de rebrote y el inicio de lluvias, así que sabemos cuántos días tardó cada celda en reverdecer después de las lluvias. Si las lluvias ya empezaron esta temporada, la fecha esperada es ese inicio más la demora habitual (la mediana), y la ventana cubre la mitad central de las demoras pasadas. Si no empezaron, usamos la fecha habitual de rebrote de temporadas pasadas. La confianza es mayor cuando las temporadas pasadas coinciden y el registro es largo: una dispersión central de 90 días o más da cero."
+
+[[catalog]]
+id = "veg_water_balance"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/veg/water"
+time = "daily"
+date_lag_days = 1
+opacity = 0.7
+value_prop = "balance_mm"
+unit = "mm in 30 days"
+range = [-150, 50]
+ramp = [["#8c2d04", 0.0], ["#d9822b", 0.4], ["#f2efe6", 0.75], ["#4a90c2", 0.9], ["#1c4f8a", 1.0]]
+honesty = "derived"
+theme = "agua"
+label_en = "Water for plants"
+label_es = "Agua para plantas"
+what_en = "Rain minus the water plants would use in the last 30 days. Below zero, plants are drawing down soil water; the cell says since when."
+what_es = "Lluvia menos el agua que usarían las plantas en los últimos 30 días. Bajo cero, las plantas están gastando el agua del suelo; la celda dice desde cuándo."
+decision_en = "Find where crops and pasture are running out of water and for how long, to plan irrigation, stocking or fire watch."
+decision_es = "Encuentre dónde cultivos y pasturas se están quedando sin agua y hace cuánto, para planificar riego, carga animal o vigilancia de fuego."
+nodata_en = "No cell: the weather service had no data for that point or date."
+nodata_es = "Sin celda: el servicio meteorológico no tenía datos para ese punto o fecha."
+caveats_en = "Reference evapotranspiration is what a well-watered grass would use, so real use is lower when soil is already dry. It ignores irrigation, runoff and groundwater. The deficit start is a lower bound when it comes before the 92-day look-back."
+caveats_es = "La evapotranspiración de referencia es lo que usaría un pasto bien regado, así que el uso real es menor cuando el suelo ya está seco. No considera riego, escurrimiento ni napa. El inicio del déficit es una cota mínima cuando cae antes de los 92 días consultados."
+product = "Open-Meteo forecast and archive daily precipitation_sum, et0_fao_evapotranspiration (FAO-56 Penman-Monteith)"
+formula = "balance = sum over last 30 days of (rain - ET0); deficit_since = first day of the current unbroken run with balance < 0"
+attribution = "Open-Meteo (CC BY 4.0), ECMWF IFS and ERA5 based"
+source_url = "https://open-meteo.com/en/docs"
+inputs = [
+  { name = "Daily rain and reference evapotranspiration", agency = "Open-Meteo", product = "forecast api past_days / archive api", url = "https://open-meteo.com/en/docs" },
+]
+method_en = "For a 6 by 6 grid over the view we read daily rain and reference evapotranspiration, the water a short grass would use given sun, heat, wind and air humidity (FAO-56). We add rain minus that use over the last 30 days. A negative total means plants are using more water than falls. Walking back day by day, the first day of the current negative run is reported as the deficit start."
+method_es = "Para una grilla de 6 por 6 sobre la vista leemos la lluvia diaria y la evapotranspiración de referencia, el agua que usaría un pasto corto según sol, calor, viento y humedad del aire (FAO-56). Sumamos lluvia menos ese uso en los últimos 30 días. Un total negativo significa que las plantas usan más agua de la que cae. Recorriendo los días hacia atrás, el primer día de la racha negativa actual se informa como inicio del déficit."
+
+[[catalog]]
+id = "veg_water_outlook"
+tier = "prediction"
+kind = "geojson_grid"
+url = "/api/veg/water-outlook"
+time = "static"
+opacity = 0.7
+value_prop = "balance_mm"
+confidence_prop = "confidence"
+unit = "mm in 30 days"
+range = [-150, 50]
+ramp = [["#8c2d04", 0.0], ["#d9822b", 0.4], ["#f2efe6", 0.75], ["#4a90c2", 0.9], ["#1c4f8a", 1.0]]
+honesty = "model"
+theme = "agua"
+label_en = "Water outlook"
+label_es = "Pronóstico de agua"
+what_en = "Expected rain minus the water plants would use."
+what_es = "Lluvia esperada menos el agua que usarían las plantas."
+decision_en = "See if the coming rain is likely to end a water deficit or deepen it, before deciding on sowing, irrigation or moving cattle."
+decision_es = "Vea si la lluvia que viene probablemente corte el déficit de agua o lo profundice, antes de decidir siembra, riego o traslado de hacienda."
+nodata_en = "No cell: the forecast ensemble had fewer than 5 usable members for that point."
+nodata_es = "Sin celda: el conjunto de pronósticos tenía menos de 5 miembros útiles para ese punto."
+caveats_en = "Rain beyond a week is hard to forecast, and the ensemble can agree and still be wrong. Always shows the outlook from today, whatever date is selected."
+caveats_es = "La lluvia a más de una semana es difícil de pronosticar, y los miembros pueden coincidir y aun así errar. Siempre muestra el pronóstico desde hoy, sin importar la fecha elegida."
+product = "Open-Meteo ensemble api, NOAA GFS 0.25 ensemble (31 members), daily precipitation_sum and et0_fao_evapotranspiration; forecast api past_days for the observed part"
+formula = "per member: balance = sum(rain - ET0, last 14 observed days) + sum(rain - ET0, next 16 forecast days); value = median member; confidence = share of members on the same side of zero as the median"
+attribution = "Open-Meteo (CC BY 4.0); NOAA NCEP GFS ensemble"
+source_url = "https://open-meteo.com/en/docs/ensemble-api"
+inputs = [
+  { name = "Forecast ensemble, rain and evapotranspiration", agency = "NOAA NCEP via Open-Meteo", product = "GFS ensemble 0.25 (gfs025)", url = "https://open-meteo.com/en/docs/ensemble-api" },
+  { name = "Recent daily rain and evapotranspiration", agency = "Open-Meteo", product = "forecast api past_days", url = "https://open-meteo.com/en/docs" },
+]
+method_en = "We take the last 14 days of rain and plant water use already observed and add the next 16 days from each of about 31 forecast runs that start from slightly different conditions. Each run gives one 30-day balance; the layer shows the middle one. The confidence is the share of runs that agree with it about deficit or no deficit, so 0.5 means a coin toss and 1 means all runs agree."
+method_es = "Tomamos los últimos 14 días de lluvia y uso de agua ya observados y sumamos los próximos 16 días de cada una de unas 31 corridas de pronóstico que parten de condiciones apenas distintas. Cada corrida da un balance de 30 días; la capa muestra el del medio. La confianza es la proporción de corridas que coinciden con ese valor en si hay déficit o no, así que 0,5 es tirar una moneda y 1 es que todas coinciden."

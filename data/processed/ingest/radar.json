@@ -1,0 +1,16 @@
+{
+  "kind": "radar",
+  "strategy": "prefer_validated",
+  "status": "ok",
+  "tried": [
+    {
+      "provider": "earthdata_nisar_gcov",
+      "ok": true,
+      "count": 0
+    }
+  ],
+  "from_cache": false,
+  "records": [],
+  "selected_sources": [],
+  "count": 0
+}

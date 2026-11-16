@@ -1,0 +1,23 @@
+[
+  {
+    "place_id": 4947732,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "relation",
+    "osm_id": 2271182,
+    "lat": "-27.4959255",
+    "lon": "-64.8640783",
+    "category": "boundary",
+    "type": "administrative",
+    "place_rank": 16,
+    "importance": 0.3968152145293224,
+    "addresstype": "town",
+    "name": "Termas de Río Hondo",
+    "display_name": "Termas de Río Hondo, Departamento Río Hondo, Santiago del Estero, G4220, Argentina",
+    "boundingbox": [
+      "-27.5190507",
+      "-27.4764806",
+      "-64.8840990",
+      "-64.8386533"
+    ]
+  }
+]

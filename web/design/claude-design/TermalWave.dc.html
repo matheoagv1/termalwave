@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+html,body{margin:0;background:#06080a}
+[data-tw-theme]{--sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+[data-tw-theme="dark"]{--bg:#06080a;--panel:rgba(10,13,16,.84);--panel-solid:#0b0f12;--sel:rgba(255,255,255,.06);--line:#232c34;--line2:#3a4651;--fg:#e8ecef;--fg2:#a2acb5;--fg3:#7c8792;--acc:oklch(0.82 0.15 78);--acc-ink:#14110a;--acc-fg:oklch(0.82 0.15 78);--accB:oklch(0.80 0.11 215);--accB-ink:#061218;--warn:oklch(0.80 0.14 55);--ok:oklch(0.78 0.13 155);--hatch:rgba(240,200,140,.38);--scene-sphere:#0c1217;--scene-land:#5d6b77;--scene-grid:rgba(150,170,190,.14);--scene-ground:#10161b;--scene-ground-hi:#1d262d;--scene-line:rgba(160,180,200,.16);--scene-label:#8c98a3;--scene-hatch:rgba(255,200,120,.22);--scene-outline:rgba(230,235,240,.55);--scene-spot:#f2f4f5}
+[data-tw-theme="light"]{--bg:#e7eaec;--panel:rgba(248,249,250,.9);--panel-solid:#f6f7f8;--sel:rgba(0,0,0,.05);--line:#cdd3d8;--line2:#9aa4ad;--fg:#0e1215;--fg2:#47515a;--fg3:#5d6770;--acc:oklch(0.80 0.15 78);--acc-ink:#14110a;--acc-fg:oklch(0.50 0.12 65);--accB:oklch(0.62 0.12 230);--accB-ink:#ffffff;--warn:oklch(0.55 0.15 50);--ok:oklch(0.55 0.13 155);--hatch:rgba(150,80,10,.4);--scene-sphere:#dfe4e8;--scene-land:#7d8a95;--scene-grid:rgba(40,60,80,.14);--scene-ground:#d9dee2;--scene-ground-hi:#eef1f3;--scene-line:rgba(30,50,70,.16);--scene-label:#4e5862;--scene-hatch:rgba(170,90,10,.28);--scene-outline:rgba(15,20,25,.6);--scene-spot:#111417}
+[data-tw-theme] *{box-sizing:border-box}
+[data-tw-theme] button{font:inherit;color:inherit}
+[data-tw-theme] button{white-space:nowrap}
+[data-tw-theme] button:disabled{cursor:not-allowed;opacity:.5}
+[data-tw-theme] :focus-visible{outline:2px solid var(--acc)!important;outline-offset:1px}
+[data-tw-theme] a{color:var(--acc-fg)}
+[data-tw-theme] a:hover{color:var(--fg)}
+@keyframes tw-pulse{0%,100%{opacity:.35}50%{opacity:.8}}
+@media (prefers-reduced-motion:reduce){[data-tw-theme] *{animation:none!important;transition-duration:0s!important}}
+</style>
+</helmet>
+<div data-tw-theme="{{ theme }}" ref="{{ rootRef }}" style="position:fixed;inset:0;overflow:hidden;background:var(--bg);color:var(--fg);font:13px/1.4 var(--sans)">
+<div ref="{{ sceneRef }}" style="position:absolute;inset:0"></div>
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;pointer-events:none">
+
+<div style="position:absolute;left:{{ lay.pad }};right:{{ lay.pad }};top:{{ lay.pad }};display:flex;gap:8px;align-items:flex-start">
+  <sc-if value="{{ brandOn }}" hint-placeholder-val="{{ true }}">
+  <div style="pointer-events:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);flex:none;white-space:nowrap">
+    <span style="font:600 13px var(--mono);letter-spacing:.02em">{{ t.brand }}</span>
+    <sc-if value="{{ showName }}" hint-placeholder-val="{{ false }}"><span style="color:var(--fg2)">{{ areaName }}</span></sc-if>
+    <sc-if value="{{ mock }}" hint-placeholder-val="{{ false }}"><span title="{{ t.mock.detail }}" style="font:11px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)">{{ t.mock.tag }}</span></sc-if>
+  </div>
+  </sc-if>
+  <sc-if value="{{ searchField }}" hint-placeholder-val="{{ true }}">
+  <div style="pointer-events:auto;flex:1 1 0;min-width:0;max-width:440px;margin:0 auto;position:relative">
+    <input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="{{ t.top.search }}" aria-label="{{ t.top.search }}" autocomplete="off" style="width:100%;height:40px;padding:0 12px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);color:var(--fg);font:13px var(--sans);border-radius:0" />
+    <sc-if value="{{ showResults }}" hint-placeholder-val="{{ false }}">
+    <div role="listbox" style="position:absolute;left:0;right:0;top:44px;background:var(--panel-solid);border:1px solid var(--line2)">
+      <sc-for list="{{ results }}" as="r" hint-placeholder-count="1">
+        <button role="option" onClick="{{ r.go }}" style="display:block;width:100%;text-align:left;padding:0 12px;height:{{ lay.hit }};border:0;background:transparent;cursor:pointer;font:13px var(--sans)" style-hover="background:var(--sel)">{{ r.label }}</button>
+      </sc-for>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;color:var(--fg2)">{{ noResultsText }}</div></sc-if>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+  <sc-if value="{{ searchBtn }}" hint-placeholder-val="{{ false }}">
+  <button onClick="{{ toggleSearch }}" aria-label="{{ t.top.searchOpen }}" style="pointer-events:auto;width:40px;height:40px;margin-left:auto;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);cursor:pointer"><span style="width:12px;height:12px;border:2px solid currentColor;border-radius:50%"></span></button>
+  </sc-if>
+  <sc-if value="{{ searchClose }}" hint-placeholder-val="{{ false }}">
+  <button onClick="{{ toggleSearch }}" aria-label="{{ t.top.searchClose }}" style="pointer-events:auto;width:40px;height:40px;border:1px solid var(--line);background:var(--panel);cursor:pointer;flex:none">×</button>
+  </sc-if>
+  <sc-if value="{{ brandOn }}" hint-placeholder-val="{{ true }}">
+  <div style="pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 10px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);flex:none">
+    <span title="{{ statusDetail }}" style="display:flex;gap:6px;align-items:center;font:11px var(--mono)"><span style="width:8px;height:8px;background:{{ statusColor }}"></span><sc-if value="{{ showStatusText }}" hint-placeholder-val="{{ true }}"><span>{{ statusText }}</span></sc-if></span>
+    <sc-if value="{{ noTerrain }}" hint-placeholder-val="{{ false }}"><span title="{{ t.status.terrainOffDetail }}" style="font:11px var(--mono);color:var(--warn)">{{ t.status.terrainOff }}</span></sc-if>
+    <button onClick="{{ toggleHelp }}" aria-label="{{ t.top.help }}" title="{{ t.top.help }}" style="width:28px;height:28px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:600 13px var(--mono)" style-hover="background:var(--sel)">?</button>
+  </div>
+  </sc-if>
+</div>
+
+<sc-if value="{{ showEntry }}" hint-placeholder-val="{{ false }}">
+<section aria-label="{{ t.entry.kicker }}" style="position:absolute;left:{{ lay.entL }};right:{{ lay.entR }};top:{{ lay.entT }};bottom:{{ lay.entB }};width:{{ lay.entW }};transform:{{ lay.entTf }};pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);padding:20px;display:flex;flex-direction:column;gap:12px">
+  <div style="font:11px var(--mono);color:var(--fg2)">{{ t.entry.kicker }}</div>
+  <sc-if value="{{ hasDs }}" hint-placeholder-val="{{ true }}"><h1 style="margin:0;font:500 32px/1.1 var(--sans)">{{ areaName }}</h1></sc-if>
+  <sc-if value="{{ noDs }}" hint-placeholder-val="{{ false }}"><div style="height:35px;width:70%;background:var(--line);animation:tw-pulse 1.4s infinite"></div></sc-if>
+  <p style="margin:0;color:var(--fg2);max-width:46ch;text-wrap:pretty">{{ t.entry.lead }}</p>
+  <sc-if value="{{ hasDs }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:2px;font:11px var(--mono);color:var(--fg2)">
+    <sc-for list="{{ entryLines }}" as="ln" hint-placeholder-count="3"><div>{{ ln }}</div></sc-for>
+  </div>
+  </sc-if>
+  <sc-if value="{{ noDs }}" hint-placeholder-val="{{ false }}"><div style="font:11px var(--mono);color:var(--fg3)">{{ t.status.loading }}</div></sc-if>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button onClick="{{ enter }}" disabled="{{ noDs }}" style="height:{{ lay.hit }};padding:0 16px;border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600">{{ t.entry.enter }}</button>
+    <button onClick="{{ explore }}" style="height:{{ lay.hit }};padding:0 16px;border:1px solid var(--line2);background:transparent;cursor:pointer" style-hover="background:var(--sel)">{{ t.entry.explore }}</button>
+  </div>
+</section>
+</sc-if>
+
+<sc-if value="{{ showExplore }}" hint-placeholder-val="{{ false }}">
+<section style="position:absolute;left:{{ lay.entL }};right:{{ lay.entR }};top:{{ lay.entT }};bottom:{{ lay.entB }};width:{{ lay.entW }};transform:{{ lay.entTf }};pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);padding:14px;display:flex;flex-direction:column;gap:10px">
+  <button onClick="{{ enter }}" disabled="{{ noDs }}" style="height:{{ lay.hit }};padding:0 16px;border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600">{{ t.entry.backToArea }}</button>
+  <div style="font:11px var(--mono);color:var(--fg2)">{{ t.entry.dragHint }}</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ showErr }}" hint-placeholder-val="{{ false }}">
+<section role="alert" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 16px));pointer-events:auto;background:var(--panel-solid);border:1px solid var(--warn);padding:20px;display:flex;flex-direction:column;gap:12px">
+  <h2 style="margin:0;font:500 18px/1.25 var(--sans)">{{ t.error.title }}</h2>
+  <p style="margin:0;color:var(--fg2)">{{ t.error.detail }}</p>
+  <div style="font:11px var(--mono);color:var(--fg3)">{{ t.error.code }}: {{ errCode }}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button onClick="{{ retry }}" style="height:{{ lay.hit }};padding:0 16px;border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600">{{ t.error.retry }}</button>
+    <button onClick="{{ explore }}" style="height:{{ lay.hit }};padding:0 16px;border:1px solid var(--line2);background:transparent;cursor:pointer" style-hover="background:var(--sel)">{{ t.error.explore }}</button>
+  </div>
+</section>
+</sc-if>
+
+<sc-if value="{{ dockOn }}" hint-placeholder-val="{{ false }}">
+<div role="radiogroup" aria-label="{{ t.layers.title }}" style="position:absolute;left:12px;top:64px;width:220px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px)">
+  <div style="padding:8px 12px;font:11px var(--mono);color:var(--fg2)">{{ t.layers.title }}</div>
+  <sc-for list="{{ layerItems }}" as="l" hint-placeholder-count="4">
+    <button role="radio" aria-checked="{{ l.on }}" onClick="{{ l.go }}" style="display:flex;gap:10px;align-items:center;width:100%;height:{{ lay.hit }};padding:0 12px;border:0;border-top:1px solid var(--line);background:{{ l.bg }};text-align:left;cursor:pointer" style-hover="background:var(--sel)">
+      <span style="flex:none;width:14px;height:14px;background:{{ l.grad }};border:1px solid var(--line2)"></span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ l.label }}</span>
+      <sc-if value="{{ l.gap }}" hint-placeholder-val="{{ false }}"><span title="{{ t.layers.gapHere }}" style="flex:none;width:10px;height:10px;background:repeating-linear-gradient(135deg,var(--hatch) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px var(--line2)"></span></sc-if>
+      <span style="flex:none;font:11px var(--mono);color:var(--fg3)">{{ l.unit }}</span>
+    </button>
+  </sc-for>
+  <sc-if value="{{ noDs }}" hint-placeholder-val="{{ false }}">
+    <div style="border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:12px"><div style="height:14px;background:var(--line);animation:tw-pulse 1.4s infinite"></div><div style="height:14px;background:var(--line);animation:tw-pulse 1.4s infinite"></div><div style="height:14px;background:var(--line);animation:tw-pulse 1.4s infinite"></div></div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ chipsOn }}" hint-placeholder-val="{{ false }}">
+<div role="radiogroup" aria-label="{{ t.layers.title }}" style="position:absolute;left:8px;right:8px;top:52px;display:flex;gap:6px;overflow-x:auto;pointer-events:auto">
+  <sc-for list="{{ layerItems }}" as="l" hint-placeholder-count="4">
+    <button role="radio" aria-checked="{{ l.on }}" onClick="{{ l.go }}" style="flex:none;display:flex;gap:8px;align-items:center;height:44px;padding:0 12px;border:1px solid var(--line);background:{{ l.chipBg }};backdrop-filter:blur(10px);cursor:pointer">
+      <span style="width:12px;height:12px;background:{{ l.grad }};border:1px solid var(--line2)"></span>{{ l.label }}
+    </button>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ camOn }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="{{ t.camera.group }}" style="position:absolute;left:{{ lay.camL }};right:{{ lay.camR }};top:{{ lay.camT }};bottom:{{ lay.camB }};width:{{ lay.camW }};transform:{{ lay.camTf }};pointer-events:auto;display:flex;flex-direction:{{ lay.camDir }};background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px)">
+  <button onClick="{{ toggleNorth }}" aria-pressed="{{ northOn }}" aria-label="{{ northLabel }}" title="{{ northLabel }}" style="height:{{ lay.hit }};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--sel)"><span style="display:block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:13px solid var(--acc-fg);transform:rotate({{ northDeg }}deg)"></span></button>
+  <button onClick="{{ tiltUp }}" disabled="{{ tiltOff }}" aria-label="{{ t.camera.tiltUp }}" title="{{ t.camera.tiltUp }}" style="height:{{ lay.hit }};border:0;box-shadow:{{ lay.sepSh }};background:transparent;cursor:pointer;font:600 15px var(--mono)" style-hover="background:var(--sel)">+</button>
+  <div title="{{ tiltTitle }}" style="min-width:34px;min-height:22px;box-shadow:{{ lay.sepSh }};display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--fg2)">{{ tiltText }}</div>
+  <button onClick="{{ tiltDown }}" disabled="{{ tiltOff }}" aria-label="{{ t.camera.tiltDown }}" title="{{ t.camera.tiltDown }}" style="height:{{ lay.hit }};border:0;box-shadow:{{ lay.sepSh }};background:transparent;cursor:pointer;font:600 15px var(--mono)" style-hover="background:var(--sel)">−</button>
+  <button onClick="{{ toOrbit }}" aria-label="{{ t.camera.reset }}" title="{{ t.camera.reset }} (O)" style="height:{{ lay.hit }};border:0;box-shadow:{{ lay.sepSh }};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--sel)"><span style="width:16px;height:16px;border:2px solid var(--fg);border-radius:50%;position:relative"><span style="position:absolute;left:5px;top:-2px;bottom:-2px;width:2px;background:var(--fg)"></span></span></button>
+</div>
+</sc-if>
+
+<div style="position:absolute;left:50%;transform:translateX(-50%);top:{{ lay.labelT }};width:max-content;max-width:calc(100% - 24px);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center">
+  <div role="status" aria-live="polite" style="display:{{ labelDisplay }};padding:4px 12px;font:13px var(--mono);background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px)">{{ mapLabel }}</div>
+  <sc-if value="{{ compareOn }}" hint-placeholder-val="{{ false }}"><div style="padding:3px 10px;font:11px var(--mono);background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px)">{{ compareBanner }}</div></sc-if>
+  <sc-if value="{{ mixed }}" hint-placeholder-val="{{ false }}"><div style="max-width:460px;padding:6px 10px;font:12px var(--sans);background:var(--panel-solid);border:1px solid var(--warn);color:var(--fg);text-wrap:pretty">{{ t.compare.mixed }}</div></sc-if>
+  <sc-if value="{{ gapOn }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 10px;font:12px var(--sans);background:var(--panel-solid);border:1px solid var(--line2)">{{ gapText }} <span style="color:var(--fg2)">{{ t.map.gapHint }}</span></div></sc-if>
+  <sc-if value="{{ offlineNote }}" hint-placeholder-val="{{ false }}"><div style="font:11px var(--sans);color:var(--fg2)">{{ t.status.offlineDetail }}</div></sc-if>
+</div>
+
+<sc-if value="{{ cardOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:{{ lay.cL }};right:{{ lay.cR }};top:{{ lay.cT }};bottom:{{ lay.cB }};width:{{ lay.cW }};height:{{ lay.cH }};display:flex;flex-direction:column;justify-content:{{ lay.cJ }};gap:8px;pointer-events:{{ lay.cPE }};background:{{ lay.shBg }};border:{{ lay.shBd }};backdrop-filter:{{ lay.shBl }}">
+  <div style="pointer-events:auto;min-height:0;display:flex;flex-direction:column;background:{{ lay.inBg }};border:{{ lay.inBd }};backdrop-filter:{{ lay.inBl }}">
+    <sc-if value="{{ mClosed }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggleCard }}" aria-expanded="false" style="height:44px;width:100%;display:flex;align-items:center;gap:10px;padding:0 12px;border:0;background:transparent;cursor:pointer;text-align:left">
+        <span style="flex:1">{{ t.card.sheet }}</span>
+        <span style="font:600 13px var(--mono)">{{ valueText }}</span>
+        <span style="width:48px;height:8px;background:{{ leg.grad }}"></span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ mOpenOrDesk }}" hint-placeholder-val="{{ true }}">
+      <div role="tablist" style="display:flex;align-items:stretch;flex:none">
+        <button role="tab" aria-selected="{{ isTabArea }}" onClick="{{ setTabArea }}" style="height:{{ lay.hit }};padding:0 14px;border:0;border-bottom:2px solid {{ tabAreaLine }};background:transparent;cursor:pointer">{{ t.card.tabArea }}</button>
+        <button role="tab" aria-selected="{{ isTabRead }}" onClick="{{ setTabRead }}" style="height:{{ lay.hit }};padding:0 14px;border:0;border-bottom:2px solid {{ tabReadLine }};background:transparent;cursor:pointer">{{ t.card.tabReading }}</button>
+        <button onClick="{{ toggleCard }}" aria-expanded="{{ cardOpen }}" aria-label="{{ cardToggleText }}" title="{{ cardToggleText }}" style="margin-left:auto;width:{{ lay.hit }};height:{{ lay.hit }};border:0;background:transparent;cursor:pointer;font:600 14px var(--mono)" style-hover="background:var(--sel)">{{ cardToggleGlyph }}</button>
+      </div>
+      <sc-if value="{{ cardOpen }}" hint-placeholder-val="{{ true }}">
+      <div role="tabpanel" style="overflow-x:hidden;overflow-y:auto;padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px;min-height:0">
+        <sc-if value="{{ isTabArea }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="font:500 15px var(--sans)">{{ areaName }}</div>
+            <div style="font:11px var(--mono);color:var(--fg2)">{{ boundsText }}</div>
+          </div>
+          <div>
+            <div style="font:11px var(--mono);color:var(--fg2)">{{ layerName }} · {{ momentName }}</div>
+            <div style="font:600 20px/1.3 var(--mono)">{{ valueText }}</div>
+            <div style="font:12px var(--sans);color:var(--fg2)">{{ deltaText }}</div>
+          </div>
+          <div>
+            <div style="font:11px var(--mono);color:var(--fg2);margin-bottom:4px">{{ t.card.series }}</div>
+            <svg width="{{ ser.w }}" height="56" style="display:block;overflow:visible">
+              <path d="{{ ser.divD }}" style="fill:none;stroke:var(--line2);stroke-width:1;stroke-dasharray:2 3"></path>
+              <path d="{{ ser.gapD }}" style="fill:none;stroke:var(--warn);stroke-width:2"></path>
+              <path d="{{ ser.lineD }}" style="fill:none;stroke:var(--fg2);stroke-width:1.5"></path>
+              <circle cx="{{ ser.bx }}" cy="{{ ser.by }}" r="{{ ser.br }}" style="fill:var(--accB)"></circle>
+              <circle cx="{{ ser.ax }}" cy="{{ ser.ay }}" r="{{ ser.ar }}" style="fill:var(--acc);stroke:var(--bg);stroke-width:1.5"></circle>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font:10px var(--mono);color:var(--fg3)"><span>{{ ser.y0 }}</span><span>{{ ser.y1 }}</span></div>
+          </div>
+          <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font:12px var(--sans)">
+            <sc-for list="{{ imgRows }}" as="r" hint-placeholder-count="4"><dt style="color:var(--fg2)">{{ r.k }}</dt><dd style="margin:0;font-family:var(--mono);font-size:11px">{{ r.v }}</dd></sc-for>
+          </dl>
+        </sc-if>
+        <sc-if value="{{ isTabRead }}" hint-placeholder-val="{{ false }}">
+          <div style="color:var(--fg2)">{{ t.card.readingLead }}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ trades }}" as="tr" hint-placeholder-count="2"><button aria-pressed="{{ tr.on }}" onClick="{{ tr.go }}" style="white-space:normal;min-height:{{ lay.hit }};padding:4px 10px;border:1px solid {{ tr.line }};background:{{ tr.bg }};cursor:pointer;text-align:left">{{ tr.trade }}</button></sc-for>
+          </div>
+          <p style="margin:0;text-wrap:pretty">{{ tradeText }}</p>
+          <sc-if value="{{ sample }}" hint-placeholder-val="{{ false }}"><div style="font:11px var(--mono);color:var(--warn)">{{ t.card.readingSample }}</div></sc-if>
+          <sc-if value="{{ noTrades }}" hint-placeholder-val="{{ false }}"><div style="color:var(--fg2)">{{ t.card.readingEmpty }}</div></sc-if>
+        </sc-if>
+      </div>
+      </sc-if>
+    </sc-if>
+  </div>
+  <sc-if value="{{ legendOn }}" hint-placeholder-val="{{ false }}">
+  <div style="pointer-events:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:{{ lay.inBg }};border:{{ lay.inBd }};backdrop-filter:{{ lay.inBl }};flex:none">
+    <div style="display:flex;justify-content:space-between;font:11px var(--mono);color:var(--fg2)"><span>{{ t.legend.title }}</span><span style="white-space:nowrap">{{ leg.label }} · {{ leg.unit }}</span></div>
+    <div style="height:10px;background:{{ leg.grad }}"></div>
+    <div style="display:flex;justify-content:space-between;font:11px var(--mono)"><span>{{ leg.min }}</span><span>{{ leg.max }}</span></div>
+    <div style="font:11px var(--sans);color:var(--fg2);text-wrap:pretty">{{ leg.note }}</div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ dc.on }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="{{ dc.title }}" style="position:absolute;left:{{ dc.left }};right:{{ dc.right }};top:{{ dc.top }};bottom:{{ dc.bottom }};width:{{ dc.w }};pointer-events:auto;background:var(--panel-solid);border:1px solid var(--acc-fg);padding:12px;display:flex;flex-direction:column;gap:6px">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <div style="flex:1;font:600 13px var(--sans)">{{ dc.title }}</div>
+    <button onClick="{{ closePick }}" aria-label="{{ t.detail.close }}" title="{{ t.detail.close }}" style="width:{{ lay.hit }};height:{{ lay.hit }};margin:-8px -8px 0 0;border:0;background:transparent;cursor:pointer;font-size:16px" style-hover="background:var(--sel)">×</button>
+  </div>
+  <div style="font:600 20px var(--mono)">{{ dc.value }}</div>
+  <sc-if value="{{ dc.hasDelta }}" hint-placeholder-val="{{ false }}"><div style="font:12px var(--mono);color:var(--fg2)">{{ t.detail.delta }}: {{ dc.delta }}</div></sc-if>
+  <div style="font:11px var(--mono);color:var(--fg2)">{{ t.detail.layer }}: {{ dc.layer }}</div>
+  <div style="font:11px var(--mono);color:var(--fg2)">{{ t.detail.at }}: {{ dc.moment }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" style="position:absolute;left:50%;transform:translateX(-50%);bottom:{{ lay.toastB }};max-width:calc(100% - 24px);padding:6px 12px;font:12px var(--mono);background:var(--panel-solid);border:1px solid var(--line2)">{{ toast }}</div>
+</sc-if>
+
+<sc-if value="{{ tlOn }}" hint-placeholder-val="{{ false }}">
+<div ref="{{ tlRef }}" role="region" aria-label="{{ t.timeline.region }}" style="position:absolute;left:{{ lay.tlL }};right:{{ lay.tlR }};bottom:{{ lay.tlB }};pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px">
+  <sc-if value="{{ tlLoading }}" hint-placeholder-val="{{ false }}">
+    <div style="font:11px var(--mono);color:var(--fg2)">{{ t.timeline.loading }}</div>
+    <div style="display:flex;gap:6px;height:56px"><div style="flex:5;background:var(--line);animation:tw-pulse 1.4s infinite"></div><div style="flex:4;background:var(--line);animation:tw-pulse 1.4s infinite"></div><div style="flex:12;background:var(--line);animation:tw-pulse 1.4s infinite"></div><div style="flex:8;background:var(--line);animation:tw-pulse 1.4s infinite"></div></div>
+  </sc-if>
+  <sc-if value="{{ tlReady }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center">
+    <div style="display:flex;gap:4px;flex:none">
+      <button onClick="{{ togglePlay }}" disabled="{{ tl.noPlay }}" aria-label="{{ tl.playLabel }}" title="{{ tl.playLabel }} (Espacio)" style="width:{{ lay.hit }};height:{{ lay.hit }};border:1px solid var(--line2);background:{{ tl.playBg }};color:{{ tl.playFg }};cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px" style-hover="background:var(--sel)">
+        <sc-if value="{{ playing }}" hint-placeholder-val="{{ false }}"><span style="width:3px;height:12px;background:currentColor"></span><span style="width:3px;height:12px;background:currentColor"></span></sc-if>
+        <sc-if value="{{ notPlaying }}" hint-placeholder-val="{{ true }}"><span style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid currentColor;margin-left:3px"></span></sc-if>
+      </button>
+      <button onClick="{{ stepPrev }}" aria-label="{{ t.timeline.prev }}" title="{{ t.timeline.prev }}" style="width:{{ lay.hit }};height:{{ lay.hit }};border:1px solid var(--line2);background:transparent;cursor:pointer;font:600 16px var(--mono)" style-hover="background:var(--sel)">‹</button>
+      <button onClick="{{ stepNext }}" aria-label="{{ t.timeline.next }}" title="{{ t.timeline.next }}" style="width:{{ lay.hit }};height:{{ lay.hit }};border:1px solid var(--line2);background:transparent;cursor:pointer;font:600 16px var(--mono)" style-hover="background:var(--sel)">›</button>
+    </div>
+    <div style="flex:1 1 180px;min-width:0">
+      <div style="font:600 15px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ tl.name }}</div>
+      <div style="font:11px var(--mono);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ tl.meta }}</div>
+    </div>
+    <sc-if value="{{ compareOn }}" hint-placeholder-val="{{ false }}">
+    <div role="radiogroup" aria-label="{{ t.timeline.target }}" style="display:flex;gap:4px;flex:none">
+      <button role="radio" aria-checked="{{ tl.tA }}" onClick="{{ setTargetA }}" style="height:{{ lay.hit }};padding:0 10px;border:1px solid {{ tl.tALine }};background:transparent;cursor:pointer;font:11px var(--mono);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:var(--acc-fg);font-weight:600">{{ t.timeline.a }}</span> {{ tl.nameA }}</button>
+      <button role="radio" aria-checked="{{ tl.tB }}" onClick="{{ setTargetB }}" style="height:{{ lay.hit }};padding:0 10px;border:1px solid {{ tl.tBLine }};background:transparent;cursor:pointer;font:11px var(--mono);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:var(--accB);font-weight:600">{{ t.timeline.b }}</span> {{ tl.nameB }}</button>
+    </div>
+    </sc-if>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:0 1 auto;min-width:0">
+      <sc-if value="{{ showKey }}" hint-placeholder-val="{{ true }}">
+        <span aria-hidden="true" style="display:flex;gap:10px;font:10px var(--mono);color:var(--fg2);margin-right:4px">
+          <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:8px;background:var(--fg3)"></span>{{ t.timeline.kindComposite }}</span>
+          <span style="display:flex;gap:4px;align-items:center"><span style="width:2px;height:10px;background:var(--fg2);margin:0 4px"></span>{{ t.timeline.kindAcquisition }}</span>
+          <span style="display:flex;gap:4px;align-items:center"><span style="width:10px;height:8px;background:repeating-linear-gradient(135deg,var(--hatch) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px var(--line2)"></span>{{ t.timeline.gapLegend }}</span>
+        </span>
+      </sc-if>
+      <sc-if value="{{ isD }}" hint-placeholder-val="{{ true }}">
+        <div role="radiogroup" style="display:flex">
+          <button role="radio" aria-checked="{{ scopeAll }}" onClick="{{ setScopeAll }}" style="height:{{ lay.hit }};padding:0 10px;border:1px solid var(--line2);background:{{ scopeAllBg }};cursor:pointer;font:11px var(--mono)">{{ t.timeline.scopeAll }}</button>
+          <button role="radio" aria-checked="{{ scopeSeg }}" onClick="{{ setScopeSeg }}" style="height:{{ lay.hit }};padding:0 10px;border:1px solid var(--line2);border-left:0;background:{{ scopeSegBg }};cursor:pointer;font:11px var(--mono)">{{ t.timeline.scopeSeg }}</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ zoomed }}" hint-placeholder-val="{{ false }}"><button onClick="{{ fullView }}" style="height:{{ lay.hit }};padding:0 10px;border:1px solid var(--line2);background:transparent;cursor:pointer;font:11px var(--mono)" style-hover="background:var(--sel)">{{ t.timeline.full }}</button></sc-if>
+      <button onClick="{{ toggleCompare }}" aria-pressed="{{ compareOn }}" style="height:{{ lay.hit }};padding:0 12px;border:1px solid {{ cmpLine }};background:{{ cmpBg }};cursor:pointer;font:12px var(--sans)" style-hover="background:var(--sel)">{{ cmpText }}</button>
+    </div>
+  </div>
+  <sc-if value="{{ tl.single }}" hint-placeholder-val="{{ false }}"><div style="font:11px var(--mono);color:var(--fg2)">{{ t.timeline.singlePoint }}</div></sc-if>
+  <div data-tw-track="1" role="slider" tabindex="0" aria-label="{{ t.timeline.region }}" aria-valuemin="0" aria-valuemax="{{ tl.max }}" aria-valuenow="{{ tl.idx }}" aria-valuetext="{{ tl.name }}" style="display:flex;gap:6px;overflow-x:{{ tl.ox }};overflow-y:hidden;padding-bottom:2px">
+    <sc-for list="{{ tl.segs }}" as="seg" hint-placeholder-count="4">
+    <div style="flex:{{ seg.flex }};min-width:{{ seg.minW }};display:flex;flex-direction:column;gap:3px">
+      <button onClick="{{ seg.head }}" title="{{ seg.title }}" aria-label="{{ seg.title }}" aria-expanded="{{ seg.zoomed }}" style="height:18px;width:100%;display:flex;align-items:center;gap:6px;padding:0 4px;border:0;border-top:2px solid {{ seg.tone }};background:transparent;text-align:left;cursor:pointer;overflow:hidden;white-space:nowrap" style-hover="background:var(--sel)">
+        <span style="flex:none;width:8px;height:8px;border:1.5px solid {{ seg.tone }};background:{{ seg.mark }}"></span>
+        <sc-if value="{{ seg.showLabel }}" hint-placeholder-val="{{ true }}"><span style="font:500 12px var(--sans);overflow:hidden;text-overflow:ellipsis">{{ seg.label }}</span></sc-if>
+        <sc-if value="{{ seg.showMeta }}" hint-placeholder-val="{{ false }}"><span style="font:10px var(--mono);color:var(--fg3);overflow:hidden;text-overflow:ellipsis">{{ seg.meta }}</span></sc-if>
+      </button>
+      <div style="position:relative;height:14px">
+        <sc-for list="{{ seg.events }}" as="ev" hint-placeholder-count="1">
+          <div title="{{ ev.title }}" style="position:absolute;left:{{ ev.left }};top:3px;display:flex;flex-direction:{{ ev.dir }};gap:5px;align-items:center;white-space:nowrap;transform:{{ ev.tf }}">
+            <span style="width:7px;height:7px;background:var(--fg2);transform:rotate(45deg)"></span>
+            <sc-if value="{{ ev.showLabel }}" hint-placeholder-val="{{ false }}"><span style="font:10px var(--mono);color:var(--fg2)">{{ ev.label }}</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:relative;display:flex;gap:{{ seg.gap }};align-items:flex-start">
+        <sc-for list="{{ seg.ticks }}" as="tk" hint-placeholder-count="5">
+          <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <button tabindex="-1" onClick="{{ tk.go }}" title="{{ tk.title }}" aria-label="{{ tk.title }}" aria-current="{{ tk.cur }}" style="display:block;width:100%;height:26px;padding:0;border:0;cursor:pointer;background:{{ tk.bg }}"></button>
+            <sc-for list="{{ tk.pips }}" as="pp" hint-placeholder-count="4"><div style="height:5px;background:{{ pp.bg }};box-shadow:{{ pp.sh }};opacity:{{ pp.op }}"></div></sc-for>
+          </div>
+        </sc-for>
+        <sc-if value="{{ seg.empty }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;top:0;height:26px;display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--fg);pointer-events:none;background:var(--panel)">{{ t.timeline.emptySeg }}</div></sc-if>
+      </div>
+    </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)">
+    <span style="white-space:nowrap">{{ t.timeline.realTime }}</span>
+    <span>{{ tl.y0 }}</span>
+    <div style="position:relative;flex:1;height:6px;display:flex;gap:2px">
+      <sc-for list="{{ tl.real }}" as="r" hint-placeholder-count="4"><div style="flex:{{ r.flex }} 1 0;background:{{ r.tone }}"></div></sc-for>
+      <div style="position:absolute;top:-3px;bottom:-3px;left:{{ tl.aLeft }};width:2px;margin-left:-1px;background:var(--acc)"></div>
+      <sc-if value="{{ compareOn }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;top:-3px;bottom:-3px;left:{{ tl.bLeft }};width:2px;margin-left:-1px;background:var(--accB)"></div></sc-if>
+    </div>
+    <span>{{ tl.y1 }}</span>
+    <sc-if value="{{ isD }}" hint-placeholder-val="{{ true }}"><span style="font:11px var(--sans);max-width:330px;line-height:1.25">{{ t.timeline.scaleNote }}</span></sc-if>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ help }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ toggleHelp }}" style="position:absolute;inset:0;pointer-events:auto;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center">
+  <div role="dialog" aria-modal="true" aria-label="{{ t.help.title }}" onClick="{{ stop }}" style="width:min(420px,calc(100% - 24px));background:var(--panel-solid);border:1px solid var(--line2);padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center"><h2 style="margin:0;flex:1;font:500 15px var(--sans)">{{ t.help.title }}</h2><button onClick="{{ toggleHelp }}" style="height:{{ lay.hit }};padding:0 12px;border:1px solid var(--line2);background:transparent;cursor:pointer">{{ t.help.close }}</button></div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font:12px var(--sans)">
+      <sc-for list="{{ helpKeys }}" as="k" hint-placeholder-count="8"><span style="font:11px var(--mono);color:var(--acc-fg)">{{ k.k }}</span><span>{{ k.d }}</span></sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Escena&quot;},&quot;escenario&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;cargando&quot;,&quot;sin-conexion&quot;,&quot;sin-relieve&quot;,&quot;error-config&quot;,&quot;un-tramo&quot;,&quot;un-punto&quot;,&quot;rango-largo&quot;,&quot;tramo-vacio&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Escena&quot;},&quot;movimientoReducido&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Escena&quot;}}">
+class Component extends DCLogic {
+  state = {
+    ready: false, ds: null, err: null, scene: { camera: 'orbit', layer: '', tickId: '', tilt: 35, northUp: true },
+    W: 1280, H: 800, tlH: 200, hotspots: [], series: {}, pick: null, pickPos: null, zoomSeg: null, playing: false,
+    scope: 'all', cmpTarget: 'B', q: '', results: [], searched: false, searchOpen: false, toast: '', help: false,
+    ficha: true, sheet: false, tab: 'area', trade: 0, explore: false, status: { online: true, terrain: true, basemap: true },
+  };
+  sceneRef = React.createRef();
+  rootRef = React.createRef();
+  tlRef = React.createRef();
+  flat = []; idx = {}; segRange = {};
+
+  async componentDidMount() {
+    const imp = (p) => import(new URL(p, document.baseURI).href);
+    const [cat, prov, scn] = await Promise.all([imp('tw/catalog.es-AR.js'), imp('tw/mock-provider.js'), imp('tw/mock-scene.js')]);
+    this.cat = cat; this.Prov = prov.MockProvider; this.Scn = scn.MockScene;
+    this.ro = new ResizeObserver(() => this.measure());
+    this.ro.observe(this.rootRef.current);
+    this.kd = (e) => this.onKey(e);
+    document.addEventListener('keydown', this.kd);
+    this.setState({ ready: true }, () => { this.measure(); this.boot(); });
+  }
+  componentWillUnmount() {
+    this.teardown(); if (this.ro) this.ro.disconnect(); if (this.tlRo) this.tlRo.disconnect();
+    document.removeEventListener('keydown', this.kd);
+  }
+  componentDidUpdate(pp, ps) {
+    this.measure();
+    const S = this.state;
+    if (this.scene) {
+      const key = [S.scene.camera, S.W, S.H, S.tlH].join();
+      if (key !== this._padKey) { this._padKey = key; this.scene.setPadding(this.padding()); this.trackPos(); }
+      const th = this.theme();
+      if (th !== this._theme) { this._theme = th; this.scene.refreshStyle(); }
+      const rm = this.rm();
+      if (rm !== this._rm) { this._rm = rm; this.scene.setReducedMotion(rm); }
+      if (this.scenario() !== this._scn) this.boot();
+      if (S.pick !== ps.pick) this.trackPos();
+    }
+    if (this.tlRef.current && this._tlEl !== this.tlRef.current) {
+      this._tlEl = this.tlRef.current;
+      if (!this.tlRo) this.tlRo = new ResizeObserver(() => this.measure());
+      this.tlRo.disconnect(); this.tlRo.observe(this._tlEl);
+    }
+  }
+
+  hashParams() {
+    const o = {};
+    (location.hash || '').replace(/^#/, '').split('&').forEach((p) => { if (!p) return; const i = p.indexOf('='); o[p.slice(0, i < 0 ? p.length : i)] = i < 0 ? '' : decodeURIComponent(p.slice(i + 1)); });
+    return o;
+  }
+  scenario() { return this.hashParams().escenario || this.props.escenario || 'normal'; }
+  theme() { const v = this.hashParams().tema; return v === 'claro' ? 'light' : v === 'oscuro' ? 'dark' : this.props.tema === 'claro' ? 'light' : 'dark'; }
+  rm() { return !!(this.props.movimientoReducido || this.hashParams().rm === '1' || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)); }
+
+  measure() {
+    const r = this.rootRef.current; if (!r) return;
+    const S = this.state, W = r.clientWidth, H = r.clientHeight, tlH = this.tlRef.current ? Math.round(this.tlRef.current.offsetHeight) : S.tlH;
+    if (W !== S.W || H !== S.H || Math.abs(tlH - S.tlH) > 1) this.setState({ W, H, tlH });
+  }
+
+  teardown() {
+    clearTimeout(this.timer); clearTimeout(this.toastT); cancelAnimationFrame(this.posRaf);
+    if (this.unC) this.unC(); if (this.unP) this.unP();
+    if (this.scene) { this.scene.destroy(); this.scene = null; }
+    this.bootId = (this.bootId || 0) + 1;
+  }
+
+  async boot() {
+    this.teardown();
+    const my = this.bootId, hp = this.hashParams(), sc = this.scenario(), { T } = this.cat;
+    this._scn = sc; this._theme = this.theme(); this._rm = this.rm();
+    const status = { online: sc !== 'sin-conexion', terrain: sc !== 'sin-relieve', basemap: sc !== 'sin-conexion' };
+    this.provider = new this.Prov({ scenario: sc });
+    this.scene = new this.Scn({ ...status, reducedMotion: this._rm, labels: { curtain: T.compare.curtain } });
+    this.scene.mount(this.sceneRef.current);
+    this.unC = this.scene.onChange((st) => {
+      const prev = this.state.scene; this.setState({ scene: st });
+      if (prev.layer !== st.layer || prev.tickId !== st.tickId) this.loadHotspots(st);
+      this.writeHash(st);
+    });
+    this.unP = this.scene.onPick((id) => this.onPick(id));
+    this.setState({ ds: null, err: null, hotspots: [], series: {}, pick: null, pickPos: null, zoomSeg: hp.zoom || null, playing: false, status,
+      explore: hp.explorar === '1', help: hp.ayuda === '1', sheet: hp.ficha === '1', tab: hp.tab === 'lectura' ? 'read' : 'area',
+      scene: { camera: 'orbit', layer: '', tickId: '', tilt: 35, northUp: true } });
+    this._padKey = null;
+    this.scene.setPadding(this.padding());
+    let start = hp.c || ((sc !== 'normal' && sc !== 'error-config') ? 'territory' : 'orbit');
+    if (start === 'approach' || start === 'detail') start = 'territory';
+    if (start !== 'orbit') { this.scene.setPadding(this.padding(start)); this.scene.set({ camera: start }, { instant: true }); }
+    let ds;
+    try { ds = await this.provider.load(); } catch (e) { if (my === this.bootId) this.setState({ err: e }); return; }
+    if (my !== this.bootId) return;
+    this.derive(ds);
+    await new Promise((r) => this.setState({ ds }, r));
+    this.scene.setDataset(ds);
+    const lastSeg = ds.segments[ds.segments.length - 1];
+    const layer = ds.layers.some((l) => l.id === hp.l) ? hp.l : ds.layers[0].id;
+    const tickId = this.idx[hp.t] != null ? hp.t : lastSeg.ticks[lastSeg.ticks.length - 1].id;
+    const set = { layer, tickId, tilt: isNaN(parseFloat(hp.tilt)) ? 35 : parseFloat(hp.tilt), northUp: hp.n !== '0' };
+    if (hp.cmp) { const [cid, sp] = hp.cmp.split(','); if (this.idx[cid] != null) set.compare = { tickId: cid, split: isNaN(parseFloat(sp)) ? 0.5 : parseFloat(sp) }; }
+    this.scene.set(set, { instant: true });
+    if (set.compare) this.setState({ cmpTarget: 'B' });
+    const lists = await Promise.all(ds.layers.map((l) => this.provider.series(l.id)));
+    if (my !== this.bootId) return;
+    const series = {}; ds.layers.forEach((l, i) => { series[l.id] = lists[i]; });
+    this.setState({ series });
+    await this.loadHotspots(this.scene.getState());
+    if (my === this.bootId && hp.pick) this.onPick(hp.pick);
+  }
+
+  derive(ds) {
+    this.flat = []; this.idx = {}; this.segRange = {};
+    ds.segments.forEach((seg) => { const start = this.flat.length; seg.ticks.forEach((tick) => { this.idx[tick.id] = this.flat.length; this.flat.push({ seg, tick }); }); this.segRange[seg.id] = { start, end: this.flat.length - 1 }; });
+  }
+
+  writeHash(st) {
+    if (!st.layer || !st.tickId) return;
+    const o = this.hashParams(), p = [];
+    if (o.escenario) p.push('escenario=' + o.escenario);
+    if (o.tema) p.push('tema=' + o.tema);
+    p.push('c=' + (st.camera === 'approach' ? 'territory' : st.camera), 'l=' + st.layer, 't=' + st.tickId);
+    if (st.compare) p.push(`cmp=${st.compare.tickId},${st.compare.split.toFixed(2)}`);
+    p.push('tilt=' + Math.round(st.tilt), 'n=' + (st.northUp ? 1 : 0));
+    if (this.state.pick) p.push('pick=' + this.state.pick);
+    if (this.state.zoomSeg) p.push('zoom=' + this.state.zoomSeg);
+    try { history.replaceState(null, '', '#' + p.join('&')); } catch (e) {}
+  }
+
+  async loadHotspots(st) {
+    if (!this.state.ds || !st.layer || !st.tickId) return;
+    const tok = (this.hsTok = (this.hsTok || 0) + 1);
+    let list = [];
+    try { list = await this.provider.hotspots(st.layer, st.tickId); } catch (e) {}
+    if (tok !== this.hsTok || !this.scene) return;
+    this.scene.setHotspots(list);
+    this.setState({ hotspots: list });
+    const pk = this.state.pick;
+    if (pk && !list.find((h) => h.id === pk)) { this.setState({ pick: null }); this.scene.set({ camera: 'territory', focus: null }); }
+  }
+
+  onPick(id) {
+    if (id == null) { if (this.state.pick) { this.setState({ pick: null }); this.scene.set({ camera: 'territory', focus: null }); } return; }
+    const h = this.state.hotspots.find((x) => x.id === id); if (!h) return;
+    this.setState({ pick: id }); this.scene.set({ camera: 'detail', focus: { lonlat: h.lonlat, zoom: 1.7 } });
+  }
+  closePick = () => this.onPick(null);
+
+  trackPos(ms = 1200) {
+    cancelAnimationFrame(this.posRaf); const t0 = performance.now();
+    const f = () => { this.updatePickPos(); if (performance.now() - t0 < ms) this.posRaf = requestAnimationFrame(f); };
+    f();
+  }
+  updatePickPos() {
+    const S = this.state; if (!this.scene) return;
+    const h = S.pick && S.hotspots.find((x) => x.id === S.pick);
+    if (!h) { if (S.pickPos) this.setState({ pickPos: null }); return; }
+    const p = this.scene.project(h.lonlat), o = S.pickPos;
+    if (p && (!o || Math.abs(o.x - p.x) > 0.5 || Math.abs(o.y - p.y) > 0.5)) this.setState({ pickPos: p });
+  }
+
+  padding(camOverride) {
+    const S = this.state, isM = S.W < 760, cam = camOverride || S.scene.camera;
+    if (cam === 'orbit') return isM ? { top: 60, right: 12, bottom: 330, left: 12 } : { top: 60, right: 20, bottom: 20, left: 460 };
+    return isM ? { top: 112, left: 8, right: 60, bottom: 52 + S.tlH + 20 } : { top: 64, left: 250, right: 330, bottom: S.tlH + 28 };
+  }
+
+  targetId() { const sc = this.state.scene; return this.state.cmpTarget === 'B' && sc.compare ? sc.compare.tickId : sc.tickId; }
+  setTarget(id) {
+    const sc = this.state.scene;
+    if (this.state.cmpTarget === 'B' && sc.compare) this.scene.set({ compare: { ...sc.compare, tickId: id } }); else this.scene.set({ tickId: id });
+    const f = this.flat[this.idx[id]];
+    if (this.state.zoomSeg && f && f.seg.id !== this.state.zoomSeg) this.setState({ zoomSeg: f.seg.id });
+  }
+  userSet(id) { this.stopPlay(); this.setTarget(id); }
+  step = (d) => { const i = this.idx[this.targetId()]; if (i == null) return; this.userSet(this.flat[Math.max(0, Math.min(this.flat.length - 1, i + d))].tick.id); };
+  segStep(d) {
+    const i = this.idx[this.targetId()]; if (i == null) return;
+    const segs = this.state.ds.segments, si = segs.findIndex((s) => s.id === this.flat[i].seg.id), ns = Math.max(0, Math.min(segs.length - 1, si + d));
+    this.userSet(this.flat[this.segRange[segs[ns].id].start].tick.id);
+  }
+  tickClick(id, segId) { if (this.state.W < 760 && this.state.zoomSeg !== segId) this.setState({ zoomSeg: segId }); this.userSet(id); }
+  segHead(segId) { this.setState({ zoomSeg: this.state.zoomSeg === segId ? null : segId }); }
+
+  pace(seg) { return seg.kind === 'acquisition' ? 800 : { year: 1300, quarter: 1000, month: 650, week: 600, day: 500 }[seg.granularity]; }
+  togglePlay = () => {
+    if (this.state.playing) { this.stopPlay(); return; }
+    if (this.flat.length < 2) return;
+    const i = this.idx[this.targetId()];
+    if (this.state.scope === 'all' && i >= this.flat.length - 1) this.setTarget(this.flat[0].tick.id);
+    this.setState({ playing: true }, () => this.schedule());
+  };
+  stopPlay() { clearTimeout(this.timer); this.extra = 0; if (this.state.playing) this.setState({ playing: false }); }
+  schedule() {
+    clearTimeout(this.timer); const cur = this.flat[this.idx[this.targetId()]]; if (!cur) return;
+    const d = this.pace(cur.seg) + (this.extra || 0); this.extra = 0;
+    this.timer = setTimeout(() => this.advance(), d);
+  }
+  advance() {
+    if (!this.state.playing) return;
+    const i = this.idx[this.targetId()], cur = this.flat[i]; let ni = i + 1;
+    if (this.state.scope === 'all') { if (ni >= this.flat.length) { this.stopPlay(); return; } }
+    else if (i >= this.segRange[cur.seg.id].end) ni = this.segRange[cur.seg.id].start;
+    const nx = this.flat[ni];
+    if (nx.seg.id !== cur.seg.id) { this.showToast(this.cat.T.timeline.crossing(nx.seg.label, this.granText(nx.seg))); this.extra = 1100; }
+    this.setTarget(nx.tick.id); this.schedule();
+  }
+  showToast(m, ms = 1800) { this.setState({ toast: m }); clearTimeout(this.toastT); this.toastT = setTimeout(() => this.setState({ toast: '' }), ms); }
+
+  granText(seg) {
+    const { T } = this.cat;
+    if (seg.kind === 'acquisition' && seg.ticks.length > 1) return T.acqEvery(Math.round((new Date(seg.ticks[1].start) - new Date(seg.ticks[0].start)) / 864e5));
+    return seg.kind === 'acquisition' ? T.kind.acquisition.toLowerCase() : T.granEvery[seg.granularity];
+  }
+
+  toggleCompare = () => {
+    const sc = this.state.scene;
+    if (sc.compare) { this.scene.set({ compare: null }); this.setState({ cmpTarget: 'A' }); return; }
+    const bi = this.idx[sc.tickId] > 0 ? 0 : this.flat.length - 1;
+    this.scene.set({ compare: { tickId: this.flat[bi].tick.id, split: 0.5 } }); this.setState({ cmpTarget: 'B' });
+  };
+  enter = () => { if (!this.state.ds) return; this.setState({ explore: false }); this.scene.set({ focus: null }); this.scene.flyTo('territory'); };
+  toOrbit = () => { this.stopPlay(); this.setState({ pick: null, explore: false }); this.scene.resetToOrbit(); };
+  retry = () => this.boot();
+
+  onQ = (e) => {
+    const q = e.target.value; this.setState({ q, searched: false }); clearTimeout(this.qt);
+    if (!q.trim()) { this.setState({ results: [] }); return; }
+    this.qt = setTimeout(async () => { const r = await this.provider.search(q); if (this.state.q === q) this.setState({ results: r, searched: true }); }, 120);
+  };
+  onQKey = (e) => { if (e.key === 'Enter' && this.state.results[0]) this.goResult(this.state.results[0]); if (e.key === 'Escape') this.setState({ q: '', results: [], searchOpen: false }); };
+  goResult(r) {
+    const ds = this.state.ds, b = ds.area.bounds, [lon, lat] = r.lonlat, inside = lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north;
+    this.setState({ q: '', results: [], searched: false, searchOpen: false });
+    if (r.kind === 'area' || inside) { if (this.state.scene.camera === 'orbit') this.enter(); return; }
+    this.showToast(this.cat.T.search.going(r.label));
+    if (this.state.scene.camera !== 'orbit') this.scene.resetToOrbit();
+    this.scene.set({ focus: { lonlat: r.lonlat, zoom: 1 } }); this.setState({ explore: true });
+  }
+
+  onKey(e) {
+    const el = e.target, tag = el && el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (el && el.closest && el.closest('[data-scene-handle]')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey || !this.scene) return;
+    const S = this.state, hud = (S.scene.camera === 'territory' || S.scene.camera === 'detail') && S.ds, k = e.key;
+    if (k === 'Escape') { if (S.help) this.setState({ help: false }); else if (S.pick) this.closePick(); else if (S.sheet) this.setState({ sheet: false }); else if (S.searchOpen) this.setState({ searchOpen: false }); return; }
+    if (k === '?') { this.setState({ help: !S.help }); return; }
+    if (!hud) return;
+    const go = (fn) => { e.preventDefault(); fn(); };
+    if (k === 'ArrowLeft') go(() => this.step(-1));
+    else if (k === 'ArrowRight') go(() => this.step(1));
+    else if (k === 'PageUp') go(() => this.segStep(-1));
+    else if (k === 'PageDown') go(() => this.segStep(1));
+    else if (k === 'Home') go(() => this.userSet(this.flat[0].tick.id));
+    else if (k === 'End') go(() => this.userSet(this.flat[this.flat.length - 1].tick.id));
+    else if (k === ' ' && tag !== 'BUTTON') go(this.togglePlay);
+    else if (k === 'c' || k === 'C') go(this.toggleCompare);
+    else if (k === 'o' || k === 'O') go(this.toOrbit);
+  }
+
+  renderVals() {
+    const S = this.state, theme = this.theme();
+    if (!S.ready) return { ready: false, theme, rootRef: this.rootRef, sceneRef: this.sceneRef };
+    const { T, F } = this.cat, ds = S.ds, sc = S.scene, W = S.W, isM = W < 760, hit = isM ? 44 : 32, cam = sc.camera, pad = isM ? 8 : 12;
+    const hasDs = !!ds, err = S.err, hud = (cam === 'territory' || cam === 'detail') && !err;
+    const layers = ds ? ds.layers : [], L = layers.find((l) => l.id === sc.layer) || null;
+    const fa = ds && this.flat[this.idx[sc.tickId]] || null;
+    const nameOf = (f) => T.tickName(f.seg.kind, f.tick.label);
+    const swatch = (l) => { let b = l.ramp[0]; l.ramp.forEach((s) => { if (Math.abs(s.at - 0.7) < Math.abs(b.at - 0.7)) b = s; }); return b.color; };
+    const grad = (l) => 'linear-gradient(90deg,' + l.ramp.map((s) => `${s.color} ${s.at * 100}%`).join(',') + ')';
+    const cardOpen = isM ? S.sheet : S.ficha;
+    const panel = 'var(--panel)', bd = '1px solid var(--line)', bl = 'blur(10px)';
+
+    const lay = {
+      pad: pad + 'px', hit: hit + 'px', labelT: isM ? '104px' : '64px',
+      camW: isM ? hit + 'px' : 'auto', camTf: isM ? 'none' : 'translateX(-50%)', camDir: isM ? 'column' : 'row', sepSh: isM ? 'inset 0 1px 0 var(--line)' : 'inset 1px 0 0 var(--line)', camL: isM ? 'auto' : '50%', camR: isM ? '8px' : 'auto', camT: isM ? '104px' : 'auto', camB: isM ? 'auto' : (S.tlH + 24) + 'px',
+      tlL: pad + 'px', tlR: pad + 'px', tlB: isM ? '52px' : '12px', toastB: ((isM ? 52 : 12) + S.tlH + 12) + 'px',
+      entL: isM ? '8px' : '12px', entR: isM ? '8px' : 'auto', entT: isM ? 'auto' : '50%', entB: isM ? '8px' : 'auto', entW: isM ? 'auto' : '380px', entTf: isM ? 'none' : 'translateY(-50%)',
+      cL: isM ? '0' : 'auto', cR: isM ? '0' : '12px', cT: isM ? 'auto' : '64px', cB: isM ? '0' : (S.tlH + 24) + 'px', cW: isM ? 'auto' : '300px', cH: isM ? (cardOpen ? '70%' : '44px') : 'auto',
+      cJ: isM ? 'flex-start' : 'space-between', cPE: isM ? 'auto' : 'none',
+      shBg: isM ? 'var(--panel-solid)' : 'transparent', shBd: isM ? bd : '0', shBl: isM ? 'none' : 'none',
+      inBg: isM ? 'transparent' : panel, inBd: isM ? '0' : bd, inBl: isM ? 'none' : bl,
+    };
+
+    // search
+    const searchField = !isM || S.searchOpen;
+    const showResults = searchField && !!S.q.trim() && (S.results.length > 0 || S.searched);
+    const results = S.results.map((r) => ({ label: r.label, go: () => this.goResult(r) }));
+    const st = S.status;
+    // layers
+    const layerItems = layers.map((l) => {
+      const on = l.id === sc.layer, gap = !!(fa && !fa.tick.frames[l.id]);
+      return { id: l.id, label: l.label, unit: l.unit, on, gap, grad: grad(l), bg: on ? 'var(--sel)' : 'transparent', chipBg: on ? 'var(--sel)' : panel, go: () => this.scene.set({ layer: l.id }) };
+    });
+    // detail card + value
+    const fb = ds && sc.compare ? this.flat[this.idx[sc.compare.tickId]] : null;
+    const compareOn = !!sc.compare && !!fb && !!fa;
+    const iA = fa ? this.idx[sc.tickId] : -1, iB = fb ? this.idx[sc.compare.tickId] : -1;
+    const sp = L && S.series[L.id];
+    const spA = sp && sp[iA];
+    const valueText = spA && spA.value != null ? F.value(spA.value, L.unit, L.decimals) : (L ? T.card.noValue : '');
+    let deltaText = '';
+    if (spA && spA.value != null) {
+      let j = iA - 1; while (j >= 0 && sp[j].value == null) j--;
+      if (j < 0) deltaText = T.card.deltaNone;
+      else { const dv = spA.value - sp[j].value, lb = nameOf(this.flat[j]); deltaText = Math.abs(dv) < Math.pow(10, -(L.decimals || 0)) / 2 ? T.card.noChange(lb) : T.card.delta(F.delta(dv, L.unit, L.decimals), lb); }
+    }
+    // series svg
+    const serW = isM ? Math.min(W - 40, 560) : 266, serH = 56;
+    const ser = { w: serW, lineD: '', divD: '', gapD: '', ax: 0, ay: 0, ar: 0, bx: 0, by: 0, br: 0, y0: '', y1: '' };
+    if (ds && L && sp) {
+      const n = this.flat.length, xOf = (i) => (n < 2 ? serW / 2 : 2 + ((serW - 4) * i) / (n - 1)), yOf = (v) => serH - 4 - ((serH - 8) * (v - L.range[0])) / (L.range[1] - L.range[0]);
+      let pen = false;
+      sp.forEach((p, i) => { const x = xOf(i); if (p.value == null) { pen = false; ser.gapD += `M${x.toFixed(1)} ${serH} L${x.toFixed(1)} ${serH - 7} `; } else { ser.lineD += `${pen ? 'L' : 'M'}${x.toFixed(1)} ${yOf(p.value).toFixed(1)} `; pen = true; } });
+      let acc = 0; ds.segments.slice(0, -1).forEach((s) => { acc += s.ticks.length; const x = (xOf(acc - 1) + xOf(acc)) / 2; ser.divD += `M${x.toFixed(1)} 0 L${x.toFixed(1)} ${serH} `; });
+      if (spA && spA.value != null) { ser.ax = xOf(iA); ser.ay = yOf(spA.value); ser.ar = 4; }
+      const spB = compareOn && sp[iB]; if (spB && spB.value != null) { ser.bx = xOf(iB); ser.by = yOf(spB.value); ser.br = 4; }
+      ser.y0 = F.year(this.flat[0].seg.from); ser.y1 = F.year(this.flat[n - 1].seg.to);
+    }
+    // image rows
+    const fr = fa && L ? fa.tick.frames[L.id] : null;
+    const imgRows = !fa || !L ? [] : fr ? [
+      { k: T.card.kind, v: T.kind[fr.kind] }, fr.resolutionM != null && { k: T.card.resolution, v: T.card.meters(fr.resolutionM) },
+      fr.source && { k: T.card.source, v: fr.source }, fr.quality && { k: T.card.quality, v: fr.quality === 'ok' ? T.card.qualityOk : T.card.qualityPartial },
+      fr.bytes != null && { k: T.card.size, v: F.bytes(fr.bytes) },
+    ].filter(Boolean) : [{ k: T.card.image, v: T.map.gap(L.label) }];
+    const b = ds && ds.area.bounds;
+    const trades = ds ? ds.context.map((c, i) => ({ trade: c.trade, on: i === S.trade, line: i === S.trade ? 'var(--acc-fg)' : 'var(--line2)', bg: i === S.trade ? 'var(--sel)' : 'transparent', go: () => this.setState({ trade: i }) })) : [];
+    const leg = L ? { grad: grad(L), min: F.value(L.range[0], L.unit, L.decimals), max: F.value(L.range[1], L.unit, L.decimals), label: L.label, unit: L.unit, note: L.note } : { grad: 'none', min: '', max: '', label: '', unit: '', note: '' };
+
+    // timeline
+    const isDark = theme === 'dark', nseg = ds ? ds.segments.length : 0, totalPts = this.flat.length;
+    const toneL = (i) => { const k = nseg < 2 ? 0.5 : i / (nseg - 1); return isDark ? 0.42 + 0.4 * k : 0.62 - 0.3 * k; };
+    const hatchG = 'repeating-linear-gradient(135deg,var(--hatch) 0 2px,transparent 2px 5px)';
+    const lineG = (c, w) => `linear-gradient(90deg,transparent calc(50% - ${w / 2}px),${c} calc(50% - ${w / 2}px) calc(50% + ${w / 2}px),transparent calc(50% + ${w / 2}px))`;
+    const trackW = W - 2 * pad - 24, zs = S.zoomSeg;
+    const segs = !ds ? [] : ds.segments.map((seg, si) => {
+      const n = seg.ticks.length, zoomed = zs === seg.id, collapsed = !!zs && !zoomed, Lt = toneL(si);
+      const tone = `oklch(${Lt.toFixed(3)} 0.05 235)`, toneA = `oklch(${Lt.toFixed(3)} 0.05 235 / 0.55)`;
+      const px = zoomed ? n * (isM ? 30 : 34) : (n / totalPts) * trackW, per = isM ? 3 : 6;
+      const empty = seg.ticks.every((t) => Object.values(t.frames).every((f) => !f));
+      const events = ds.events.map((ev) => {
+        const j = seg.ticks.findIndex((t) => ev.date >= t.start && ev.date <= t.end); if (j < 0) return null;
+        const t = seg.ticks[j], a = +new Date(t.start), z = +new Date(t.end), fr0 = z > a ? (+new Date(ev.date) - a) / (z - a) : 0.5;
+        const fl = (j + fr0) / n > 0.6; return { dir: fl ? 'row-reverse' : 'row', tf: fl ? 'translateX(calc(-100% + 4px))' : 'translateX(-4px)', left: ((j + fr0) / n) * 100 + '%', label: ev.label, title: T.timeline.event(ev.label), showLabel: !isM && !collapsed && px >= 160 };
+      }).filter(Boolean);
+      const ticks = seg.ticks.map((tk) => {
+        const f0 = L ? tk.frames[L.id] : null, gap = !!L && !f0, isA = tk.id === sc.tickId, isB = compareOn && tk.id === sc.compare.tickId;
+        const layersBg = [];
+        if (seg.kind === 'acquisition') layersBg.push(lineG(isA ? 'var(--acc-ink)' : isB ? 'var(--accB-ink)' : tone, isA || isB ? 3 : 2));
+        if (gap) layersBg.push(hatchG);
+        const base = isA ? 'var(--acc)' : isB ? 'var(--accB)' : seg.kind === 'composite' ? toneA : 'transparent';
+        const any = Object.values(tk.frames).find(Boolean), miss = layers.filter((l) => !tk.frames[l.id]).map((l) => l.label);
+        const title = [T.tickName(seg.kind, tk.label), any && T.card.meters(any.resolutionM), any && any.source, miss.length && T.timeline.missing(miss.join(', '))].filter(Boolean).join(' · ');
+        return {
+          title, cur: isA, bg: layersBg.length ? layersBg.join(',') + ',' + base : base, go: () => this.tickClick(tk.id, seg.id),
+          pips: collapsed ? [] : layers.map((l) => { const f = tk.frames[l.id]; return { bg: !f ? 'transparent' : f.quality === 'partial' ? `linear-gradient(90deg,${swatch(l)} 50%,transparent 50%)` : swatch(l), sh: !f ? 'inset 0 0 0 1px var(--line2)' : 'none', op: l.id === sc.layer ? 1 : 0.6 }; }),
+        };
+      });
+      const gt = seg.kind === 'acquisition' ? this.granText(seg) : T.gran[seg.granularity];
+      return {
+        id: seg.id, label: seg.label, tone, zoomed, events, ticks, empty, gap: collapsed ? '0' : '1px',
+        mark: seg.kind === 'composite' ? tone : 'transparent', title: `${seg.label} · ${gt} · ${T.timeline.points(n)}`,
+        flex: zoomed ? `0 0 ${n * (isM ? 30 : 34)}px` : collapsed ? '0 0 20px' : `${Math.max(n, 2)} 1 0`,
+        minW: (zoomed ? n * (isM ? 30 : 34) : collapsed ? 20 : Math.max(n * per, 24)) + 'px',
+        showLabel: !collapsed && (px >= 70 || zoomed), showMeta: !isM && !collapsed && px >= 230, meta: `${gt} · ${T.timeline.points(n)}`,
+        head: () => this.segHead(seg.id),
+      };
+    });
+    const t0 = ds ? +new Date(ds.segments[0].from) : 0, t1 = ds ? +new Date(ds.segments[nseg - 1].to) : 1, span = Math.max(1, t1 - t0);
+    const midOf = (f) => (+new Date(f.tick.start) + +new Date(f.tick.end)) / 2;
+    const pctOf = (f) => (f ? Math.max(0, Math.min(100, ((midOf(f) - t0) / span) * 100)) + '%' : '0%');
+    const real = !ds ? [] : ds.segments.map((seg, i) => ({ flex: Math.max(1, (+new Date(seg.to) - +new Date(seg.from)) / 864e5 + 1), tone: segs[i].tone }));
+    const evNow = fa && ds.events.find((ev) => ev.date >= fa.tick.start && ev.date <= fa.tick.end);
+    const anyFr = fa && (fa.tick.frames[sc.layer] || Object.values(fa.tick.frames).find(Boolean));
+    const meta = fa ? [fa.seg.label, this.granText(fa.seg), anyFr && T.card.meters(anyFr.resolutionM), anyFr && anyFr.source, evNow && T.timeline.event(evNow.label)].filter(Boolean).join(' · ') : '';
+    const tgtB = S.cmpTarget === 'B';
+    const tl = {
+      ox: zs ? 'auto' : 'hidden', segs, real, name: fa ? nameOf(fa) : '', meta, y0: ds ? F.year(ds.segments[0].from) : '', y1: ds ? F.year(ds.segments[nseg - 1].to) : '',
+      aLeft: pctOf(fa), bLeft: pctOf(fb), max: Math.max(0, totalPts - 1), idx: Math.max(0, iA),
+      noPlay: totalPts < 2, single: totalPts === 1, playLabel: S.playing ? T.timeline.pause : T.timeline.play,
+      playBg: S.playing ? 'var(--acc)' : 'transparent', playFg: S.playing ? 'var(--acc-ink)' : 'var(--fg)',
+      nameA: fa ? nameOf(fa) : '', nameB: fb ? nameOf(fb) : '', tA: !tgtB, tB: tgtB,
+      tALine: !tgtB ? 'var(--acc-fg)' : 'var(--line2)', tBLine: tgtB ? 'var(--accB)' : 'var(--line2)',
+    };
+    // detail
+    const hp = S.pick && S.hotspots.find((h) => h.id === S.pick), pp = S.pickPos;
+    const dc = { on: false, title: '', value: '', delta: '', hasDelta: false, layer: '', moment: '', left: 'auto', right: 'auto', top: 'auto', bottom: 'auto', w: 'auto' };
+    if (hp && cam === 'detail' && pp) {
+      dc.on = true; dc.title = hp.title; dc.value = hp.value; dc.delta = hp.delta || ''; dc.hasDelta = !!hp.delta; dc.layer = L ? L.label : ''; dc.moment = fa ? nameOf(fa) : '';
+      if (isM) { dc.left = '8px'; dc.right = '8px'; dc.bottom = (52 + S.tlH + 20) + 'px'; }
+      else {
+        const w = 240; dc.w = w + 'px';
+        const lx = pp.x + 24 + w > W - 324 ? pp.x - 24 - w : pp.x + 24;
+        dc.left = Math.max(250, lx) + 'px'; dc.top = Math.max(64, Math.min(S.H - S.tlH - 200, pp.y - 70)) + 'px';
+      }
+    }
+    // label
+    const gapOn = hud && !!fa && !!L && !fa.tick.frames[L.id];
+    const mapLabel = cam === 'orbit' ? (S.explore ? T.map.orbit : '') : cam === 'approach' ? T.map.approach : !ds ? T.map.loading : fa && L ? T.map.label(L.label, nameOf(fa)) : '';
+    const entryLines = ds ? [T.entry.coords(F.lat(ds.area.center[1]), F.lon(ds.area.center[0])), T.entry.range(F.year(ds.segments[0].from), F.year(ds.segments[nseg - 1].to)), `${T.entry.layers(layers.length)} · ${T.entry.points(totalPts)}`] : [];
+    const tilt = st.terrain ? sc.tilt : 0;
+    const online = st.online;
+
+    return {
+      ready: true, theme, rootRef: this.rootRef, sceneRef: this.sceneRef, tlRef: this.tlRef, t: T, lay, isM, isD: !isM,
+      hasDs, noDs: !hasDs && !err, areaName: ds ? ds.area.name : '', mock: !!(ds && ds.isMock),
+      brandOn: !isM || !S.searchOpen, showName: !isM && hasDs, searchField, searchBtn: isM && !S.searchOpen, searchClose: isM && S.searchOpen,
+      q: S.q, onQ: this.onQ, onQKey: this.onQKey, results, showResults, noResults: S.searched && S.results.length === 0,
+      noResultsText: T.search.none(S.q.trim()), toggleSearch: () => this.setState({ searchOpen: !S.searchOpen, q: '', results: [] }),
+      statusColor: online ? 'var(--ok)' : 'var(--warn)', statusText: online ? T.status.online : T.status.offline, statusDetail: online ? T.status.online : T.status.offlineDetail,
+      showStatusText: !isM, noTerrain: !st.terrain, toggleHelp: () => this.setState({ help: !S.help }), stop: (e) => e.stopPropagation(),
+      showEntry: cam === 'orbit' && !S.explore && !err, showExplore: cam === 'orbit' && S.explore && !err, showErr: cam === 'orbit' && !!err,
+      errCode: err && err.code || '', entryLines, enter: this.enter, explore: () => this.setState({ explore: true }), retry: this.retry,
+      dockOn: hud && !isM, chipsOn: hud && isM, layerItems,
+      camOn: hud, northOn: !sc.northUp, northLabel: sc.northUp ? T.camera.northUp : T.camera.northFree, northDeg: sc.northUp ? 0 : -18,
+      toggleNorth: () => this.scene.set({ northUp: !sc.northUp }), tiltText: T.camera.deg(Math.round(tilt)), tiltOff: !st.terrain, tiltTitle: st.terrain ? T.camera.tilt : T.camera.tiltOff,
+      tiltUp: () => this.scene.set({ tilt: Math.min(60, sc.tilt + 10) }), tiltDown: () => this.scene.set({ tilt: Math.max(0, sc.tilt - 10) }), toOrbit: this.toOrbit,
+      mapLabel, labelDisplay: mapLabel ? 'block' : 'none', compareOn, compareBanner: compareOn ? T.compare.banner(nameOf(fb), nameOf(fa)) : '',
+      mixed: compareOn && fa.seg.kind !== fb.seg.kind, gapOn, gapText: L ? T.map.gap(L.label) : '', offlineNote: hud && !online && !isM,
+      cardOn: hud, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen, legendOn: hud && (!isM || S.sheet) && !!L,
+      isTabArea: S.tab === 'area', isTabRead: S.tab === 'read', tabAreaLine: S.tab === 'area' ? 'var(--acc-fg)' : 'transparent', tabReadLine: S.tab === 'read' ? 'var(--acc-fg)' : 'transparent',
+      setTabArea: () => this.setState({ tab: 'area' }), setTabRead: () => this.setState({ tab: 'read' }),
+      toggleCard: () => (isM ? this.setState({ sheet: !S.sheet }) : this.setState({ ficha: !S.ficha })),
+      cardToggleText: cardOpen ? T.card.close : T.card.open, cardToggleGlyph: cardOpen ? (isM ? '↓' : '–') : '+',
+      boundsText: b ? `${F.lat(b.south)} a ${F.lat(b.north)} · ${F.lon(b.west)} a ${F.lon(b.east)}` : '',
+      layerName: L ? L.label : '', momentName: fa ? nameOf(fa) : '', valueText, deltaText, ser, imgRows, trades,
+      tradeText: ds && ds.context[S.trade] ? ds.context[S.trade].text : '', sample: !!(ds && ds.isMock && ds.context.length), noTrades: !!ds && ds.context.length === 0, leg,
+      dc, closePick: this.closePick, toast: S.toast,
+      showKey: W >= 1240, tlOn: hud, tlLoading: !ds && !err, tlReady: !!ds, tl, playing: S.playing, notPlaying: !S.playing, togglePlay: this.togglePlay,
+      stepPrev: () => this.step(-1), stepNext: () => this.step(1), setTargetA: () => this.setState({ cmpTarget: 'A' }), setTargetB: () => this.setState({ cmpTarget: 'B' }),
+      scopeAll: S.scope === 'all', scopeSeg: S.scope === 'seg', scopeAllBg: S.scope === 'all' ? 'var(--sel)' : 'transparent', scopeSegBg: S.scope === 'seg' ? 'var(--sel)' : 'transparent',
+      setScopeAll: () => this.setState({ scope: 'all' }), setScopeSeg: () => this.setState({ scope: 'seg' }),
+      zoomed: !!zs, fullView: () => this.setState({ zoomSeg: null }), toggleCompare: this.toggleCompare,
+      cmpLine: compareOn ? 'var(--acc-fg)' : 'var(--line2)', cmpBg: compareOn ? 'var(--sel)' : 'transparent', cmpText: compareOn ? T.timeline.compareOff : T.timeline.compare,
+      help: S.help, helpKeys: T.help.keys.map(([k, d]) => ({ k, d })),
+    };
+  }
+}
+</script>
+</body>
+</html>

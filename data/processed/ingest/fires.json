@@ -1,0 +1,26 @@
+{
+  "kind": "fires",
+  "strategy": "union_dedupe",
+  "status": "ok",
+  "tried": [
+    {
+      "provider": "firms_viirs_sp",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "provider": "firms_viirs_nrt",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "provider": "firms_modis",
+      "ok": true,
+      "count": 0
+    }
+  ],
+  "from_cache": false,
+  "records": [],
+  "selected_sources": [],
+  "count": 0
+}

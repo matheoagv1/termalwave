@@ -1,0 +1,42 @@
+{
+  "python": {
+    "major": 3,
+    "minor": 11
+  },
+  "paths": {
+    "vendor_python": "vendor/python",
+    "manifest": "vendor/manifest.json",
+    "default_config": "config/santiago.toml"
+  },
+  "musl_path_templates": [
+    "/lib/ld-musl-{machine}.so.1",
+    "/lib/libc.musl-{machine}.so.1"
+  ],
+  "musl_map_markers": ["ld-musl", "libc.musl"],
+  "platforms": [
+    {
+      "tag": "win_amd64-cp311",
+      "system": "Windows",
+      "machines": ["amd64", "x86_64"],
+      "libc": null,
+      "pip_platform": "win_amd64",
+      "packages": ["numpy==2.2.6", "h5py==3.14.0", "Pillow==12.2.0"]
+    },
+    {
+      "tag": "linux_musl_x86_64-cp311",
+      "system": "Linux",
+      "machines": ["x86_64", "amd64"],
+      "libc": "musl",
+      "pip_platform": "musllinux_1_2_x86_64",
+      "packages": ["numpy==2.2.6", "h5py==3.15.1", "Pillow==12.2.0"]
+    },
+    {
+      "tag": "linux_x86_64-cp311",
+      "system": "Linux",
+      "machines": ["x86_64", "amd64"],
+      "libc": "glibc",
+      "pip_platform": "manylinux2014_x86_64",
+      "packages": ["numpy==2.2.6", "h5py==3.14.0", "Pillow==12.2.0"]
+    }
+  ]
+}

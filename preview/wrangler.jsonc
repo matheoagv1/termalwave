@@ -1,0 +1,34 @@
+{
+  "name": "termalwave-preview",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-14",
+  "routes": [
+    { "pattern": "termalwave.space/*", "zone_name": "termalwave.space" },
+    { "pattern": "www.termalwave.space/*", "zone_name": "termalwave.space" },
+    { "pattern": "c.termalwave.space/*", "zone_name": "termalwave.space" }
+  ],
+  "workers_dev": true,
+
+  "preview_urls": true,
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "termalwave-preview-auth",
+      "database_id": "325cca3a-ec91-4f5c-88e9-1d7333bd7d19"
+    }
+  ],
+  "vars": {
+    // 1 = anonymous read-only access to the site (A-01); 0 = login required again
+    "PUBLIC_MODE": "1",
+    "APP_NAME": "TermalWave Preview",
+    // must match config/apis.toml [tiles] origin_host / key_header; key is the TILE_ORIGIN_KEY secret
+    "TILE_ORIGIN": "https://origin.termalwave.space",
+    "TILE_ORIGIN_HEADER": "X-TW-Origin-Key"
+  }
+}

@@ -1,0 +1,134 @@
+# Radar interferometry, forest loss and cropland layers. Owned by agent "insar".
+# Contract and label rules: see the header of config/catalog.toml.
+# ground_motion is produced by termalwave/insar/gunw_displacement.py; its numbers are in
+# web/public/insar/gunw_los_mm.stats.json. radar_pairs is served by preview/src/insar/gunw-coverage.js.
+
+# ---------- Ground motion ----------
+
+[[catalog]]
+id = "ground_motion"
+tier = "processed"
+kind = "raster_tiles"
+theme = "movimiento"
+url = "/insar/tiles/gunw_los_mm/{z}/{x}/{y}.png"
+time = "static"
+date = "2026-10-09 to 2026-10-21"
+min_zoom = 8
+max_zoom = 13
+opacity = 0.85
+unit = "mm"
+range = [-30, 30]
+ramp = [["#2166ac", 0.0], ["#67a9cf", 0.25], ["#f7f7f7", 0.5], ["#ef8a62", 0.75], ["#b2182b", 1.0]]
+honesty = "derived"
+label_en = "Ground motion"
+label_es = "Movimiento del suelo"
+what_en = "How far the ground moved toward or away from the radar between two NISAR passes 12 days apart, over Santiago del Estero and La Banda. Red moved toward the satellite (up or east), blue moved away (down or west)."
+what_es = "Cuánto se movió el suelo hacia el radar o alejándose de él entre dos pasadas de NISAR separadas por 12 días, sobre Santiago del Estero y La Banda. Rojo se acercó al satélite (subió o fue al este), azul se alejó (bajó o fue al oeste)."
+decision_en = "Look for small, sharp patches that differ from their surroundings, such as a sinking field, a settling embankment or a pumping well, and check them on the ground. Broad smooth colour across many kilometres is most likely air, not ground."
+decision_es = "Buscá manchas chicas y nítidas que se distingan de su entorno, como un lote que se hunde, un terraplén que se asienta o un pozo de bombeo, y verificalas en el terreno. Un color amplio y suave a lo largo de muchos kilómetros es casi seguro aire, no suelo."
+nodata_en = "Transparent means the radar could not be trusted there: water, the river, fields that changed too much between passes (coherence under 0.3), or areas cut off from the main unwrapped region."
+nodata_es = "Transparente significa que el radar no es confiable ahí: agua, el río, lotes que cambiaron demasiado entre pasadas (coherencia menor a 0,3) o zonas separadas de la región principal desenrollada."
+caveats_en = "One pair only, 12 days. Water vapour in the air and the ionosphere delay the signal and can look like tens of millimetres of motion; we removed a tilted plane across the area, which also removes any real motion that is that broad. Values are relative to the median of the area, not to a fixed point. Phase unwrapping can jump by about 120 mm between regions. Line of sight only: up and sideways motion are mixed. The ionosphere screen in the product was not applied, because on this pair it made the result worse."
+caveats_es = "Un solo par, 12 días. El vapor de agua del aire y la ionosfera demoran la señal y pueden parecer decenas de milímetros de movimiento; quitamos un plano inclinado en toda el área, lo que también quita cualquier movimiento real así de amplio. Los valores son relativos a la mediana del área, no a un punto fijo. El desenrollado de fase puede saltar unos 120 mm entre regiones. Solo línea de vista: el movimiento vertical y el lateral se mezclan. No aplicamos la corrección ionosférica del producto, porque en este par empeoraba el resultado."
+formula = "d_LOS = -λ·Δφ / 4π, λ = 0.2385 m; positive = toward the satellite; minus best-fit plane; minus median"
+product = "NISAR L2 GUNW, validated, track 140 descending, frame 102, HH, 2026-10-09 / 2026-10-21"
+attribution = "NASA/JPL-ISRO NISAR via ASF DAAC; processed by TermalWave"
+source_url = "https://nisar-docs.asf.alaska.edu/gunw/"
+inputs = [
+  { name = "Unwrapped interferogram, coherence and connected components", agency = "NASA / ISRO (ASF DAAC)", product = "NISAR L2 GUNW V1", url = "https://cmr.earthdata.nasa.gov/search/concepts/C2854335566-ASF" },
+]
+method_en = "We take one NISAR interferogram: the radar phase difference between 9 and 21 October 2026, already unwrapped and placed on a map grid by NASA. We keep only pixels with coherence of at least 0.3 inside the largest connected component, so the phase is consistent. Each 2π of phase is half a wavelength of path change, so millimetres = -0.2385 m × phase / 4π × 1000, positive toward the satellite. We remove a best-fit tilted plane, which is mostly atmosphere, and set the median of the area to zero."
+method_es = "Tomamos un interferograma de NISAR: la diferencia de fase del radar entre el 9 y el 21 de octubre de 2026, ya desenrollada y ubicada en una grilla de mapa por la NASA. Solo usamos píxeles con coherencia de al menos 0,3 dentro del componente conexo más grande, para que la fase sea coherente. Cada 2π de fase es media longitud de onda de cambio de camino, así que milímetros = -0,2385 m × fase / 4π × 1000, positivo hacia el satélite. Quitamos el plano inclinado que mejor ajusta, que es sobre todo atmósfera, y llevamos la mediana del área a cero."
+
+[[catalog]]
+id = "radar_pairs"
+tier = "raw"
+kind = "geojson_polygons"
+theme = "movimiento"
+url = "/api/insar/gunw"
+time = "static"
+date = "latest pairs"
+value_prop = "temporal_baseline_days"
+unit = "days"
+range = [12, 48]
+ramp = [["#c7e9b4", 0.0], ["#41b6c4", 0.5], ["#253494", 1.0]]
+honesty = "measured"
+label_en = "Radar pairs"
+label_es = "Pares de radar"
+what_en = "Footprints of NISAR interferograms published for the area: each one compares two radar passes and can show ground motion between their dates. Colour is the days between the two passes."
+what_es = "Huellas de los interferogramas de NISAR publicados para el área: cada uno compara dos pasadas del radar y puede mostrar movimiento del suelo entre sus fechas. El color son los días entre las dos pasadas."
+decision_en = "See whether a pair exists over your place and which dates it spans before asking for a ground motion map."
+decision_es = "Fijate si hay un par sobre tu lugar y qué fechas cubre antes de pedir un mapa de movimiento del suelo."
+nodata_en = "No footprint means NASA has not published a pair for that place yet."
+nodata_es = "Sin huella significa que la NASA todavía no publicó un par para ese lugar."
+caveats_en = "Lists what exists in the catalogue, not what each pair shows. Validated, provisional and beta pairs are mixed; maturity is in each footprint."
+caveats_es = "Lista lo que existe en el catálogo, no lo que muestra cada par. Se mezclan pares validados, provisorios y beta; la madurez figura en cada huella."
+product = "NISAR L2 GUNW (V1, PROVISIONAL_V1, BETA_V1) from NASA CMR"
+attribution = "NASA CMR / ASF DAAC"
+source_url = "https://nisar-docs.asf.alaska.edu/gunw/"
+inputs = [{ name = "Interferogram catalogue", agency = "NASA (ASF DAAC)", product = "NISAR L2 GUNW", url = "https://cmr.earthdata.nasa.gov/search/granules.json?short_name=NISAR_L2_GUNW_PROVISIONAL_V1" }]
+
+# ---------- Forest and crops ----------
+
+[[catalog]]
+id = "forest_loss"
+tier = "processed"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://tiles.globalforestwatch.org/umd_tree_cover_loss/v1.13/dynamic/{z}/{x}/{y}.png?implementation=tcd_30"
+time = "static"
+date = "2001 to 2025"
+max_zoom = 12
+opacity = 0.85
+honesty = "derived"
+label_en = "Forest loss"
+label_es = "Pérdida de bosque"
+what_en = "Places where tree cover was removed at some point since 2001, mapped from Landsat images by the University of Maryland. Counts only where trees covered at least 30 percent of the ground in 2000."
+what_es = "Lugares donde se perdió la cobertura de árboles en algún momento desde 2001, mapeados con imágenes Landsat por la Universidad de Maryland. Solo cuenta donde los árboles cubrían al menos el 30 por ciento del suelo en 2000."
+decision_en = "Check if a radar change sits on land that was cleared, and see where clearing for crops and cattle has advanced in the Chaco."
+decision_es = "Verificá si un cambio en el radar cae sobre tierra desmontada, y mirá por dónde avanzó el desmonte para cultivo y ganado en el Chaco."
+nodata_en = "Transparent means no loss detected, or less than 30 percent tree cover in 2000."
+nodata_es = "Transparente significa que no se detectó pérdida, o que había menos del 30 por ciento de cobertura arbórea en 2000."
+caveats_en = "Loss means trees gone from a 30 m pixel for any reason: clearing, fire, storm or harvest of a plantation. Regrowth is not shown. The year of loss is in the source data but not in this colour. Dry Chaco forest is sparse and can be missed."
+caveats_es = "Pérdida significa árboles ausentes en un píxel de 30 m por cualquier causa: desmonte, fuego, tormenta o cosecha de una plantación. No muestra el rebrote. El año de pérdida está en el dato original pero no en este color. El bosque seco chaqueño es ralo y puede no detectarse."
+product = "Hansen/UMD Global Forest Change v1.13, tree cover loss, canopy density 30 percent"
+attribution = "Hansen/UMD/Google/USGS/NASA, via Global Forest Watch (CC BY 4.0)"
+source_url = "https://glad.earthengine.app/view/global-forest-change"
+inputs = [
+  { name = "Landsat surface reflectance time series", agency = "USGS / NASA", product = "Landsat 5, 7, 8, 9", url = "https://www.usgs.gov/landsat-missions" },
+  { name = "Tree cover loss", agency = "University of Maryland", product = "Global Forest Change v1.13", url = "https://glad.earthengine.app/view/global-forest-change" },
+]
+method_en = "The University of Maryland reads every cloud-free Landsat image of each 30 m pixel since 2000. A trained classifier decides, year by year, if the trees in that pixel are gone. We draw the pixels that had at least 30 percent tree cover in 2000 and lost it later. We do not change the values; Global Forest Watch serves the tiles."
+method_es = "La Universidad de Maryland lee cada imagen Landsat sin nubes de cada píxel de 30 m desde 2000. Un clasificador entrenado decide, año por año, si los árboles de ese píxel desaparecieron. Dibujamos los píxeles que tenían al menos 30 por ciento de cobertura arbórea en 2000 y la perdieron después. No cambiamos los valores; Global Forest Watch sirve los mosaicos."
+
+[[catalog]]
+id = "cropland_2000"
+tier = "processed"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/Agricultural_Lands_Croplands_2000/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png"
+time = "static"
+date = "2000"
+max_zoom = 7
+opacity = 0.75
+unit = "% of cell"
+honesty = "derived"
+label_en = "Cropland"
+label_es = "Cultivos"
+what_en = "Share of each cell used for crops."
+what_es = "Parte de cada celda usada para cultivos."
+decision_en = "Compare with forest loss to see where cropland has expanded since 2000."
+decision_es = "Comparalo con la pérdida de bosque para ver dónde se expandieron los cultivos desde 2000."
+nodata_en = "Transparent means no cropland or no estimate for the cell."
+nodata_es = "Transparente significa sin cultivos o sin estimación para la celda."
+caveats_en = "A picture of about 2000: the soybean and cattle expansion of the Chaco since then is not in it. Coarse cells. Use it as a baseline, not as today's map."
+caveats_es = "Es una foto de alrededor de 2000: no incluye la expansión de soja y ganadería en el Chaco desde entonces. Celdas gruesas. Usalo como línea de base, no como mapa actual."
+product = "Global Agricultural Lands: Croplands, 2000 (GIBS: Agricultural_Lands_Croplands_2000)"
+attribution = "NASA SEDAC / Ramankutty et al. 2008, via NASA GIBS"
+source_url = "https://sedac.ciesin.columbia.edu/data/set/aglands-croplands-2000"
+inputs = [
+  { name = "Land cover", agency = "NASA", product = "MODIS land cover and SPOT VEGETATION (as used by the authors)", url = "https://sedac.ciesin.columbia.edu/data/set/aglands-croplands-2000" },
+  { name = "Agricultural census statistics", agency = "national agencies, compiled by McGill University", product = "Global Agricultural Lands 2000", url = "https://sedac.ciesin.columbia.edu/data/set/aglands-croplands-2000" },
+]
+method_en = "The authors start from satellite land cover maps of about 2000. They match them with crop area reported by national and provincial farm censuses. A statistical model spreads the census totals over the cells the satellites show as farmland. The value is the percent of each cell under crops; we draw it as NASA GIBS serves it."
+method_es = "Los autores parten de mapas satelitales de cobertura del suelo de alrededor de 2000. Los combinan con la superficie cultivada informada por censos agropecuarios nacionales y provinciales. Un modelo estadístico reparte los totales censales en las celdas que los satélites muestran como tierra agrícola. El valor es el porcentaje de cada celda con cultivos; lo dibujamos tal como lo sirve NASA GIBS."

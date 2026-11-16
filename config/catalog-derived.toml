@@ -1,0 +1,217 @@
+# Processed and prediction layers (owner: agent "science").
+# Grids come from /api/derived/* (preview/src/derived/) or static files under web/public/derived/.
+# Every value is computed from the listed inputs by the stated formula; nothing here is example data.
+
+[[catalog]]
+id = "fire_danger"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/derived/fire-weather"
+time = "daily"
+date_lag_days = 0
+max_zoom = 12
+opacity = 0.55
+value_prop = "ffwi"
+unit = "FFWI (0-100)"
+range = [0, 100]
+ramp = [["#2f6b3a", 0.0], ["#c9b23a", 0.2], ["#e07b28", 0.4], ["#c62f2a", 0.6], ["#6e1020", 1.0]]
+honesty = "derived"
+theme = "fuego"
+label_en = "Fire weather"
+label_es = "Clima de fuego"
+what_en = "How much the day's heat, dry air and wind favour fire spread, as the day's peak of the Fosberg index on a 7 x 7 grid over the view."
+what_es = "Cuánto favorecen el calor, el aire seco y el viento del día la propagación del fuego, como el pico diario del índice de Fosberg en una grilla de 7 x 7 sobre la vista."
+decision_en = "Use it to judge whether burning, harvesting or field work with machinery is risky on that day, and where to watch first."
+decision_es = "Sirve para juzgar si quemar, cosechar o trabajar con máquinas en el campo es riesgoso ese día, y dónde mirar primero."
+nodata_en = "No cell means Open-Meteo did not return weather for that point or day."
+nodata_es = "Una celda vacía indica que Open-Meteo no devolvió datos del tiempo para ese punto o día."
+caveats_en = "Weather only: it ignores fuel load and type. Cells are 1/7 of the view, so local valleys and ridges are smoothed. Classes (20, 40, 60) are project thresholds, not an official scale. Days since rain (rain of 1 mm or more) is shown for context and is not part of the index."
+caveats_es = "Solo tiempo atmosférico: no considera la cantidad ni el tipo de combustible. Cada celda es 1/7 de la vista, así que valles y lomas locales quedan suavizados. Las clases (20, 40, 60) son umbrales del proyecto, no una escala oficial. Los días sin lluvia (1 mm o más) se muestran como contexto y no entran en el índice."
+product = "Open-Meteo hourly temperature_2m, relative_humidity_2m, wind_speed_10m; daily precipitation_sum (forecast models for the last 80 days, ERA5 before)"
+formula = "m = EMC(T F, RH %) (Simard 1968); eta = 1 - 2(m/30) + 1.5(m/30)^2 - 0.5(m/30)^3; FFWI = eta * sqrt(1 + U_mph^2) / 0.3002, capped at 100; daily maximum of hourly values"
+inputs = [
+  { name = "Hourly temperature, humidity and wind", agency = "Open-Meteo (national weather service models)", product = "Forecast API hourly variables", url = "https://open-meteo.com/en/docs" },
+  { name = "Past weather and rain", agency = "ECMWF via Open-Meteo", product = "ERA5 reanalysis (Historical Weather API)", url = "https://open-meteo.com/en/docs/historical-weather-api" },
+]
+method_en = "For each grid cell we read hourly air temperature, relative humidity and wind speed for the chosen day. From temperature and humidity we estimate how much water dead grass and twigs hold. Drier fuel and stronger wind raise the Fosberg Fire Weather Index, from 0 to 100. We keep the highest hourly value of the day. Above 40 fire spreads easily; above 60 it is hard to control."
+method_es = "Para cada celda de la grilla leemos la temperatura del aire, la humedad relativa y el viento de cada hora del día elegido. Con la temperatura y la humedad estimamos cuánta agua tienen el pasto seco y las ramas finas. Un combustible más seco y un viento más fuerte suben el índice de Fosberg, de 0 a 100. Nos quedamos con el valor horario más alto del día. Por encima de 40 el fuego se propaga con facilidad; por encima de 60 es difícil de controlar."
+attribution = "Open-Meteo (CC BY 4.0); index after Fosberg (1978) and Goodrick (2002)"
+source_url = "https://doi.org/10.1071/WF02005"
+
+[[catalog]]
+id = "fire_danger_3d"
+tier = "prediction"
+kind = "geojson_grid"
+url = "/api/derived/fire-danger-3d"
+time = "static"
+max_zoom = 12
+opacity = 0.55
+value_prop = "ffwi_max_3d"
+confidence_prop = "confidence"
+unit = "FFWI (0-100)"
+range = [0, 100]
+ramp = [["#2f6b3a", 0.0], ["#c9b23a", 0.2], ["#e07b28", 0.4], ["#c62f2a", 0.6], ["#6e1020", 1.0]]
+honesty = "model"
+theme = "fuego"
+label_en = "Fire danger forecast"
+label_es = "Pronóstico de fuego"
+what_en = "The worst fire weather expected in the next three days per cell, with the day it peaks and whether satellites already see fire there."
+what_es = "El peor clima de fuego esperado en los próximos tres días por celda, con el día del pico y si los satélites ya ven fuego ahí."
+decision_en = "Use it to plan the next days: postpone burns, move crews or check firebreaks where the peak is high, first where fire is already burning."
+decision_es = "Sirve para planificar los próximos días: postergar quemas, mover cuadrillas o revisar cortafuegos donde el pico es alto, primero donde ya hay fuego."
+nodata_en = "No cell means the forecast was missing for one of the three days. burning_now is empty when FIRMS was not reachable."
+nodata_es = "Una celda vacía indica que faltó el pronóstico de alguno de los tres días. burning_now queda vacío cuando FIRMS no respondió."
+caveats_en = "Always issued from today's forecast; the timeline date does not change it. Confidence = lead weight of the peak day (0.9, 0.8, 0.7 for days 1 to 3, a project heuristic, not a calibration) x (0.5 + 0.5 x agreement), where agreement is 1 when the three days share a danger class and 0 when they span all four. Fuel is not modelled."
+caveats_es = "Se emite siempre con el pronóstico de hoy; la fecha de la línea de tiempo no lo cambia. Confianza = peso por anticipación del día pico (0,9, 0,8, 0,7 para los días 1 a 3, una heurística del proyecto, no una calibración) x (0,5 + 0,5 x acuerdo), donde el acuerdo vale 1 si los tres días caen en la misma clase y 0 si abarcan las cuatro. El combustible no se modela."
+product = "Open-Meteo forecast hourly temperature_2m, relative_humidity_2m, wind_speed_10m (days +1 to +3); NASA FIRMS VIIRS_SNPP_NRT last 24 h"
+formula = "ffwi_max_3d = max over days d=1..3 of daily max FFWI; confidence = w[peak] * (0.5 + 0.5 * (1 - class_range/3)); hotspots_24h = FIRMS points inside the cell"
+inputs = [
+  { name = "Weather forecast, next 72 h", agency = "Open-Meteo (national weather service models)", product = "Forecast API hourly variables", url = "https://open-meteo.com/en/docs" },
+  { name = "Active fire hotspots", agency = "NASA", product = "FIRMS VIIRS S-NPP NRT", url = "https://firms.modaps.eosdis.nasa.gov/api/area/" },
+]
+method_en = "We take the hourly weather forecast for each of the next three days and compute the Fosberg index for every hour. Each day keeps its highest value, and the cell shows the highest of the three days. We also count the satellite fire hotspots seen in the last 24 hours inside the cell. Confidence falls the further ahead the peak day is and when the three days disagree."
+method_es = "Tomamos el pronóstico horario de los próximos tres días y calculamos el índice de Fosberg para cada hora. Cada día conserva su valor más alto, y la celda muestra el más alto de los tres días. También contamos los focos de calor vistos por satélite en las últimas 24 horas dentro de la celda. La confianza baja cuanto más lejos está el día pico y cuando los tres días no coinciden."
+attribution = "Open-Meteo (CC BY 4.0); NASA FIRMS; index after Fosberg (1978)"
+source_url = "https://doi.org/10.1071/WF02005"
+
+[[catalog]]
+id = "landslide_risk"
+tier = "processed"
+kind = "geojson_grid"
+url = "/api/derived/landslide"
+time = "daily"
+date_lag_days = 0
+max_zoom = 12
+opacity = 0.55
+value_prop = "index"
+unit = "index (0-1)"
+range = [0, 1]
+ramp = [["#e8e2c8", 0.0], ["#d9a441", 0.3], ["#a8552a", 0.6], ["#4a1d12", 1.0]]
+honesty = "derived"
+theme = "movimiento"
+label_en = "Landslide risk"
+label_es = "Riesgo de deslizamiento"
+what_en = "Where steep ground has just received enough rain to trigger shallow landslides, from terrain slope and the last 72 h of rain."
+what_es = "Dónde un terreno empinado acaba de recibir lluvia suficiente para disparar deslizamientos superficiales, a partir de la pendiente y la lluvia de las últimas 72 h."
+decision_en = "Use it to decide which mountain roads, slopes or homes below slopes to inspect after heavy rain."
+decision_es = "Sirve para decidir qué caminos de montaña, laderas o viviendas al pie de laderas revisar después de lluvias fuertes."
+nodata_en = "No cell means elevation or rain was missing at that point. Zero on flat plains is a real result, not missing data."
+nodata_es = "Una celda vacía indica que faltó la altura o la lluvia en ese punto. Cero en llanuras es un resultado real, no un dato faltante."
+caveats_en = "Slope is measured at the cell centre over about 220 m, so a cell can hide a steep gully. Soil type, vegetation and geology are not used. The rain threshold is the global minimum of Guzzetti et al. (2008); local thresholds are often higher. This is a screening index, not a probability."
+caveats_es = "La pendiente se mide en el centro de la celda sobre unos 220 m, así que una celda puede ocultar una quebrada empinada. No se usan el tipo de suelo, la vegetación ni la geología. El umbral de lluvia es el mínimo global de Guzzetti et al. (2008); los umbrales locales suelen ser mayores. Es un índice de tamizaje, no una probabilidad."
+product = "Open-Meteo Elevation API (Copernicus GLO-90 DEM), 5 samples per cell; Open-Meteo daily precipitation_sum for the 3 days ending on the date"
+formula = "slope = atan(|grad z|) by central differences (+/- 0.001 deg); S = clamp((slope - 5)/(35 - 5), 0, 1); E72 = 2.20 * 72^-0.44 * 72 = 24.1 mm (Guzzetti 2008); index = S * clamp(P72 / E72, 0, 1)"
+inputs = [
+  { name = "Ground elevation", agency = "ESA Copernicus via Open-Meteo", product = "Copernicus DEM GLO-90 (Elevation API)", url = "https://open-meteo.com/en/docs/elevation-api" },
+  { name = "Rain, last 3 days", agency = "Open-Meteo / ECMWF ERA5", product = "Daily precipitation sum", url = "https://open-meteo.com/en/docs/historical-weather-api" },
+]
+method_en = "We read the ground height at each cell centre and at four points about 110 m around it, and compute the slope. Slopes under 5 degrees score 0 and slopes of 35 degrees or more score 1. We add up the rain of the last three days and compare it with 24 mm, the smallest 72 h total known to trigger landslides worldwide. The index is the slope score times the rain score, capped at 1."
+method_es = "Leemos la altura del terreno en el centro de cada celda y en cuatro puntos a unos 110 m alrededor, y calculamos la pendiente. Las pendientes menores de 5 grados valen 0 y las de 35 grados o más valen 1. Sumamos la lluvia de los últimos tres días y la comparamos con 24 mm, el total en 72 h más bajo que se sabe que dispara deslizamientos en el mundo. El índice es el puntaje de pendiente por el puntaje de lluvia, con tope 1."
+attribution = "Open-Meteo (CC BY 4.0); Copernicus DEM (ESA); threshold after Guzzetti et al. (2008)"
+source_url = "https://doi.org/10.1007/s10346-007-0112-1"
+
+[[catalog]]
+id = "landslide_3d"
+tier = "prediction"
+kind = "geojson_grid"
+url = "/api/derived/landslide-3d"
+time = "static"
+max_zoom = 12
+opacity = 0.55
+value_prop = "likelihood"
+confidence_prop = "confidence"
+unit = "index (0-1)"
+range = [0, 1]
+ramp = [["#e8e2c8", 0.0], ["#d9a441", 0.3], ["#a8552a", 0.6], ["#4a1d12", 1.0]]
+honesty = "model"
+theme = "movimiento"
+label_en = "Landslide forecast"
+label_es = "Pronóstico de deslizamiento"
+what_en = "Where steep ground is forecast to get enough rain in the next 72 h to trigger shallow landslides."
+what_es = "Dónde se pronostica que un terreno empinado reciba en las próximas 72 h lluvia suficiente para disparar deslizamientos superficiales."
+decision_en = "Use it to warn people below steep slopes, or to plan road closures and crews, before the rain arrives."
+decision_es = "Sirve para avisar a quienes viven al pie de laderas, o planificar cortes de ruta y cuadrillas, antes de que llegue la lluvia."
+nodata_en = "No cell means elevation or the rain forecast was missing at that point."
+nodata_es = "Una celda vacía indica que faltó la altura o el pronóstico de lluvia en ese punto."
+caveats_en = "Always issued from today's forecast. Rain forecasts are less reliable than temperature: confidence is the average of lead weights 0.75, 0.6 and 0.5 (days 1 to 3, a project heuristic, not a calibration) weighted by each day's share of the forecast rain. Same terrain limits as Landslide risk."
+caveats_es = "Se emite siempre con el pronóstico de hoy. El pronóstico de lluvia es menos confiable que el de temperatura: la confianza es el promedio de los pesos 0,75, 0,6 y 0,5 (días 1 a 3, una heurística del proyecto, no una calibración) ponderado por la parte de la lluvia pronosticada en cada día. Tiene los mismos límites de terreno que Riesgo de deslizamiento."
+product = "Open-Meteo Elevation API (Copernicus GLO-90 DEM); Open-Meteo forecast daily precipitation_sum, days +1 to +3"
+formula = "likelihood = S(slope) * clamp(P72_forecast / 24.1 mm, 0, 1); confidence = sum_d (P_d / P72) * w_d, w = [0.75, 0.6, 0.5] (mean of w when no rain is forecast)"
+inputs = [
+  { name = "Ground elevation", agency = "ESA Copernicus via Open-Meteo", product = "Copernicus DEM GLO-90 (Elevation API)", url = "https://open-meteo.com/en/docs/elevation-api" },
+  { name = "Rain forecast, next 3 days", agency = "Open-Meteo (national weather service models)", product = "Forecast API daily precipitation sum", url = "https://open-meteo.com/en/docs" },
+]
+method_en = "We compute the slope of each cell from the ground height, as in Landslide risk. We add up the rain forecast for the next three days and compare it with 24 mm, the smallest 72 h total known to trigger landslides worldwide. The value is the slope score times the rain score, from 0 to 1. Confidence is lower when most of the rain is forecast for day 2 or 3."
+method_es = "Calculamos la pendiente de cada celda con la altura del terreno, como en Riesgo de deslizamiento. Sumamos la lluvia pronosticada para los próximos tres días y la comparamos con 24 mm, el total en 72 h más bajo que se sabe que dispara deslizamientos en el mundo. El valor es el puntaje de pendiente por el puntaje de lluvia, de 0 a 1. La confianza es menor cuando la mayor parte de la lluvia se pronostica para el día 2 o 3."
+attribution = "Open-Meteo (CC BY 4.0); Copernicus DEM (ESA); threshold after Guzzetti et al. (2008)"
+source_url = "https://doi.org/10.1007/s10346-007-0112-1"
+
+[[catalog]]
+id = "flood_risk"
+tier = "prediction"
+kind = "geojson_grid"
+url = "/api/derived/flood-3d"
+time = "static"
+max_zoom = 12
+opacity = 0.55
+value_prop = "potential"
+confidence_prop = "confidence"
+unit = "index (0-1)"
+range = [0, 1]
+ramp = [["#e9eef0", 0.0], ["#8fc1d9", 0.3], ["#2f7fb5", 0.6], ["#0b2f5e", 1.0]]
+honesty = "model"
+theme = "agua"
+label_en = "Flood risk"
+label_es = "Riesgo de inundación"
+what_en = "Where heavy rain forecast for the next 72 h falls on flat ground that sits lower than its surroundings, so water tends to pool."
+what_es = "Dónde la lluvia fuerte pronosticada para las próximas 72 h cae sobre terreno plano y más bajo que su entorno, donde el agua tiende a acumularse."
+decision_en = "Use it to choose which low fields, roads and neighbourhoods to watch or drain before the rain."
+decision_es = "Sirve para elegir qué campos bajos, caminos y barrios vigilar o drenar antes de la lluvia."
+nodata_en = "No cell means elevation or the rain forecast was missing at that point."
+nodata_es = "Una celda vacía indica que faltó la altura o el pronóstico de lluvia en ese punto."
+caveats_en = "A screening rule, not a hydraulic model: rivers, drainage, soil infiltration and upstream rain are not used. 'Lower' is relative to the cells of the current view, so the result changes when the view moves. 50 mm in 72 h is the project's reference for flood-capable rain. Confidence uses the same lead weights as Landslide forecast."
+caveats_es = "Es una regla de tamizaje, no un modelo hidráulico: no usa ríos, drenaje, infiltración del suelo ni la lluvia aguas arriba. 'Más bajo' se mide respecto de las celdas de la vista actual, así que el resultado cambia al mover la vista. 50 mm en 72 h es la referencia del proyecto para lluvia capaz de inundar. La confianza usa los mismos pesos por anticipación que Pronóstico de deslizamiento."
+product = "Open-Meteo forecast daily precipitation_sum, days +1 to +3; Open-Meteo Elevation API (Copernicus GLO-90 DEM)"
+formula = "lowness = clamp(0.5 + (mean_z - z)/(4 sd_z)); flatness = clamp(1 - slope/5 deg); potential = clamp(P72/50 mm) * (0.5 flatness + 0.5 lowness); confidence as landslide_3d"
+inputs = [
+  { name = "Rain forecast, next 3 days", agency = "Open-Meteo (national weather service models)", product = "Forecast API daily precipitation sum", url = "https://open-meteo.com/en/docs" },
+  { name = "Ground elevation", agency = "ESA Copernicus via Open-Meteo", product = "Copernicus DEM GLO-90 (Elevation API)", url = "https://open-meteo.com/en/docs/elevation-api" },
+]
+method_en = "We add up the rain forecast for the next three days; 50 mm or more scores 1. From the ground height we score how flat each cell is and how much lower it sits than the average of the view, idea borrowed from height-above-drainage mapping (Nobre et al. 2011). The value is the rain score times the average of the flat and low scores, from 0 to 1. Confidence is lower when most of the rain is forecast for day 2 or 3."
+method_es = "Sumamos la lluvia pronosticada para los próximos tres días; 50 mm o más vale 1. Con la altura del terreno puntuamos cuán plana es cada celda y cuánto más baja está que el promedio de la vista, una idea tomada de los mapas de altura sobre el drenaje (Nobre et al. 2011). El valor es el puntaje de lluvia por el promedio de los puntajes de plano y bajo, de 0 a 1. La confianza es menor cuando la mayor parte de la lluvia se pronostica para el día 2 o 3."
+attribution = "Open-Meteo (CC BY 4.0); Copernicus DEM (ESA)"
+source_url = "https://doi.org/10.1016/j.jhydrol.2011.03.051"
+
+[[catalog]]
+id = "biomass"
+tier = "processed"
+kind = "geojson_grid"
+url = "/derived/biomass_hv_santiago.geojson"
+time = "static"
+max_zoom = 13
+opacity = 0.6
+value_prop = "index"
+unit = "index (0-1)"
+range = [0, 1]
+ramp = [["#efe6c6", 0.0], ["#b7c46a", 0.35], ["#4f8a3a", 0.7], ["#163d1f", 1.0]]
+honesty = "derived"
+theme = "vegetacion"
+label_en = "Woody biomass"
+label_es = "Biomasa leñosa"
+what_en = "Woody vegetation (trunks and branches), as an index."
+what_es = "Vegetación leñosa (troncos y ramas), como índice."
+decision_en = "Use it to find where forest still stands and where it has thinned, and as the base to compare with a later pass after clearing or fire."
+decision_es = "Sirve para ver dónde sigue en pie el monte y dónde se raleó, y como base para comparar con una pasada posterior tras un desmonte o un incendio."
+nodata_en = "No cell means the radar frame does not cover that part of the area, or fewer than 50 valid pixels fell in the cell."
+nodata_es = "Una celda vacía indica que la escena del radar no cubre esa parte del área, o que cayeron menos de 50 píxeles válidos en la celda."
+caveats_en = "An index, not tonnes: no field plots were used to calibrate it. L-band HV saturates near 100 to 150 Mg/ha, so dense forest all reads close to 1. Wet soil and rain before the pass raise HV and can read as more biomass. One pass only (frame 034_140_D_103, descending); covers part of the view."
+caveats_es = "Es un índice, no toneladas: no se calibró con parcelas de campo. La señal HV en banda L se satura cerca de 100 a 150 Mg/ha, así que todo monte denso se lee cerca de 1. El suelo húmedo y la lluvia antes de la pasada suben la HV y pueden leerse como más biomasa. Es una sola pasada (escena 034_140_D_103, descendente); cubre parte de la vista."
+product = "NISAR L2 GCOV V1 NISAR_L2_PR_GCOV_034_140_D_103_2005_DHDH_A_20261102T222346_20261102T222415_P05036_N_F_J_001, gamma0 HVHV and HHHH, frequency A"
+formula = "per 0.04 deg cell: HV_dB = 10 log10(mean linear gamma0_HV); index = clamp((HV_dB + 25)/(-12 + 25), 0, 1); also hh_db and rvi_dual = 4 HV/(HH + HV)"
+inputs = [
+  { name = "Radar backscatter HV and HH", agency = "NASA / ISRO", product = "NISAR L2 GCOV (ASF DAAC)", url = "https://search.asf.alaska.edu/" },
+]
+method_en = "We read the NISAR L-band radar image of 2 November 2026 for Santiago del Estero. The HV channel returns energy that bounces among trunks and branches, so it grows with woody biomass. We average the signal over each cell of about 4 km and convert it to decibels. We map -25 dB (bare soil) to 0 and -12 dB (where L-band stops growing in dense forest) to 1."
+method_es = "Leemos la imagen del radar NISAR en banda L del 2 de noviembre de 2026 sobre Santiago del Estero. El canal HV devuelve la energía que rebota entre troncos y ramas, por eso crece con la biomasa leñosa. Promediamos la señal en cada celda de unos 4 km y la pasamos a decibeles. Llevamos -25 dB (suelo desnudo) a 0 y -12 dB (donde la banda L deja de crecer en monte denso) a 1."
+attribution = "NASA/ISRO NISAR, ASF DAAC; saturation after Mitchard et al. (2009)"
+source_url = "https://doi.org/10.1029/2009GL040692"

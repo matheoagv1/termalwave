@@ -1,0 +1,117 @@
+/* "How this is made" block. Zero radius, same field scale as the layer detail. */
+.twp {
+  margin: 10px 0 2px;
+  padding: 8px 0 0;
+  border-top: 1px dashed var(--line2);
+}
+
+.twp-h {
+  margin: 0 0 6px;
+  color: var(--tw-radar);
+  font: 9px/1.4 var(--pixel);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.twp-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: twp;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.twp-steps > li {
+  counter-increment: twp;
+  position: relative;
+  padding-left: 20px;
+}
+
+.twp-steps > li::before {
+  content: counter(twp);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  color: var(--fg3);
+  font: 9px/1.4 var(--mono);
+  text-align: right;
+}
+
+.twp-k {
+  display: block;
+  color: var(--fg3);
+  font: 9px/1.4 var(--mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.twp p {
+  margin: 1px 0 0;
+  color: var(--fg2);
+  font-size: 12px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.twp-inputs {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.twp-inputs li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 4px 6px;
+  border: 1px solid var(--line2);
+}
+
+.twp-in-name {
+  flex: 1 0 100%;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.twp-in-sub {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--fg3);
+  font-size: 11px;
+}
+
+.twp-link {
+  color: var(--tw-radar);
+  font: 11px var(--mono);
+}
+
+.twp-link:focus-visible {
+  outline: 1px solid var(--tw-radar);
+  outline-offset: 1px;
+}
+
+.twp-empty {
+  font-style: italic;
+}
+
+.twp-card {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.twp-sum {
+  cursor: pointer;
+  color: var(--tw-radar);
+  font: 11px var(--mono);
+}
+
+.twp-sum:focus-visible {
+  outline: 1px solid var(--tw-radar);
+  outline-offset: 2px;
+}
