@@ -183,6 +183,11 @@ export interface SceneApi {
   // two-phase return to the wide view; does not clear panels, layers, or the search
   backToEarth?(): Promise<void>;
   fitBounds?(bounds: Bounds): Promise<void>;
+  // controles de camara: acercar/alejar, alternar cenital/oblicua, norte arriba, ir a mi ubicacion
+  zoomBy?(delta: number): void;
+  toggleTilt?(): void;
+  resetNorth?(): void;
+  locate?(): Promise<boolean>;
   onChange(cb: (state: SceneState) => void): () => void;
   onPick(cb: (hotspotId: string | null) => void): () => void;
   status(): { online: boolean; terrain: boolean; basemap: boolean };
@@ -201,6 +206,8 @@ export interface SceneApi {
   setSpaceLayer?(id: string, on: boolean): void;
   // opcional: marcadores globales (p. ej. "firms") como GeoJSON; null los quita
   setEntities?(id: string, data: unknown | null): void;
+  // opcional: vistas rapidas de radar (NisarPass[]) de las pasadas mas nuevas; siguen al toggle de radar
+  showNisarBrowse?(passes: unknown[]): void;
   // zona activa (busqueda): bounds del estudio; null apaga chrome AOI
   setActivePlace?(bounds: Bounds | null): void;
   destroy(): void;

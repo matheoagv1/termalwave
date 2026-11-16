@@ -20,6 +20,8 @@ const IDLE: CatalogStatus = { state: "idle", reason: "", count: 0, confidence: n
 let entries: CatalogEntry[] = bundledEntries();
 let on = new Set<string>(readPrefs());
 let timelineDate: string | null = null;
+// date picked on an acquisition tick; daily layers follow it, null means their default lag
+let dailyDate: string | null = null;
 const status = new Map<string, CatalogStatus>();
 const subs = new Set<() => void>();
 let version = 0;
@@ -97,6 +99,14 @@ export const catalog = {
   timelineDate(): string | null {
     return timelineDate;
   },
+  dailyDate(): string | null {
+    return dailyDate;
+  },
+  setDailyDate(d: string | null): void {
+    if (d === dailyDate) return;
+    dailyDate = d;
+    emit();
+  },
   setTimelineDate(d: string | null): void {
     if (d === timelineDate) return;
     timelineDate = d;
@@ -119,4 +129,5 @@ export function useCatalogVersion(): number {
 export function syncCatalogTimeline(ds: { segments: Array<{ ticks: Array<{ id: string; start: string }> }> } | null, tickId: string): void {
   const tick = ds?.segments.flatMap((s) => s.ticks).find((t) => t.id === tickId);
   catalog.setTimelineDate(tick ? tick.start.slice(0, 10) : null);
+  catalog.setDailyDate(tick && tickId.startsWith("a-") ? tick.start.slice(0, 10) : null);
 }

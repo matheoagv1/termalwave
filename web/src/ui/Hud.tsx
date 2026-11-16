@@ -705,7 +705,10 @@ function ExploreTools({ v, a }: { v: View; a: App }): React.ReactElement {
 
 function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t, lay } = v;
-  const btn = `height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;font:600 15px var(--mono)`;
+  const btn = `height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono)`;
+  const tilted = v.tiltValue > 5;
+  const sc = a.scene;
+  // same set and order as the reference dock: zoom, tilt, north, whole Earth, locate
   return (
     <div
       role="group"
@@ -714,13 +717,29 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         `position:absolute;left:${lay.camL};right:${lay.camR};top:${lay.camT};bottom:${lay.camB};width:${lay.camW};transform:${lay.camTf};pointer-events:auto;display:flex;flex-direction:${lay.camDir};${PANEL}`,
       )}
     >
+      <button className="tw-hov" onClick={() => sc?.zoomBy?.(1)} aria-label={t.camera.zoomIn} title={`${t.camera.zoomIn} (+)`} style={s(btn)}>
+        <Icon.zoomIn size={16} strokeWidth={2.25} aria-hidden />
+      </button>
+      <button className="tw-hov" onClick={() => sc?.zoomBy?.(-1)} aria-label={t.camera.zoomOut} title={`${t.camera.zoomOut} (-)`} style={s(btn)}>
+        <Icon.zoomOut size={16} strokeWidth={2.25} aria-hidden />
+      </button>
       <button
         className="tw-hov"
-        onClick={() => a.scene?.set({ northUp: !v.northUp })}
-        aria-pressed={v.northOn}
-        aria-label={v.northLabel}
-        title={v.northLabel}
-        style={s(`height:${lay.hit};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
+        onClick={() => sc?.toggleTilt?.()}
+        disabled={v.tiltOff}
+        aria-pressed={tilted}
+        aria-label={tilted ? t.camera.tiltFlat : t.camera.tiltToggle}
+        title={v.tiltOff ? t.camera.tiltOff : tilted ? t.camera.tiltFlat : t.camera.tiltToggle}
+        style={s(btn)}
+      >
+        <span aria-hidden="true">3D</span>
+      </button>
+      <button
+        className="tw-hov"
+        onClick={() => sc?.resetNorth?.()}
+        aria-label={t.camera.northUp}
+        title={t.camera.northUp}
+        style={s(`height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
       >
         <span
           style={s(
@@ -728,40 +747,11 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
           )}
         />
       </button>
-      <button
-        className="tw-hov"
-        onClick={() => a.scene?.set({ tilt: Math.min(60, v.tiltValue + 10) })}
-        disabled={v.tiltOff}
-        aria-label={t.camera.tiltUp}
-        title={t.camera.tiltUp}
-        style={s(btn)}
-      >
-        <span aria-hidden="true">▲</span>
-      </button>
-      <div
-        title={v.tiltTitle}
-        style={s(`min-width:34px;min-height:22px;box-shadow:${lay.sepSh};display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--fg2)`)}
-      >
-        {v.tiltText}
-      </div>
-      <button
-        className="tw-hov"
-        onClick={() => a.scene?.set({ tilt: Math.max(0, v.tiltValue - 10) })}
-        disabled={v.tiltOff}
-        aria-label={t.camera.tiltDown}
-        title={t.camera.tiltDown}
-        style={s(btn)}
-      >
-        <span aria-hidden="true">▼</span>
-      </button>
-      <button
-        className="tw-hov"
-        onClick={a.toOrbit}
-        aria-label={t.camera.reset}
-        title={`${t.camera.reset} (O)`}
-        style={s(`height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
-      >
+      <button className="tw-hov" onClick={a.toOrbit} aria-label={t.camera.reset} title={`${t.camera.reset} (O)`} style={s(btn)}>
         <Icon.earth size={16} strokeWidth={2.25} aria-hidden />
+      </button>
+      <button className="tw-hov" onClick={a.locateMe} aria-label={t.camera.locate} title={t.camera.locate} style={s(btn)}>
+        <Icon.inspect size={16} strokeWidth={2.25} aria-hidden />
       </button>
     </div>
   );

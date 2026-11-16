@@ -179,10 +179,13 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                     n > THIN_AT ? "is-thin" : "",
                     tk.example ? "is-example" : tk.before ? "is-before" : "",
                     tk.gap ? "is-gap" : "",
+                    tk.milestone ? "is-milestone" : "",
                     i === hover ? "is-hover" : "",
                   ].join(" ")}
                   style={s(`left:${at(i, n) * 100}%`)}
-                />
+                >
+                  {tk.milestone && <span className="tw-tlb-ms">{tk.short}</span>}
+                </span>
               ))}
               {bIdx >= 0 && <span className="tw-tlb-knob is-b" style={s(`left:${at(bIdx, n) * 100}%`)} />}
               {n > 0 && <span className="tw-tlb-knob" style={s(`left:${at(cur, n) * 100}%`)} />}

@@ -192,7 +192,7 @@ export class CatalogRenderer {
   }
 
   private show(e: CatalogEntry): void {
-    const date = entryDate(e, catalog.timelineDate());
+    const date = entryDate(e, catalog.timelineDate(), new Date(), catalog.dailyDate());
     if (e.min_zoom != null && this.map.getZoom() < e.min_zoom) {
       catalog.setStatus(e.id, { state: "empty", reason: "zoom", date });
       return;

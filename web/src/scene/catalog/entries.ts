@@ -111,7 +111,8 @@ export function bundledEntries(): CatalogEntry[] {
 }
 
 // Fills {date}. Daily products lag behind today; timeline products follow the timeline.
-export function entryDate(e: CatalogEntry, timeline: string | null, today = new Date()): string {
+export function entryDate(e: CatalogEntry, timeline: string | null, today = new Date(), daily: string | null = null): string {
+  if (e.time === "daily" && daily) return daily;
   if (e.time === "static") return typeof e.date === "string" && e.date ? e.date : "default";
   if (e.time === "timeline" && timeline) return timeline;
   const lag = Number.isFinite(Number(e.date_lag_days)) ? Number(e.date_lag_days) : 1;

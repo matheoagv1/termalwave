@@ -27,6 +27,7 @@ import { SatellitesLayer } from "./space/satellites";
 import { SkyLayer } from "./space/sky";
 import { WindLayer } from "./space/wind";
 import type { Bounds } from "./space/satellites-geometry";
+import type { NisarPass } from "../data/nisar-passes";
 import { installTileCache, tileCacheTransformRequest } from "./tile-cache";
 
 export type { BasemapTiles } from "../tw/contract";
@@ -112,6 +113,9 @@ export { cityBounds, placeFlyMs };
 const ENTITY_EXTRA = ["-glow", "-line"] as const;
 // share of the shorter image side that fades out at each border
 const SOFT_EDGE_FRAC = 0.045;
+// newest NISAR quick-look previews drawn at once
+const BROWSE_MAX = 6;
+const BROWSE_OPACITY = 0.85;
 
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
@@ -152,6 +156,9 @@ export class MapLibreScene implements SceneApi {
   private fx = new Layers3D();
   private soft = new Map<string, Promise<string>>();
   private extraSeq = new Map<string, number>();
+  private browse: NisarPass[] = [];
+  private browseKey = "";
+  private browseSeq = 0;
   private dead = false;
   private ready = false;
   private queue: Array<() => void> = [];
@@ -470,6 +477,15 @@ export class MapLibreScene implements SceneApi {
     this.whenReady(() => this.applyEntities(id, data));
   }
 
+  // quick-look previews of the newest passes in view; they follow the radar toggle
+  showNisarBrowse(passes: NisarPass[]): void {
+    this.browse = passes
+      .filter((p) => p.browseUrl && p.bounds)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, BROWSE_MAX);
+    this.whenReady(() => this.syncBrowse());
+  }
+
   setActivePlace(bounds: Bounds | null): void {
     this.placeOn = !!bounds;
     this.placeBounds = bounds;
@@ -518,6 +534,10 @@ export class MapLibreScene implements SceneApi {
     if (!data) {
       for (const lid of [layerId, ...ENTITY_EXTRA.map((x) => layerId + x)]) if (map.getLayer(lid)) map.removeLayer(lid);
       if (map.getSource(srcId)) map.removeSource(srcId);
+      if (id === "nisar") {
+        this.browse = [];
+        this.syncBrowse();
+      }
       return;
     }
     const fc = data as GeoJSON.GeoJSON;
@@ -573,10 +593,38 @@ export class MapLibreScene implements SceneApi {
   private syncSwaths(): void {
     const on = this.radarOn();
     this.fx.setSwathsVisible(on);
+    this.syncBrowse();
     if (!this.ready) return;
     for (const lid of ["tw-ent-nisar", "tw-ent-nisar-glow", "tw-ent-nisar-line"]) {
       if (this.map.getLayer(lid)) this.map.setLayoutProperty(lid, "visibility", on ? "visible" : "none");
     }
+  }
+
+  // previews sit under the swath outlines and exist only while the radar layer is on
+  private syncBrowse(): void {
+    if (!this.ready) return;
+    const want = this.radarOn() ? this.browse : [];
+    const key = want.map((p) => p.browseUrl).join("|");
+    if (key === this.browseKey) return;
+    this.browseKey = key;
+    const map = this.map;
+    const seq = ++this.browseSeq;
+    for (let i = 0; i < BROWSE_MAX; i++) {
+      if (map.getLayer(`tw-nisar-browse-${i}`)) map.removeLayer(`tw-nisar-browse-${i}`);
+      if (map.getSource(`tw-nisar-browse-${i}`)) map.removeSource(`tw-nisar-browse-${i}`);
+    }
+    if (!want.length) return;
+    // a preview that fails to load is skipped; nothing is added for it
+    void Promise.all(want.map((p) => this.loadImage(p.browseUrl as string).then(() => true, () => false))).then((ok) => {
+      if (seq !== this.browseSeq || this.dead || !this.ready) return;
+      const before = map.getLayer("tw-ent-nisar") ? "tw-ent-nisar" : undefined;
+      want.forEach((p, i) => {
+        if (!ok[i] || !p.bounds) return;
+        const id = `tw-nisar-browse-${i}`;
+        map.addSource(id, { type: "image", url: p.browseUrl as string, coordinates: coordsOf(p.bounds) });
+        map.addLayer({ id, type: "raster", source: id, paint: { "raster-opacity": BROWSE_OPACITY } }, before);
+      });
+    });
   }
 
   // entity marks stay above the dataset rasters, which are added later than them
@@ -1185,6 +1233,47 @@ export class MapLibreScene implements SceneApi {
 
   private globeView(): { center: [number, number]; zoom: number; pitch: number; bearing: number } {
     return { center: this.globeCenter(), zoom: GLOBE_ZOOM, pitch: 0, bearing: 0 };
+  }
+
+  zoomBy(delta: number): void {
+    this.whenReady(() => {
+      const map = this.map;
+      map.easeTo({ zoom: clamp(map.getZoom() + delta, map.getMinZoom(), map.getMaxZoom()), duration: this.dur(300), essential: true });
+    });
+  }
+
+  // straight down <-> oblique, like the reference dock; 55 deg is the oblique pitch
+  toggleTilt(): void {
+    this.whenReady(() => {
+      const next = this.map.getPitch() > 5 ? 0 : 55;
+      this.s.tilt = next;
+      this.map.easeTo({ pitch: next, duration: this.dur(400), essential: true });
+      this.emit();
+    });
+  }
+
+  resetNorth(): void {
+    this.whenReady(() => {
+      this.s.northUp = true;
+      this.map.easeTo({ bearing: 0, duration: this.dur(400), essential: true });
+      this.emit();
+    });
+  }
+
+  locate(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(false);
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          this.whenReady(() => {
+            this.map.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: Math.max(this.map.getZoom(), 8), duration: this.dur(1200), essential: true });
+            resolve(true);
+          });
+        },
+        () => resolve(false),
+        { timeout: 8000 },
+      );
+    });
   }
 
   backToEarth(): Promise<void> {

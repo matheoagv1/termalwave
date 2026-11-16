@@ -494,6 +494,8 @@ export function buildView(m: Model) {
             before,
             example: isExampleHonesty((f0 as { honesty?: string } | null)?.honesty),
             name: T.tickName(seg.kind, tk.label),
+            milestone: seg.kind === "composite",
+            short: tk.label,
             gap,
             honesty: (f0 as { honesty?: string } | null)?.honesty ?? "",
             h: hot ? 28 : 26,
