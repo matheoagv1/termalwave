@@ -1,0 +1,24 @@
+{
+  "daily": {
+    "time": [
+      "2024-06-14",
+      "2024-06-15",
+      "2024-06-16"
+    ],
+    "temperature_2m_max": [
+      28.1,
+      29.0,
+      null
+    ],
+    "temperature_2m_min": [
+      14.0,
+      15.2,
+      13.5
+    ],
+    "precipitation_sum": [
+      0.0,
+      null,
+      2.5
+    ]
+  }
+}

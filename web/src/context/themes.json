@@ -1,0 +1,10 @@
+[
+  { "id": "radar", "label": "Radar y cambio de superficie" },
+  { "id": "clima", "label": "Clima y nubes" },
+  { "id": "optico", "label": "Imagen óptica" },
+  { "id": "fuego", "label": "Fuego y focos térmicos" },
+  { "id": "vegetacion", "label": "Vegetación" },
+  { "id": "agua", "label": "Agua y humedad" },
+  { "id": "relieve", "label": "Elevación y relieve" },
+  { "id": "ambiente", "label": "Inferencias del territorio" }
+]

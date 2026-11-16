@@ -1,0 +1,31 @@
+---
+description: Keep hackathon agent context lean — hub-next twd, avoid archives
+globs:
+alwaysApply: true
+---
+
+# Lean context (hackathon)
+
+Reading is expensive. Prefer CLI over browsing.
+
+**Hub:** `tw-hub-next` only (`twd`). Legacy `tw`, `tw pulse`, `scripts/comms.py`, and `.tw/` are dead — do not use them.
+
+Each turn:
+
+1. `twd whoami` (and `twd sessions` / `twd wakes` if acting)
+2. If acting: open session work only; read `twd events` for new messages
+3. Reply with `twd send --session <id> "…"` (`--now` if urgent)
+4. Edit **only** owned roots (see seat / AGENTS.md) or paths you were handed
+
+Idle / no wakes for you: **stop**. Do not explore. Re-check with `twd wakes`.
+
+Do **not** open unless blocked:
+
+- `comms/**/archive/`, `board.done.toml`, `STEERS.archive.md`, `milestones/`
+- `references/`, `vendor/`, `web/dist/assets/`, brand binaries
+- Full jury tables in root `AGENTS.md`
+
+Outputs stay short. No tasks/pins board — status is messages. Never put secrets in `twd send` or commits.
+
+Config: `.twd/config.json` (gitignored) or `TW_HUB` / `TW_TOKEN` / `TW_MACHINE`.
+Matheo/GrokBot handoff: `machine_id=pc-matheo`, agent `vps` (see `docs/handoff/hub-next-vps-matheo.txt`).

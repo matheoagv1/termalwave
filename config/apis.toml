@@ -1,0 +1,530 @@
+# Public API registry. Order and strategy only — no secrets here.
+# Credentials live in config/secrets.local.toml (gitignored) or env vars named below.
+
+[paths]
+apis_config = "config/apis.toml"
+secrets_local = "config/secrets.local.toml"
+cache_dir = "data/cache"
+fixtures_dir = "tests/fixtures/providers"
+stats_out = "data/processed/stats.json"
+
+[cache]
+# Provider HTTP responses under {cache_dir}/requests stay fresh this long (7 days).
+# Offline snapshots under {cache_dir}/snapshots never expire; keyed per request.
+# Past subjects (period end older than settle_days) go under archive/ and never expire.
+request_max_age_s = 604800
+settle_days = 3
+max_bytes = 2147483648
+
+[credentials]
+# Names of keys expected in secrets.local.toml [credentials] or matching env vars.
+# Full catalog: docs/APIS.md
+earthdata_token_env = "EARTHDATA_TOKEN"
+firms_map_key_env = "FIRMS_MAP_KEY"
+meteomatics_user_env = "METEOMATICS_USER"
+meteomatics_password_env = "METEOMATICS_PASSWORD"
+planetary_computer_token_env = "PLANETARY_COMPUTER_TOKEN"
+aisstream_api_key_env = "AISSTREAM_API_KEY"
+opensky_client_id_env = "OPENSKY_CLIENT_ID"
+opensky_client_secret_env = "OPENSKY_CLIENT_SECRET"
+tomtom_api_key_env = "TOMTOM_API_KEY"
+# Google Maps keys optional/disabled — see docs/api/REJECTED.md
+google_maps_api_key_env = "GOOGLE_MAPS_API_KEY"
+google_maps_server_api_key_env = "GOOGLE_MAPS_SERVER_API_KEY"
+cesium_ion_token_env = "CESIUM_ION_TOKEN"
+carto_basemaps_api_key_env = "CARTO_BASEMAPS_API_KEY"
+
+[fires]
+order = ["firms_viirs_sp", "firms_viirs_nrt", "firms_modis"]
+strategy = "union_dedupe"
+dedupe_distance_km = 1.0
+dedupe_time_hours = 12.0
+# Lower quality_rank wins when deduping (SP preferred over NRT).
+quality_rank = { firms_viirs_sp = 10, firms_viirs_nrt = 20, firms_modis = 30 }
+
+[fires.endpoints]
+firms_viirs_sp = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_SNPP_SP/{west},{south},{east},{north}/{day_range}"
+firms_viirs_nrt = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_SNPP_NRT/{west},{south},{east},{north}/{day_range}"
+firms_modis = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/MODIS_SP/{west},{south},{east},{north}/{day_range}"
+
+[weather]
+order = ["open_meteo_archive", "meteomatics"]
+strategy = "first_available"
+
+[weather.endpoints]
+open_meteo_archive = "https://archive-api.open-meteo.com/v1/archive"
+meteomatics = "https://api.meteomatics.com"
+
+[optical]
+order = ["planetary_computer_s2"]
+strategy = "least_cloudy_near_nisar"
+max_cloud_pct = 40.0
+max_day_delta = 16
+
+[optical.endpoints]
+planetary_computer_s2 = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
+
+[radar]
+order = ["earthdata_nisar_gcov"]
+strategy = "prefer_validated"
+# CMR has no short_name NISAR_L2_GCOV. Prefer validated, then provisional, then beta.
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+gcov_collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
+gunw_collections = ["NISAR_L2_GUNW_V1"]
+sme2_collections = ["NISAR_L3_SME2_PROVISIONAL_V1"]
+# Preview Worker: GET /api/nisar/coverage?bbox=w,s,e,n
+# Bbox intersects default AOI (app-config) → honest demo frames from web/dist overlays.
+# Else CMR granules when Worker secret EARTHDATA_TOKEN is set; otherwise status=empty (no fake Santiago).
+coverage_endpoint = "/api/nisar/coverage"
+
+[radar.endpoints]
+earthdata_nisar_gcov = "https://cmr.earthdata.nasa.gov/search/granules.json"
+
+[radar.coverage]
+endpoint = "/api/nisar/coverage"
+upstream = "https://cmr.earthdata.nasa.gov/search/granules.json"
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
+cache_ttl_s = 600
+attribution = "NASA Earthdata · NISAR L2 GCOV"
+
+[providers.firms_viirs_sp]
+kind = "fires"
+module = "termalwave.providers.fires.firms_viirs_sp"
+credential = "FIRMS_MAP_KEY"
+product = "VIIRS_SNPP_SP"
+license = "NASA FIRMS"
+
+[providers.firms_viirs_nrt]
+kind = "fires"
+module = "termalwave.providers.fires.firms_viirs_nrt"
+credential = "FIRMS_MAP_KEY"
+product = "VIIRS_SNPP_NRT"
+license = "NASA FIRMS"
+
+[providers.firms_modis]
+kind = "fires"
+module = "termalwave.providers.fires.firms_modis"
+credential = "FIRMS_MAP_KEY"
+product = "MODIS_SP"
+license = "NASA FIRMS"
+
+[providers.open_meteo_archive]
+kind = "weather"
+module = "termalwave.providers.weather.open_meteo_archive"
+credential = ""
+product = "open-meteo-archive"
+license = "Open-Meteo / CC-BY"
+
+[providers.meteomatics]
+kind = "weather"
+module = "termalwave.providers.weather.meteomatics"
+credential = "METEOMATICS_USER"
+product = "meteomatics"
+license = "Meteomatics proprietary"
+
+[providers.planetary_computer_s2]
+kind = "optical"
+module = "termalwave.providers.optical.planetary_computer_s2"
+credential = "PLANETARY_COMPUTER_TOKEN"
+product = "sentinel-2-l2a"
+license = "ESA Sentinel / Microsoft PC"
+
+[providers.earthdata_nisar_gcov]
+kind = "radar"
+module = "termalwave.providers.radar.earthdata_nisar_gcov"
+credential = "EARTHDATA_TOKEN"
+product = "NISAR_L2_GCOV_V1"
+license = "NASA Earthdata"
+
+# --- kinds pending full fetch (stubs return [] when credential present) ---
+
+[vessels]
+order = ["aisstream"]
+strategy = "union_dedupe"
+
+[vessels.endpoints]
+aisstream = "https://stream.aisstream.io/v0/stream"
+
+[aviation]
+order = ["opensky"]
+strategy = "first_available"
+
+[aviation.endpoints]
+opensky = "https://opensky-network.org/api"
+
+[traffic]
+order = ["tomtom_traffic"]
+strategy = "first_available"
+
+[traffic.endpoints]
+tomtom_traffic = "https://api.tomtom.com"
+
+[providers.aisstream]
+kind = "vessels"
+module = "termalwave.providers.vessels.aisstream"
+credential = "AISSTREAM_API_KEY"
+product = "aisstream"
+license = "AISStream"
+
+[providers.opensky]
+kind = "aviation"
+module = "termalwave.providers.aviation.opensky"
+credential = "OPENSKY_CLIENT_ID"
+product = "opensky"
+license = "OpenSky Network"
+
+[providers.tomtom_traffic]
+kind = "traffic"
+module = "termalwave.providers.traffic.tomtom_traffic"
+credential = "TOMTOM_API_KEY"
+product = "tomtom-traffic"
+license = "TomTom"
+
+# --- elevation (server-side only) ---
+
+[elevation]
+order = ["open_meteo_elevation", "opentopodata_srtm30m"]
+strategy = "first_available_per_point"
+disagree_meters = 30.0
+
+[elevation.endpoints]
+open_meteo_elevation = "https://api.open-meteo.com/v1/elevation"
+opentopodata_srtm30m = "https://api.opentopodata.org/v1/srtm30m"
+
+[providers.open_meteo_elevation]
+kind = "elevation"
+module = "termalwave.providers.elevation.open_meteo"
+credential = ""
+product = "open-meteo-elevation"
+dem = "copernicus-glo90"
+resolution_m = 90
+license = "Open-Meteo / Copernicus DEM CC BY 4.0"
+attribution = "Elevation data by Open-Meteo.com (CC BY 4.0), Copernicus DEM"
+rate_limit = "600/min"
+daily_cap = 10000
+docs_url = "https://open-meteo.com/en/docs/elevation-api"
+quality_rank = 10
+
+[providers.opentopodata_srtm30m]
+kind = "elevation"
+module = "termalwave.providers.elevation.opentopodata"
+credential = ""
+product = "srtm30m"
+dem = "srtm30m"
+resolution_m = 30
+license = "SRTM NASA/USGS via OpenTopoData"
+attribution = "Elevation from SRTM (NASA/USGS) via OpenTopoData"
+rate_limit = "1/s"
+daily_cap = 1000
+docs_url = "https://www.opentopodata.org/"
+quality_rank = 20
+
+# --- geocode (server-side only; no browser autocomplete) ---
+
+[geocode]
+search = ["photon", "open_meteo_geocode", "nominatim"]
+reverse = ["photon", "nominatim"]
+strategy = "first_nonempty"
+dedupe_distance_m = 500.0
+user_agent = "TermalWave/0.1 (+https://termalwave.space)"
+rate_limit = "1/s"
+
+[geocode.endpoints]
+photon = "https://photon.komoot.io/api/"
+photon_reverse = "https://photon.komoot.io/reverse"
+open_meteo_geocode = "https://geocoding-api.open-meteo.com/v1/search"
+nominatim = "https://nominatim.openstreetmap.org/search"
+nominatim_reverse = "https://nominatim.openstreetmap.org/reverse"
+google_places = "https://places.googleapis.com/v1/places:searchText"
+
+# browser search: edge proxy first (holds server keys, shared cache),
+# keyless direct calls when the app is served without the proxy
+[geocode.web]
+endpoint = "/api/search"
+proxy = ["google_places", "photon", "open_meteo_geocode"]
+direct = ["photon", "open_meteo_geocode"]
+limit = 6
+cache_ttl_s = 604800
+
+[providers.photon]
+kind = "geocode"
+module = "termalwave.providers.geocode.photon"
+credential = ""
+product = "photon"
+license = "ODbL (OpenStreetMap)"
+attribution = "© OpenStreetMap contributors (via Photon/Komoot)"
+rate_limit = "1/s"
+docs_url = "https://github.com/komoot/photon"
+quality_rank = 10
+
+[providers.open_meteo_geocode]
+kind = "geocode"
+module = "termalwave.providers.geocode.open_meteo"
+credential = ""
+product = "open-meteo-geocoding"
+license = "Open-Meteo CC BY 4.0"
+attribution = "Geocoding by Open-Meteo.com (CC BY 4.0)"
+rate_limit = "600/min"
+docs_url = "https://open-meteo.com/en/docs/geocoding-api"
+quality_rank = 20
+
+[providers.nominatim]
+kind = "geocode"
+module = "termalwave.providers.geocode.nominatim"
+credential = ""
+product = "nominatim"
+license = "ODbL (OpenStreetMap)"
+attribution = "© OpenStreetMap contributors (Nominatim)"
+user_agent = "TermalWave/0.1 (+https://termalwave.space)"
+rate_limit = "1/s"
+docs_url = "https://nominatim.org/release-docs/latest/api/Overview/"
+quality_rank = 30
+
+# --- basemaps (frontend config only; emitted into app-config.json) ---
+
+[basemaps]
+# daily gibs mosaics have black gaps between orbits; default must be gap-free
+default = "eox_s2cloudless_2025"
+# Street raster is OSM. CARTO raster now returns an API-key image, so it is not a base.
+# OpenFreeMap is a vector style, not a raster tile template.
+# GIBS truecolor lags: VIIRS often ~10–14d behind; MODIS ~2–4d. date_lag_days per entry.
+list = [
+  "gibs_modis_truecolor",
+  "gibs_viirs_truecolor",
+  "osm_standard",
+  "esri_world_imagery",
+  "openfreemap_liberty",
+  "eox_s2cloudless_2025",
+  "gibs_blue_marble",
+  "cesium_world_terrain",
+]
+engine_primary = "maplibre"
+engine_fallback_2d = "leaflet"
+cesium_ion_asset_world_terrain = 1
+cesium_ion_asset_sentinel2_test = 3954
+
+[basemaps.entries.gibs_modis_truecolor]
+id = "gibs_modis_truecolor"
+# drawn over a gap-free layer so orbit gaps show earth, not black
+underlay = "gibs_blue_marble"
+label = "NASA GIBS MODIS"
+kind = "raster"
+url_template = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
+attribution = "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS)."
+license = "NASA GIBS"
+max_zoom = 9
+time_dimension = true
+date_lag_days = 4
+docs_url = "https://wiki.earthdata.nasa.gov/display/GIBS"
+
+[basemaps.entries.gibs_viirs_truecolor]
+id = "gibs_viirs_truecolor"
+# drawn over a gap-free layer so orbit gaps show earth, not black
+underlay = "gibs_blue_marble"
+label = "NASA GIBS VIIRS"
+kind = "raster"
+url_template = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
+attribution = "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS)."
+license = "NASA GIBS"
+max_zoom = 9
+time_dimension = true
+date_lag_days = 14
+docs_url = "https://wiki.earthdata.nasa.gov/display/GIBS"
+
+[basemaps.entries.gibs_blue_marble]
+id = "gibs_blue_marble"
+label = "NASA Blue Marble"
+kind = "raster"
+url_template = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg"
+attribution = "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS)."
+license = "NASA GIBS"
+max_zoom = 8
+time_dimension = false
+# fixed mosaic, never republished under the same url
+cache_policy = "archive"
+docs_url = "https://wiki.earthdata.nasa.gov/display/GIBS"
+
+[basemaps.entries.osm_standard]
+id = "osm_standard"
+label = "Calles (OpenStreetMap)"
+kind = "raster"
+url_template = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+attribution = "© OpenStreetMap contributors"
+license = "ODbL"
+max_zoom = 19
+tile_size = 256
+time_dimension = false
+docs_url = "https://operations.osmfoundation.org/policies/tiles/"
+purpose = "streets"
+do_not_store_tiles = true
+
+[basemaps.entries.esri_world_imagery]
+id = "esri_world_imagery"
+label = "Imagen Esri"
+kind = "raster"
+# Esri World Imagery is XYZ with row before column: {z}/{y}/{x}
+url_template = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+attribution = "Tiles © Esri, Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+license = "Esri"
+max_zoom = 19
+tile_size = 256
+time_dimension = false
+docs_url = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+purpose = "imagery"
+do_not_store_tiles = true
+
+[basemaps.entries.openfreemap_liberty]
+id = "openfreemap_liberty"
+label = "Calles vector (OpenFreeMap)"
+kind = "vector"
+url_template = "https://tiles.openfreemap.org/styles/liberty"
+attribution = "© OpenStreetMap contributors · OpenFreeMap © OpenMapTiles"
+license = "ODbL / OpenMapTiles"
+max_zoom = 14
+time_dimension = false
+docs_url = "https://openfreemap.org/"
+engines = ["maplibre"]
+purpose = "streets"
+
+[basemaps.entries.eox_s2cloudless_2025]
+id = "eox_s2cloudless_2025"
+label = "Sentinel-2 sin nubes (EOX)"
+kind = "raster"
+url_template = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg"
+attribution = "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)"
+license = "CC BY-NC-SA 4.0"
+max_zoom = 16
+time_dimension = false
+docs_url = "https://tiles.maps.eox.at/"
+do_not_store_tiles = true
+
+[basemaps.entries.cesium_world_terrain]
+id = "cesium_world_terrain"
+label = "Relieve Cesium"
+kind = "terrain"
+url_template = "ion://1"
+attribution = "Cesium World Terrain · Cesium ion"
+license = "Cesium ion"
+max_zoom = 15
+time_dimension = false
+docs_url = "https://cesium.com/learn/cesiumjs/ref-doc/createWorldTerrain.html"
+requires_credential = "CESIUM_ION_TOKEN"
+ion_asset = 1
+
+# --- tile cache: worker edge (L1) -> nginx origin (L2 + archive) -> upstream ---
+# Per-entry policy: `cache_policy` if set, else direct when do_not_store_tiles or
+# not an http raster, archive when the url has {date}, volatile otherwise.
+# nginx conf is generated by scripts/tiles_nginx.py; docs/CACHE.md.
+[tiles]
+route = "/tiles"
+origin_host = "origin.termalwave.space"
+key_header = "X-TW-Origin-Key"
+key_secret = "TILE_ORIGIN_KEY"
+cache_root = "/var/cache/nginx/termalwave"
+resolver = "1.1.1.1 1.0.0.1"
+user_agent = "TermalWave/0.1 (+https://termalwave.space)"
+# upstream 404s (out of range, not published yet) stay out of the archive
+negative_valid = "10m"
+# dated tiles this close to today may still be filling in upstream (orbit gaps)
+recent_days = 3
+
+[tiles.zones.archive]
+name = "tw_tiles_archive"
+keys_mb = 128
+inactive = "3650d"
+max_size = "50g"
+
+[tiles.zones.volatile]
+name = "tw_tiles_volatile"
+keys_mb = 64
+inactive = "30d"
+max_size = "10g"
+
+[tiles.policies.archive]
+zone = "archive"
+origin_valid = "3650d"
+edge_ttl_s = 31536000
+browser_ttl_s = 31536000
+immutable = true
+
+[tiles.policies.volatile]
+zone = "volatile"
+origin_valid = "7d"
+edge_ttl_s = 604800
+browser_ttl_s = 86400
+
+[tiles.policies.recent]
+zone = "volatile"
+origin_valid = "6h"
+edge_ttl_s = 3600
+browser_ttl_s = 600
+
+# Scene helpers — Cesium ion only required for 3D terrain; Google disabled
+[scene]
+cesium_ion_credential = "CESIUM_ION_TOKEN"
+google_maps_enabled = false
+google_maps_credential = "GOOGLE_MAPS_API_KEY"
+google_maps_server_credential = "GOOGLE_MAPS_SERVER_API_KEY"
+
+# --- space scene around the globe (sky, bodies, satellites, clouds) ---
+# browser reads these through app-config.json; upstreams without cors go
+# through the edge proxy routes, which cache them (dated answers archive)
+[space]
+sky_assets = "./sky/"
+satellite_assets = "./satellites/"
+
+[space.ephemeris]
+endpoint = "/api/ephemeris"
+upstream = "https://ssd.jpl.nasa.gov/api/horizons.api"
+# horizons command ids: sun, moon, mercury, venus, mars, jupiter, saturn
+bodies = { sun = "10", moon = "301", mercury = "199", venus = "299", mars = "499", jupiter = "599", saturn = "699" }
+step_hours = 1
+
+[space.satellites]
+endpoint = "/api/satellites"
+upstream = "https://celestrak.org/NORAD/elements/gp.php"
+groups = ["sar", "weather", "stations"]
+default_group = "sar"
+highlight = ["NISAR", "SAOCOM 1A", "SAOCOM 1B", "SENTINEL-1C", "SENTINEL-1D", "ALOS-4 (DAICHI-4)"]
+# celestrak asks clients not to refetch a group more than once per 2 hours
+cache_ttl_s = 7200
+min_elevation_deg = 10
+
+[space.clouds]
+endpoint = "/api/clouds"
+upstream = "https://nowcoast.noaa.gov/geoserver/observations/satellite/ows"
+layer = "global_longwave_imagery_mosaic"
+attribution = "NOAA nowCOAST · NESDIS global infrared mosaic"
+manifest_ttl_s = 600
+max_zoom = 6
+
+# Browser discovers the path; Worker implements it (see preview/src/nisar-coverage.js).
+[space.nisar_coverage]
+endpoint = "/api/nisar/coverage"
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
+cache_ttl_s = 600
+
+# Live + archive wind (Open-Meteo; no key). Grid/point for particle overlay.
+[space.wind]
+endpoint = "/api/wind"
+forecast = "https://api.open-meteo.com/v1/forecast"
+archive = "https://archive-api.open-meteo.com/v1/archive"
+cache_ttl_s = 900
+attribution = "Open-Meteo (CC BY 4.0)"

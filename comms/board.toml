@@ -1,0 +1,199 @@
+# Shared task board. Agents + steers update via: python3 scripts/comms.py task …
+# status: open | in_progress | blocked | done | cancelled
+# paths: optional edit allow-list (globs/dirs). Live comms/ via link-worktrees.
+
+[[task]]
+id = "T011"
+owner = "vps"
+status = "done"
+title = "dataset.json con tramos (segments), series y hotspots segun web/src/tw/contract.ts"
+notes = "dataset.json regenerado con 4 layers+5 ticks; guard anti-vacio; preview redeployed. Series siguen null hasta stats reales."
+updated = "2026-11-14"
+
+[[task]]
+id = "T015"
+owner = "carne"
+status = "done"
+title = "Integrar monigote desde brand/monigote en entrada y carga"
+notes = "Consume brand/. Commit + push work/carne. Redeploy lo hace VPS al mergear."
+updated = "2026-11-14"
+
+[[task]]
+id = "T016"
+owner = "carne"
+status = "done"
+title = "HUD plegable (dock/timeline/ficha + tecla H)"
+notes = "Merged + redeployed."
+updated = "2026-11-14"
+
+[[task]]
+id = "T017"
+owner = "carne"
+status = "done"
+title = "Pulir UI globe-first: tipografia, contraste, paneles que no tape el globo"
+notes = "Libertad de gusto. Commit frecuente en work/carne. Notify vps al cortar tanda."
+updated = "2026-11-14"
+
+[[task]]
+id = "T018"
+owner = "cricri"
+status = "done"
+title = "Testear preview auth+globo y reportar fallos via notify (no arreglar VPS)"
+notes = "QA reported; auth gate ok; context fallback fixed on merge"
+updated = "2026-11-14"
+
+[[task]]
+id = "T019"
+owner = "cricri"
+status = "done"
+title = "Seguir copy ES-AR-SGO capas/fuentes/trades segun hallazgos del test"
+notes = "cricri: copy ok, no changes needed"
+updated = "2026-11-14"
+
+[[task]]
+id = "T020"
+owner = "carne"
+status = "done"
+title = "QA: ficha Sin dato / landing copy / auth tildes (cricri T018)"
+notes = "carne: tuteo + ficha sin valores; merged + rebuild"
+updated = "2026-11-14"
+
+[[task]]
+id = "T021"
+owner = "cricri"
+status = "done"
+title = "Colaborar con VPS: probar providers vivos + provenance en preview"
+notes = "Parallel: providers QA when quota allows; UX Carne lote is P0 this window"
+updated = "2026-11-14"
+
+[[task]]
+id = "T022"
+owner = "vps"
+status = "done"
+title = "Conectar fetch vivo FIRMS/weather/optical/radar y enriquecer dataset.json"
+notes = "Live run OK: weather 3240d, optical 1 scene selected, FIRMS 0 in AOI (API ok day_range5), radar CMR 0 granules window. Preview redeployed 18069b61."
+updated = "2026-11-14"
+
+[[task]]
+id = "T023"
+owner = "cricri"
+status = "done"
+title = "URGENTE cuota: ejecutar lote UX Carne via subagentes (globo-first + monigote + Fuentes)"
+notes = "P0 cuota: subagentes YA"
+updated = "2026-11-14"
+
+[[task]]
+id = "T024"
+owner = "cricri"
+status = "done"
+title = "Subagente: zoom urbano/campo en el globo + herramientas exploracion cambio"
+notes = "Detalle al zoom; sin dashboard. Cortina/hotspots/series. ES-AR-SGO."
+updated = "2026-11-14"
+
+[[task]]
+id = "T025"
+owner = "cricri"
+status = "done"
+title = "Subagente: panel Fuentes/provenance + estados sin dato segun tu copy"
+notes = "Hud wiring+dérive badge; ver 45fab44+c8f6851"
+updated = "2026-11-14"
+
+[[task]]
+id = "T026"
+owner = "carne"
+status = "done"
+title = "Review/merge lote UX cricri en work/carne"
+notes = "T026 polish merged + redeploy"
+paths = ["web/"]
+updated = "2026-11-14"
+
+[[task]]
+id = "T027"
+owner = "cricri"
+status = "done"
+title = "Subagente A: timeline/cortina UX (revision punto timeline + frontend-design link)"
+notes = "45fab44 timeline/cortina UX"
+updated = "2026-11-14"
+
+[[task]]
+id = "T028"
+owner = "cricri"
+status = "done"
+title = "Subagente B: monigote entrada/carga + estados vacios Sin dato"
+notes = "brand/monigote. ES-AR-SGO."
+updated = "2026-11-14"
+
+[[task]]
+id = "T029"
+owner = "cricri"
+status = "done"
+title = "Subagente C: HUD/controles que no tape el globo; tipografia contraste"
+notes = "globo-first."
+updated = "2026-11-14"
+
+[[task]]
+id = "T030"
+owner = "cricri"
+status = "done"
+title = "Subagente D: hotspots/series/ficha lugar en escena (exploracion cambio)"
+notes = "work/carne 45067a7: explore en escena, spotTrail, ficha por punto"
+updated = "2026-11-14"
+
+[[task]]
+id = "T031"
+owner = "cricri"
+status = "done"
+title = "Subagente E: context/trades copy capas+fuentes ES-AR-SGO"
+notes = "context merge e0cb162"
+updated = "2026-11-14"
+
+[[task]]
+id = "T032"
+owner = "cricri"
+status = "done"
+title = "Subagente F: QA preview auth+relieve+capas; bugs solo por notify"
+notes = "T021. No arregles VPS."
+updated = "2026-11-14"
+
+[[task]]
+id = "T033"
+owner = "vps"
+status = "done"
+title = "Harness lean: pulse/standby/status-mine/paths/sync scripts"
+notes = "Harness lean shipped: seat/check/now, standby=wait, status mine, paths, notify<=280, link syncs scripts/hooks/rules"
+paths = ["scripts/comms.py", "scripts/board_poll_loop.py", ".cursor/hooks/", ".cursor/rules/", "comms/README.md", "AGENTS.md"]
+updated = "2026-11-14"
+
+[[task]]
+id = "T034"
+owner = "vps"
+status = "done"
+title = "Replace Google Maps with free elevation/geocode/basemap providers"
+notes = "Free elevation/geocode/basemaps; Google disabled; offline tests OK"
+updated = "2026-11-14"
+
+[[task]]
+id = "t9.vps"
+owner = "vps"
+status = "in_progress"
+title = "Auditar/corregir ecuaciones científicas F01–F17 (pipeline + science lib)"
+notes = "b59e248 batch1; c5ef3ea batch2 F02/F05/F09-15 stubs+tests. Rem: SME2 θ_F ATBD, SPEI calib, ΔB sidecar, pipeline/UI. SME2 β grouping NOT coded."
+paths = ["termalwave/", "config/science.toml", "docs/science/", "tests/"]
+updated = "2026-11-15"
+
+[[task]]
+id = "T035"
+owner = "vps"
+status = "done"
+title = "Auditar ecuaciones F01-F17 (science lib)"
+notes = "t9.vps batch: F01,F03-04,F06-08,F16-17 code+tests commit b59e248. Rem: F02,F05,F09-15,ΔB sidecar. cricri: MNDWI≠suelo, RVI_dual≠[0,1]."
+updated = "2026-11-15"
+
+[[task]]
+id = "T036"
+owner = "vps"
+status = "cancelled"
+title = "GET /api/nisar/coverage?bbox for globe-first radar on demand"
+notes = "dup of tw t29.vps; use tw board"
+paths = ["preview/", "config/apis.toml", "termalwave/"]
+updated = "2026-11-15"

@@ -1,0 +1,42 @@
+{
+  "feed": {
+    "entry": [
+      {
+        "id": "G1",
+        "title": "NISAR_GCOV provisional scene",
+        "time_start": "2024-06-15T00:00:00Z",
+        "processing_level": "provisional",
+        "links": [
+          {
+            "rel": "http://esipfed.org/ns/fedsearch/1.1/data#",
+            "href": "https://example.invalid/g1.h5"
+          }
+        ]
+      },
+      {
+        "id": "G2",
+        "title": "NISAR_GCOV validated scene",
+        "time_start": "2024-06-15T06:00:00Z",
+        "processing_level": "validated",
+        "links": [
+          {
+            "rel": "http://esipfed.org/ns/fedsearch/1.1/data#",
+            "href": "https://example.invalid/g2.h5"
+          }
+        ]
+      },
+      {
+        "id": "G3",
+        "title": "NISAR_GCOV validated other day",
+        "time_start": "2024-06-20T00:00:00Z",
+        "processing_level": "validated",
+        "links": [
+          {
+            "rel": "http://esipfed.org/ns/fedsearch/1.1/data#",
+            "href": "https://example.invalid/g3.h5"
+          }
+        ]
+      }
+    ]
+  }
+}

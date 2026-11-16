@@ -1,0 +1,26 @@
+{
+  "estado": "provisional",
+  "ojos": {
+    "reposo": "ojos abiertos",
+    "parpadeo": "trazo dibujado en canvas"
+  },
+  "boca": {
+    "reposo": "sin boca superpuesta",
+    "hablando": "alternancia durante escritura"
+  },
+  "burbuja": [
+    "aparecer",
+    "escribiendo",
+    "esperando respuesta",
+    "informacion",
+    "exito",
+    "alerta",
+    "cerrada"
+  ],
+  "duracion_escritura_ms": 35,
+  "imagenes_definitivas": 7,
+  "nota": "Los iconos son texto provisional; faltan imagenes finales y validacion visual.",
+  "barba": "desplazamiento horizontal de 1 pixel cada 900 ms, desactivado con movimiento reducido",
+  "brazos_manos": "saludo manual: cinco posiciones por recortes, elevación máxima de 15 píxeles, dos ciclos de 400 ms por posición",
+  "torso": "cinco poses discretas mediante traslación, movimiento máximo de 5 píxeles, dos ciclos"
+}

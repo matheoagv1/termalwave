@@ -1,0 +1,53 @@
+{
+  "estado": "prototipo no validado",
+  "resolucion_canvas": [
+    256,
+    280
+  ],
+  "anclajes": "pendientes de verificacion visual",
+  "imagenes": [
+    {
+      "archivo": "assets/boca.png",
+      "ancho": 1199,
+      "alto": 1312
+    },
+    {
+      "archivo": "assets/botas.png",
+      "ancho": 1254,
+      "alto": 1254
+    },
+    {
+      "archivo": "assets/cabeza.png",
+      "ancho": 1199,
+      "alto": 1312
+    },
+    {
+      "archivo": "assets/marco.png",
+      "ancho": 1254,
+      "alto": 1254
+    },
+    {
+      "archivo": "assets/ojos.png",
+      "ancho": 1199,
+      "alto": 1312
+    },
+    {
+      "archivo": "assets/sombrero.png",
+      "ancho": 1254,
+      "alto": 1254
+    },
+    {
+      "archivo": "assets/torso.png",
+      "ancho": 1199,
+      "alto": 1312
+    }
+  ],
+  "orden": [
+    "botas",
+    "torso",
+    "cabeza",
+    "ojos",
+    "boca",
+    "sombrero"
+  ]
+}

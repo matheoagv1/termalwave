@@ -1,0 +1,47 @@
+HANDOFF — hub next · GrokBot / Matheo (vps role)
+Source of truth: /root/tw-hub-next-handoffs/GROKBOT-MATHEO.md (secrets there only).
+Synced from uploaded GROKBOT-MATHEO.md. Do not paste tokens into git or chat.
+
+================================================================================
+IDENTITY (this handoff)
+================================================================================
+Role / agent: vps  (GrokBot · Matheo)
+machine_id:   pc-matheo
+Hub UI/API:   http://159.195.157.171:7443
+Config:       .twd/config.json  → hub + pc-matheo token (gitignored, mode 600)
+
+Also on the VPS host there is machine_id `vps` (TW_M_VPS) for server-side runners.
+This Matheo/GrokBot handoff uses **pc-matheo**.
+
+Legacy dead: tw, tw pulse, scripts/comms.py, .tw/
+
+================================================================================
+EACH TURN
+================================================================================
+  twd whoami
+  twd sessions
+  twd wakes
+  twd events --limit 20
+  twd send --session <id> "…"   (--now if urgent)
+
+Open: twd open --title "<work>" --agent vps
+Windows runtime: Paseo + twd run --backend paseo
+LAND → Master FF ≤10m → DEPLOY. Status = messages (no tasks/pins board).
+
+================================================================================
+CARRY-OVER
+================================================================================
+- n387: big NISAR plan (subagents); cricri reviews science/copy
+- n393/n394: cricri t18 audit F09–F17 open
+- n395: anto ready (-anto), no task yet
+- carne offline → vps owns web/; radar core always on
+- merge leftovers: origin push pending; anto staged files; some --no-verify commits
+
+================================================================================
+OPS
+================================================================================
+Admin token: TW_ADMIN / handoff UI login (hub.env)
+Register: TW_TOKEN=<admin> twd register …
+Restart: systemctl restart tw-hub-next
+Rollback: /root/backups/tw-hub-rollback.sh
+Deploy: preview wrangler + web npm run build

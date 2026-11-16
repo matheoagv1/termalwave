@@ -1,0 +1,4 @@
+bright_stars.json y gp-sar.json no entraron por límite hub.
+En el VPS (mismo disco): cp -a /srv/sites/nasaspaceappchallenge-vps-space/web/public/sky/bright_stars.json web/public/sky/
+cp -a /srv/sites/nasaspaceappchallenge-vps-space/web/public/satellites/gp-sar.json web/public/satellites/
+O todo el árbol: rsync -a /srv/sites/nasaspaceappchallenge-vps-space/web/src/scene/space/ web/src/scene/space/

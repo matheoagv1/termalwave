@@ -1,0 +1,64 @@
+# Shared task board. Agents + steers update via: python3 scripts/comms.py task …
+# status: open | in_progress | blocked | done | cancelled
+
+[[task]]
+id = "T001"
+owner = "vps"
+status = "done"
+title = "MapLibre + timeline scaffold on master"
+updated = "2026-11-14"
+
+[[task]]
+id = "T002"
+owner = "vps"
+status = "done"
+title = "Global AGENTS.md + brand/ kit"
+updated = "2026-11-14"
+
+[[task]]
+id = "T005"
+owner = "vps"
+status = "done"
+title = "Agent coordination board + hooks (this system)"
+notes = "comms board/STEERS/CLI/hooks"
+updated = "2026-11-14"
+
+[[task]]
+id = "T006"
+owner = "vps"
+status = "done"
+title = "Unified data providers (apis.toml, merge, provenance)"
+notes = "Unblocked after coordination system landed; start after merge"
+updated = "2026-11-14"
+
+[[task]]
+id = "T004"
+owner = "carne"
+status = "done"
+title = "Wire brand/ assets into web chrome (favicon, wordmark, palette)"
+notes = "Wordmark, favicon y paleta cableados desde brand/ via web/scripts/sync-brand.mjs. Falta el monigote (T003)."
+updated = "2026-11-14"
+
+[[task]]
+id = "T007"
+owner = "carne"
+status = "done"
+title = "Data sources panel reading provenance from app-config"
+notes = "Pestana Fuentes en la ficha (provenance y data_sources de app-config). Verificada en preview."
+updated = "2026-11-14"
+
+[[task]]
+id = "T009"
+owner = "carne"
+status = "done"
+title = "Port Claude Design UI to React, conectada a ConfigProvider (datos reales de app-config)"
+notes = "UI React portada. Verificada en preview con datos reales y con #mock=1. Commits c72fb6b y siguientes."
+updated = "2026-11-14"
+
+[[task]]
+id = "T010"
+owner = "carne"
+status = "done"
+title = "MapLibreScene (globo + territorio + cortina) detras de SceneApi"
+notes = "MapLibreScene (MapLibre 5.24, globo) detras de SceneApi: orbita, aproximacion, territorio con inclinacion, cortina de comparar, hotspots, anillo. Basemap GIBS. Relieve DEM terrarium opcional sin verificar. Fallback a escena DOM con #scene=dom o sin WebGL."
+updated = "2026-11-14"

@@ -1,0 +1,12 @@
+HANDOFF vps→cricri: cerrar auditoría F01–F17 (t9)
+================================================
+Doc base (ya escrito, falta cierre): docs/science/ECUACIONES_AUDITORIA.md
+
+Estado: in_progress en hub. Auditoría hecha; falta:
+1) Commitear/publicar docs/science/ (hoy untracked en repo) — coordiná con vps si no podés tocar docs/
+2) Revisar ítems "Necesita datos" / "Faltante" y marcar qué entra al producto demo vs qué queda fuera
+3) Traducir a copy ES-AR-SGO en web/src/context/ lo que el usuario vea (sin jurado, sin % inventados)
+4) Checklist final F01–F17: Correcta | Corregida en código | Solo doc | Fuera de alcance demo
+5) Avisá a vps con notify cuando el cierre esté listo para task set t9 done
+
+Correcciones ya en pipeline: radiometría GCOV γ⁰→dB escala fija (−25…0) + tests/test_radiometry.py

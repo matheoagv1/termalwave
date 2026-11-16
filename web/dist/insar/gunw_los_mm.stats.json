@@ -1,0 +1,49 @@
+{
+ "granule": "NISAR_L2_PR_GUNW_032_140_D_102_033_2000_SH_20261009T222312_20261009T222346_20261021T222312_20261021T222346_P05036_N_F_J_001",
+ "collection": "NISAR_L2_GUNW_V1",
+ "maturity": "validated",
+ "track": 140,
+ "direction": "descending",
+ "frame": 102,
+ "reference_date": "2026-10-09",
+ "secondary_date": "2026-10-21",
+ "browse_url": "https://nisar.asf.earthdatacloud.nasa.gov/BROWSE/L2_L_GUNW/NISAR_L2_PR_GUNW_032_140_D_102_033_2000_SH_20261009T222312_20261009T222346_20261021T222312_20261021T222346_P05036_N_F_J_001/NISAR_L2_PR_GUNW_032_140_D_102_033_2000_SH_20261009T222312_20261009T222346_20261021T222312_20261021T222346_P05036_N_F_J_001_LATLON.png",
+ "datasets": {
+  "unwrappedPhase": "science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/unwrappedPhase",
+  "connectedComponents": "science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/connectedComponents",
+  "coherenceMagnitude": "science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/coherenceMagnitude",
+  "ionospherePhaseScreen": "science/LSAR/GUNW/grids/frequencyA/unwrappedInterferogram/HH/ionospherePhaseScreen"
+ },
+ "ionosphere_removed": false,
+ "plane_removed": true,
+ "plane_span_mm": 509.9,
+ "raw_mm_p05_p95": [
+  -215.6,
+  197.6
+ ],
+ "epsg": 32720,
+ "wavelength_m": 0.2384983754972156,
+ "sign": "positive = toward the satellite (F17)",
+ "reference": "median of the largest connected component in the crop set to 0",
+ "coherence_min": 0.3,
+ "valid_fraction": 0.9593,
+ "mm": {
+  "p05": -13.74,
+  "median": 0.07,
+  "p95": 11.58,
+  "min": -69.93,
+  "max": 46.25
+ },
+ "display_range_mm": [
+  -30.0,
+  30.0
+ ],
+ "tiles": "/insar/tiles/gunw_los_mm/{z}/{x}/{y}.png",
+ "tile_zooms": [
+  8,
+  13
+ ],
+ "tile_count": 184,
+ "generated_at": "2026-11-16T01:31:41+00:00",
+ "honesty": "derived"
+}

@@ -1,0 +1,18 @@
+Corrección al informe explore (3a8ff9db) — vps 2026-11-15
+==============================================================
+Ese explore quedó parcialmente viejo respecto al corte NISAR-first.
+
+YA NO APLICA / HECHO
+- FIRMS_MAP_KEY: ya en Worker (no 503 firms_disabled).
+- vessels/aviation/traffic: FUERA de Fuentes ingest y del foco producto.
+- Themes/presets amplios en layers.toml (sin actividad).
+- Fuentes kinds: radar, fires, weather, optical, elevation.
+- SSH :2222 + :22; LoginGraceTime 60.
+
+SIGUE FALTANDO (prioridad)
+1) carne t16: SpaceLayers nubes (toggle) + FIRMS entities. NO flights/vessels.
+2) vps: dataset.layers incluir ids globales marcados (clouds/firms) para Capas;
+   NDVI/agua v1 cuando toque; t9 ecuaciones en cola.
+3) cricri: topics/themes alineados (sin actividad) + copy ejemplo inferencias.
+
+Verdades visuales siguen: AOI PNG = SAR/inferencias; globo = shell/API.

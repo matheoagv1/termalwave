@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "id": 3834502,
+      "name": "Termas de Río Hondo",
+      "latitude": -27.49362,
+      "longitude": -64.85972,
+      "elevation": 260.0,
+      "feature_code": "PPLA2",
+      "country_code": "AR",
+      "admin1_id": 3835868,
+      "admin2_id": 3838845,
+      "timezone": "America/Argentina/Cordoba",
+      "population": 27838,
+      "country_id": 3865483,
+      "country": "Argentina",
+      "admin1": "Provincia de Santiago del Estero",
+      "admin2": "Departamento de Río Hondo"
+    }
+  ],
+  "generationtime_ms": 0.12087822
+}

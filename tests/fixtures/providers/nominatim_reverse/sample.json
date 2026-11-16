@@ -1,0 +1,33 @@
+{
+  "place_id": 4917713,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "node",
+  "osm_id": 3819957957,
+  "lat": "-27.4951855",
+  "lon": "-64.8643766",
+  "category": "amenity",
+  "type": "post_office",
+  "place_rank": 30,
+  "importance": 4.560997940027493e-05,
+  "addresstype": "amenity",
+  "name": "Correo Argentino",
+  "display_name": "Correo Argentino, 766, Avenida Juan B. Alberdi, Termas de Río Hondo, Departamento Río Hondo, Santiago del Estero, 4220, Argentina",
+  "address": {
+    "amenity": "Correo Argentino",
+    "house_number": "766",
+    "road": "Avenida Juan B. Alberdi",
+    "town": "Termas de Río Hondo",
+    "state_district": "Departamento Río Hondo",
+    "state": "Santiago del Estero",
+    "ISO3166-2-lvl4": "AR-G",
+    "postcode": "4220",
+    "country": "Argentina",
+    "country_code": "ar"
+  },
+  "boundingbox": [
+    "-27.4952355",
+    "-27.4951355",
+    "-64.8644266",
+    "-64.8643266"
+  ]
+}

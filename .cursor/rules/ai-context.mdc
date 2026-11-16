@@ -1,0 +1,13 @@
+---
+description: TermalWave product context for agents (lean)
+globs:
+alwaysApply: true
+---
+
+# Agent product context
+
+- Start with `twd whoami` / sessions / wakes. If idle and no wakes: wait, do not browse.
+- Role `AGENTS.md` only when ownership is unclear. Handoff: `docs/handoff/hub-next-vps-matheo.txt`.
+- Stay aligned with the official NASA challenge: interactive NISAR SAR surface-change visualization; default AOI Santiago del Estero; config-driven for any location.
+- Globe first; side panels are controls. User-facing copy: humanizer ES-AR-SGO only.
+- `references/` is code-drop only. Never put jury/scoring into UI strings or hub messages.

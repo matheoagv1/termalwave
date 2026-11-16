@@ -1,0 +1,16 @@
+---
+description: TermalWave coordinacion por hub tw (lean, siempre activa)
+globs:
+alwaysApply: true
+---
+
+# TermalWave: contexto y coordinacion
+
+- Un repo, tres roles: vps (Master), carne (PC Carne), cricri (PC Cricri). Worktrees `-carne` y `-cricri`.
+- El tablero es el hub **tw**. Cada turno: `tw pulse` (o MCP `pulse`). Idle sin inbox ni wakes: parar.
+- Si actuas: tu tarea y el inbox nuevo; `archive` lo resuelto. `agents/<rol>/AGENTS.md` solo ante dudas de ownership.
+- Protocolo de notify: pending, start, leave, handoff. Delegar = `task add --owner` o `notify` con wake; el chat no cuenta.
+- Edita solo tus roots o los `paths` de la tarea (`tw guard`).
+- Producto: globo 3D primero, NISAR SAR, AOI Santiago del Estero, config sin hardcode. Copy visible ES-AR-SGO.
+- Nunca jurado, scoring ni secretos en UI, tareas o notifies. `references/` es solo codigo.
+- No abrir: `docs/archive/`, `references/`, `vendor/`, `web/dist/assets/`.

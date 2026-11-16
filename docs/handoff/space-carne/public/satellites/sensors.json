@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "group_kind": { "sar": "sar", "weather": "weather", "stations": "crew" },
+  "entries": [
+    {
+      "id": "nisar", "label": "NISAR", "operator": "NASA / ISRO",
+      "match": { "norad": [65053], "name": "^NISAR$" },
+      "kind": "sar", "band": "L + S", "sensor": "L-SAR + S-SAR (SweepSAR)", "mode": "SweepSAR",
+      "swath_km": 242, "look": "left", "incidence_deg": [33, 47], "altitude_km": 747, "repeat_days": 12,
+      "sources": ["nisar-facts", "nisar-handbook"]
+    },
+    {
+      "id": "saocom", "label": "SAOCOM 1A / 1B", "operator": "CONAE (Argentina)",
+      "match": { "norad": [43641, 46265], "name": "^SAOCOM 1[AB]$" },
+      "kind": "sar", "band": "L", "sensor": "L-SAR", "mode": "TOPSAR Wide (doble pol.)",
+      "swath_km": 350, "look": "right", "incidence_deg": [25, 45], "altitude_km": 619.6, "repeat_days": 16,
+      "sources": ["saocom-eoportal", "saocom-conae"]
+    },
+    {
+      "id": "sentinel-1", "label": "Sentinel-1A / 1C / 1D", "operator": "ESA / Copernicus",
+      "match": { "norad": [39634, 62261, 66315], "name": "^SENTINEL-1[A-D]$" },
+      "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "IW (Interferometric Wide)",
+      "swath_km": 250, "look": "right", "incidence_deg": [29.1, 46.0], "altitude_km": 693, "repeat_days": 12,
+      "sources": ["s1-sentiwiki"]
+    },
+    {
+      "id": "alos-2", "label": "ALOS-2 (Daichi-2)", "operator": "JAXA",
+      "match": { "norad": [39766], "name": "^ALOS-2$" },
+      "kind": "sar", "band": "L", "sensor": "PALSAR-2", "mode": "ScanSAR normal",
+      "swath_km": 350, "look": "right", "incidence_deg": [8, 70], "altitude_km": 628, "repeat_days": 14,
+      "sources": ["alos2-jaxa"]
+    },
+    {
+      "id": "alos-4", "label": "ALOS-4 (Daichi-4)", "operator": "JAXA",
+      "match": { "norad": [60182], "name": "^ALOS-4" },
+      "kind": "sar", "band": "L", "sensor": "PALSAR-3", "mode": "Stripmap regular",
+      "swath_km": 200, "look": "right", "incidence_deg": [30, 44], "altitude_km": 628, "repeat_days": 14,
+      "sources": ["alos4-jaxa"]
+    },
+    {
+      "id": "radarsat-2", "label": "RADARSAT-2", "operator": "MDA / CSA",
+      "match": { "norad": [32382], "name": "^RADARSAT-2$" },
+      "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "ScanSAR Wide",
+      "swath_km": 500, "look": "right", "incidence_deg": [20, 49], "altitude_km": 798,
+      "sources": ["rs2-eoportal"]
+    },
+    {
+      "id": "rcm", "label": "RADARSAT Constellation (RCM)", "operator": "CSA",
+      "match": { "norad": [44322, 44323, 44324], "name": "^RCM-[123]$" },
+      "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "Media resolución 50 m",
+      "swath_km": 350, "look": "right", "altitude_km": 600,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "terrasar", "label": "TerraSAR-X / TanDEM-X / PAZ", "operator": "DLR / Airbus / Hisdesat",
+      "match": { "norad": [31698, 36605, 43215], "name": "^(TERRASAR-X|TANDEM-X|PAZ)$" },
+      "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Stripmap",
+      "swath_km": 30, "look": "right", "incidence_deg": [20, 45], "altitude_km": 514,
+      "sources": ["tsx-eogateway"]
+    },
+    {
+      "id": "cosmo", "label": "COSMO-SkyMed / CSG", "operator": "ASI",
+      "match": { "norad": [31598, 32376, 33412, 37216, 44873, 51444, 67304], "name": "^(COSMO-SKYMED \\d|CSG-\\d)$" },
+      "kind": "sar", "band": "X", "sensor": "SAR-2000 / CSG-SAR", "mode": "Stripmap Himage",
+      "swath_km": 40, "look": "right", "altitude_km": 620,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "gaofen-3", "label": "Gaofen-3", "operator": "CNSA",
+      "match": { "norad": [41727, 49495, 52200], "name": "^GAOFEN-3( 0[23])?$" },
+      "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "ScanSAR ancho",
+      "swath_km": 500, "look": "right", "altitude_km": 755,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "kompsat-5", "label": "KOMPSAT-5", "operator": "KARI",
+      "match": { "norad": [39227], "name": "^ARIRANG-5" },
+      "kind": "sar", "band": "X", "sensor": "COSI", "mode": "Standard",
+      "swath_km": 30, "altitude_km": 550,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "iceye", "label": "ICEYE", "operator": "ICEYE",
+      "match": { "name": "^ICEYE-X\\d+" },
+      "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Strip",
+      "swath_km": 30, "altitude_km": 570,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "capella", "label": "Capella", "operator": "Capella Space",
+      "match": { "name": "^CAPELLA-\\d+" },
+      "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Stripmap",
+      "swath_km": 5, "altitude_km": 596,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "umbra", "label": "Umbra", "operator": "Umbra Space",
+      "match": { "name": "^UMBRA-\\d+" },
+      "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Spotlight",
+      "swath_km": 5, "altitude_km": 544,
+      "sources": ["gev-pack"]
+    },
+    {
+      "id": "viirs", "label": "Suomi NPP / NOAA-20 / NOAA-21", "operator": "NASA / NOAA",
+      "match": { "norad": [37849, 43013, 54234], "name": "^(SUOMI NPP|NOAA 2[01] \\(JPSS-[12]\\))$" },
+      "kind": "optical", "band": "visible / IR", "sensor": "VIIRS", "mode": "barrido",
+      "swath_km": 3040, "altitude_km": 830,
+      "sources": ["viirs-laads"]
+    },
+    {
+      "id": "metop", "label": "Metop-B / C", "operator": "EUMETSAT",
+      "match": { "norad": [38771, 43689], "name": "^METOP-[BC]$" },
+      "kind": "weather", "band": "visible / IR", "sensor": "AVHRR/3", "mode": "barrido",
+      "swath_km": 2900, "altitude_km": 817,
+      "sources": ["avhrr-eumetsat"]
+    },
+    {
+      "id": "sentinel-3", "label": "Sentinel-3A / 3B", "operator": "ESA / EUMETSAT",
+      "match": { "norad": [41335, 43437], "name": "^SENTINEL-3[AB]$" },
+      "kind": "optical", "band": "visible / NIR", "sensor": "OLCI", "mode": "barrido",
+      "swath_km": 1270, "altitude_km": 814,
+      "sources": ["s3-sentiwiki"]
+    },
+    {
+      "id": "geo-weather", "label": "Meteorológico geoestacionario", "operator": null,
+      "match": { "name": "^(GOES \\d+|EWS-G\\d|HIMAWARI-\\d|METEOSAT-\\d+|MTG-[IS]\\d|GEO-KOMPSAT-2A|INSAT-3D\\w*|ELEKTRO-L \\d|FENGYUN [24][A-H])" },
+      "kind": "weather", "band": "visible / IR", "sensor": "imager de disco completo", "mode": "disco completo",
+      "swath_km": null, "altitude_km": 35786,
+      "sources": ["goes-abi"]
+    },
+    {
+      "id": "stations", "label": "Estación espacial", "operator": null,
+      "match": { "norad": [25544, 48274], "name": "^(ISS \\(ZARYA\\)|CSS \\(TIANHE\\))$" },
+      "kind": "crew", "band": null, "sensor": null, "mode": null,
+      "swath_km": null, "altitude_km": 420,
+      "sources": []
+    }
+  ],
+  "sources": {
+    "nisar-facts": "https://nisar.jpl.nasa.gov/mission/quick-facts/",
+    "nisar-handbook": "https://nisar.jpl.nasa.gov/documents/26/NISAR_FINAL_9-6-19.pdf",
+    "saocom-eoportal": "https://www.eoportal.org/satellite-missions/saocom",
+    "saocom-conae": "https://www.argentina.gob.ar/ciencia/conae/misiones-espaciales/saocom",
+    "s1-sentiwiki": "https://sentiwiki.copernicus.eu/web/s1-mission",
+    "alos2-jaxa": "https://www.eorc.jaxa.jp/ALOS/en/alos-2/a2_sensor_e.htm",
+    "alos4-jaxa": "https://www.eorc.jaxa.jp/ALOS/en/alos-4/a4_sensor_e.htm",
+    "rs2-eoportal": "https://www.eoportal.org/satellite-missions/radarsat-2",
+    "tsx-eogateway": "https://earth.esa.int/eogateway/missions/terrasar-x-and-tandem-x",
+    "viirs-laads": "https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/",
+    "avhrr-eumetsat": "https://www.eumetsat.int/avhrr",
+    "s3-sentiwiki": "https://sentiwiki.copernicus.eu/web/s3-mission",
+    "goes-abi": "https://www.nesdis.noaa.gov/advanced-baseline-imager-scan-mode-information",
+    "gev-pack": "imaging_sensors.json (MIT), which cites the operator page for each entry"
+  }
+}

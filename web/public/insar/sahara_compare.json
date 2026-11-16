@@ -1,0 +1,42 @@
+{
+ "granule": "NISAR_L2_PR_GCOV_033_108_D_077_0005_NASV_A_20261019T165256_20261019T165331_P05023_N_F_J_001",
+ "collection": "NISAR_L2_GCOV_PROVISIONAL_V1",
+ "maturity": "provisional",
+ "date": "2026-10-19",
+ "track": 108,
+ "direction": "descending",
+ "frame": 77,
+ "bbox": [
+  24.52848461829774,
+  21.22898575407135,
+  27.927362479872812,
+  24.302871310157187
+ ],
+ "coordinates": [
+  [
+   24.52848461829774,
+   24.302871310157187
+  ],
+  [
+   27.927362479872812,
+   24.302871310157187
+  ],
+  [
+   27.927362479872812,
+   21.22898575407135
+  ],
+  [
+   24.52848461829774,
+   21.22898575407135
+  ]
+ ],
+ "image": "/insar/sahara_gcov_browse.png",
+ "bounds_from": "product _LATLON.kml",
+ "landsat": {
+  "layer": "HLS_L30_Nadir_BRDF_Adjusted_Reflectance",
+  "date": "2026-10-16",
+  "hls_granule": "HLS.L30.T35QMF.2026289T083820.v2.0",
+  "cloud_cover_pct": 0
+ },
+ "honesty": "measured"
+}

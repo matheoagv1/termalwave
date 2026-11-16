@@ -1,0 +1,601 @@
+/* ============================================================
+   anto design system: colors_and_type.css
+   all units are relative (rem/em), no raw px anywhere including border
+   width, see --border-width below for the same treatment applied to
+   every other size token
+   ============================================================ */
+
+/* --- fonts --- */
+/* wire uses system monospace + serenityos emoji */
+/* jetbrains mono loaded as a higher-quality stand-in for system monospace in design tools */
+
+@font-face {
+  font-family: 'picon';
+  src: url('fonts/picon.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
+   wire color tokens: all 5 official themes
+   token names match the source exactly
+   ============================================================ */
+
+/* --- default / original-light --- */
+:root, [data-theme="original-light"] {
+  --bg:            #fff;
+  --bg2:           #f5f5f5;
+  --bg3:           #e8e8e8;
+  --text:          #000;
+  --text2:         #444;
+  --text3:         #5f5f5f;
+  --theme-accent:  #00f;
+  --accent:        var(--theme-accent);
+  --accent2:       #0000cc;
+  --border:        #000;
+  --border2:       #ccc;
+  --ok:            #060;
+  --warn:          #8a5a00;
+  --err:           #c00;
+  --ping:          #8a5a00;
+  --msg-me:        #f0f0f0;
+  --hover:         #fcfcfc;
+  --modal-bg:      #fff;
+  --shadow:        rgba(0,0,0,.12);
+  --status-border: var(--bg2);
+}
+
+[data-theme="new-light"] {
+  --bg:            #f8f8fb;
+  --bg2:           #eeeef4;
+  --bg3:           #e0e0ea;
+  --text:          #111118;
+  --text2:         #44444e;
+  --text3:         #5d5d6b;
+  --theme-accent:  #4a54d4;
+  --accent:        var(--theme-accent);
+  --accent2:       #3340b8;
+  --border:        #767684;
+  --border2:       #d4d4de;
+  --ok:            #0f6b32;
+  --warn:          #7a5a00;
+  --err:           #b01212;
+  --ping:          #7a5a00;
+  --msg-me:        #e8e8f0;
+  --hover:         #e4e4ec;
+  --modal-bg:      #f8f8fb;
+  --shadow:        rgba(0,0,0,.12);
+  --status-border: var(--bg2);
+}
+
+[data-theme="original-dark"] {
+  --bg:            #0d0d0f;
+  --bg2:           #151517;
+  --bg3:           #1e1e22;
+  --text:          #ececf0;
+  --text2:         #b0b0c0;
+  --text3:         #a2a2b2;
+  --theme-accent:  #4466ff;
+  --accent:        var(--theme-accent);
+  --accent2:       #2244cc;
+  --border:        #4a4a58;
+  --border2:       #22222a;
+  --ok:            #4cd68a;
+  --warn:          #e8bd3a;
+  --err:           #ff6b6b;
+  --ping:          #ddaa22;
+  --msg-me:        #181820;
+  --hover:         #1c1c22;
+  --modal-bg:      #151517;
+  --shadow:        rgba(0,0,0,.5);
+  --status-border: var(--bg2);
+}
+
+[data-theme="dark"], [data-theme="new-dark"] {
+  --bg:            #111114;
+  --bg2:           #18181c;
+  --bg3:           #222228;
+  --text:          #e8e8ee;
+  --text2:         #b8b8c8;
+  --text3:         #a6a6b8;
+  --theme-accent:  #7c85f5;
+  --accent:        var(--theme-accent);
+  --accent2:       #5a62d0;
+  --border:        #4a4a58;
+  --border2:       #25252e;
+  --ok:            #5fe08a;
+  --warn:          #f5c842;
+  --err:           #ff7a7a;
+  --ping:          #f5c842;
+  --msg-me:        #1c1c22;
+  --hover:         #1e1e24;
+  --modal-bg:      #18181c;
+  --shadow:        rgba(0,0,0,.45);
+  --status-border: var(--bg2);
+}
+
+[data-theme="red-dark"] {
+  --bg:            #0a0000;
+  --bg2:           #1a0505;
+  --bg3:           #2a0808;
+  --text:          #f5d4d2;
+  --text2:         #e0b0ad;
+  --text3:         #d9a8a5;
+  --theme-accent:  #ff6b63;
+  --accent:        var(--theme-accent);
+  --accent2:       #d94d45;
+  --border:        #8a4a45;
+  --border2:       #52201c;
+  --ok:            #5fd68a;
+  --warn:          #ffdd55;
+  --err:           #ff6a62;
+  --ping:          #ffdd55;
+  --msg-me:        #2a0808;
+  --hover:         #2a0808;
+  --modal-bg:      #1a0505;
+  --shadow:        rgba(255,107,99,.2);
+  --status-border: var(--bg2);
+}
+
+/* ============================================================
+   legacy aliases (kept for backwards compat with preview cards)
+   ============================================================ */
+:root {
+  --accent-fg:  var(--on-accent);
+  --color-bg:           var(--bg);
+  --color-surface:      var(--bg2);
+  --color-surface-hi:   var(--bg3);
+  --color-surface-hover:var(--hover);
+  --color-border:       var(--border);
+  --color-border-focus: var(--accent);
+  --color-text:         var(--text);
+  --color-text-muted:   var(--text3);
+  --color-text-disabled:var(--text3);
+  --color-text-link:    var(--accent);
+  --color-primary:      var(--accent);
+  --color-primary-fg:   #fff;
+  --color-primary-hover:var(--accent2);
+  --color-danger:       var(--err);
+  --color-success:      var(--ok);
+  --color-warning:      var(--warn);
+}
+
+/* ============================================================
+   typography tokens
+   ============================================================ */
+:root {
+  --font-mono:  'JetBrains Mono', 'Iosevka', 'Cascadia Code', ui-monospace, monospace;
+  --font-icon:  'picon';
+
+  /* scale: all in rem, composed against --text-scale (default 1) so a
+     live text size control can zoom every font-size token at once
+     without touching spacing/radius/border, the same compositional
+     pattern as --ease feeding --transition-fast/base below: one
+     variable, every consumer already reads it, zero component changes */
+  --text-scale: 1;
+  --text-xs:    calc(0.625rem * var(--text-scale));   /* 10px @ scale 1 */
+  --text-sm:    calc(0.75rem  * var(--text-scale));   /* 12px @ scale 1, default ui text */
+  --text-base:  calc(0.875rem * var(--text-scale));   /* 14px @ scale 1, primary body text */
+  --text-md:    calc(1rem     * var(--text-scale));   /* 16px @ scale 1, medium heading */
+  --text-lg:    calc(1.25rem  * var(--text-scale));   /* 20px @ scale 1 */
+  --text-xl:    calc(1.5rem   * var(--text-scale));   /* 24px @ scale 1 */
+  --text-2xl:   calc(2rem     * var(--text-scale));   /* 32px @ scale 1 */
+
+  /* weight */
+  --weight-normal: 400;
+  --weight-bold:   700;
+
+  /* line heights */
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-code:   1.6;
+}
+
+/* ============================================================
+   spacing tokens (8px grid = 0.5rem base)
+   ============================================================ */
+:root {
+  --space-1:  0.25rem;   /* 4px */
+  --space-2:  0.5rem;    /* 8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+}
+
+/* ============================================================
+   shape, elevation, motion-curve, ui-font tokens
+   these are the axes a theme touches to become something other than
+   suckless: rounded instead of square, lifted instead of flat, eased
+   instead of linear, humanist instead of monospace. they are not
+   per-theme (the 5 palettes above only touch color). they live once
+   at :root with defaults that reproduce today's exact look, and a
+   custom theme overrides only the ones it cares about via its own
+   [data-theme="name"] block. see SPEC.md sections 2.6 and 6.
+   ============================================================ */
+:root {
+  /* --radius is the one knob most themes need. component tokens below
+     alias to it so "round everything" is a single line, but a theme
+     that wants tiers (e.g. cards rounder than buttons) can still set
+     them individually. --radius-dot is intentionally not aliased to
+     --radius: status-dot squareness is a semantic signal, not a
+     decorative default, so rounding it is an opt-in, not a side effect. */
+  --radius:        0;
+  --radius-sm:     var(--radius);
+  --radius-lg:     var(--radius);
+  --radius-pill:   var(--radius);
+  --radius-btn:    var(--radius);
+  --radius-input:  var(--radius);
+  --radius-card:   var(--radius-lg);
+  --radius-modal:  var(--radius-lg);
+  --radius-tag:    var(--radius-pill);
+  --radius-dot:    0;
+
+  /* density: how roomy panel() (components.tsx) is by default. a
+     separate axis from --space-* (which stays fixed, because the
+     type/icon/gap scale should not move just because panels get airier)
+     and from --radius (a theme can be dense and round, or roomy and
+     square, and the two do not imply each other). */
+  --panel-padding: var(--space-4);
+
+  /* depth-as-contrast is the suckless default (SPEC.md section 1.1):
+     all four empty. a theme adds real shadow values to opt into
+     elevation. -inset is the separate "sunken surface" axis (form
+     fields, slider tracks), kept apart from elevation-1/2/3 because a
+     recessed look and a raised one are never the same shadow recipe. */
+  --elevation-1: none;
+  --elevation-2: none;
+  --elevation-3: none;
+  --elevation-inset: none;
+
+  /* components read --font-ui, not --font-mono, for interface chrome.
+     --font-mono stays the literal monospace stack (used directly by
+     code/pre/.code below) so a theme swapping the ui face does not
+     accidentally reflow code blocks too. default: identical output. */
+  --font-ui: var(--font-mono);
+
+  /* headingPage/headingSection (components.tsx) read this, not
+     --font-ui directly, so a theme can pair a display face with a
+     different ui face (e.g. kona, serif headings over a sans body)
+     without a second typography axis for every other component.
+     aliased to --font-ui by default: out of the box, headings and
+     body text are still the same monospace stack. */
+  --font-display: var(--font-ui);
+
+  /* the easing half of every transition token below. swap this one
+     variable and every component's motion curve changes at once,
+     without re-specifying duration everywhere it is used. */
+  --ease: linear;
+
+  /* text color drawn on top of a solid --accent fill (primary button,
+     active sidebar item, status bar). white by default; a theme with a
+     light/pastel accent overrides this instead of every consumer
+     re-deriving contrast by hand. */
+  --on-accent: #fff;
+}
+
+[data-theme="dark"], [data-theme="new-dark"] {
+  --on-accent: #101014;
+}
+
+/* ============================================================
+   semantic type styles (use as classes or cascade)
+   ============================================================ */
+
+/* base reset. border-radius now reads the token above instead of a
+   hardcoded !important 0, same default result, but a theme can
+   change --radius and have it cascade. components that need a
+   *different* radius than the page default (see the component tokens
+   above) set it inline, which already wins over this rule without
+   needing !important anywhere. */
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-radius: var(--radius);
+}
+
+body {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background: var(--color-bg);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+}
+
+h2, .h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-3);
+}
+
+h3, .h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-2);
+}
+
+h4, .h4 {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-2);
+}
+
+p, .body {
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+}
+
+.small {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+code, .code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--fg0);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  line-height: var(--leading-code);
+}
+
+pre {
+  padding: var(--space-4);
+  overflow-x: auto;
+  display: block;
+}
+
+a, .link {
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   icon utility
+   ============================================================ */
+.icon {
+  font-family: var(--font-icon);
+  font-size: 1rem;      /* 16px */
+  line-height: 1;
+  display: inline-block;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+}
+.icon-sm  { font-size: 1rem; }     /* 16px */
+.icon-md  { font-size: 1.5rem; }   /* 24px */
+.icon-lg  { font-size: 2rem; }     /* 32px */
+.icon-xl  { font-size: 2.5rem; }   /* 40px */
+
+/* ============================================================
+   picon checkbox / radio
+   ============================================================ */
+[data-before]::before {
+  font-family: var(--font-icon);
+  content: attr(data-before);
+}
+[data-before-checked]:checked::before {
+  font-family: var(--font-icon);
+  content: attr(data-before-checked);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-icon);
+  font-size: 1rem;
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+/* ============================================================
+   focus, z-index, and interaction tokens
+   ============================================================ */
+:root {
+  --transition-fast: 50ms var(--ease);
+  --transition-base: 100ms var(--ease);
+
+  /* single source for all border widths: no px anywhere */
+  --border-width: 0.0625rem;   /* 1px */
+
+  /* focus-visible outline uses accent so keyboard nav is always visible; no box-shadow */
+  --focus-outline: 0.125rem solid var(--accent);   /* 2px */
+  /* purely additive halo, off by default. a theme that wants a soft
+     shadow-ring focus style instead of (or in addition to) the hard
+     outline, e.g. to sit flush against a rounded control with no
+     visible gap, sets this and optionally sets --focus-outline: none. */
+  --focus-shadow: none;
+
+  /* layer stack for overlays */
+  --z-tooltip: 50;
+  --z-modal:   100;
+  --z-toast:   200;
+  /* tooltips, toggletips and menus. above the modal, because a control inside a
+     dialog opens its popup from within it */
+  --z-popover: 300;
+}
+
+/* keyboard-only focus ring; suppressed for pointer navigation */
+:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0.0625rem;
+  box-shadow: var(--focus-shadow);
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* honor prefers-reduced-motion by dropping all durations */@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* ============================================================
+   HOURGLASS LOADING ANIMATION (picon)
+   ============================================================ */
+@keyframes picon-hourglass {
+  0%   { content: 'hourglass0'; }
+  12%  { content: 'hourglass1'; }
+  25%  { content: 'hourglass2'; }
+  37%  { content: 'hourglass3'; }
+  50%  { content: 'hourglass4'; }
+  62%  { content: 'hourglass5'; }
+  75%  { content: 'hourglass6'; }
+  87%  { content: 'hourglass7'; }
+  100% { content: 'hourglass8'; }
+}
+
+.loading-icon::before {
+  font-family: var(--font-icon);
+  content: 'hourglass0';
+  animation: picon-hourglass 800ms steps(1) infinite;
+  display: inline-block;
+}
+
+/* ============================================================
+   SLIDER (input[type="range"])
+   Rectangular track, square thumb, no native rounded chrome.
+   Class-based because thumb/track pseudo-elements can't be
+   reached from inline styles.
+   ============================================================ */
+.anto-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--space-2);
+  background: var(--bg2);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-input);
+  box-shadow: var(--elevation-inset);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+.anto-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.anto-slider:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0.0625rem;
+}
+.anto-slider::-webkit-slider-runnable-track {
+  height: var(--space-2);
+  background: transparent;
+}
+.anto-slider::-moz-range-track {
+  height: var(--space-2);
+  background: transparent;
+  border: none;
+}
+.anto-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--space-3);
+  height: calc(var(--space-2) + 0.25rem);
+  background: var(--accent);
+  border: var(--border-width) solid var(--accent);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  margin-top: -0.0625rem;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+.anto-slider::-moz-range-thumb {
+  width: var(--space-3);
+  height: calc(var(--space-2) + 0.25rem);
+  background: var(--accent);
+  border: var(--border-width) solid var(--accent);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+.anto-slider:disabled::-webkit-slider-thumb { background: var(--text3); border-color: var(--text3); }
+.anto-slider:disabled::-moz-range-thumb     { background: var(--text3); border-color: var(--text3); }
+
+/* ============================================================
+   NUMBER INPUT (input[type="number"])
+   NumberInput (components.tsx) already draws its own -/+ Btns; the
+   browser's native up/down spin button is a second, redundant control
+   that only appears on hover and reads as a misaligned stray widget,
+   suppressed the same way the slider's native chrome is, since these
+   pseudo-elements aren't reachable from inline styles either.
+   ============================================================ */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ============================================================
+   SKELETON / INDETERMINATE PROGRESS
+   Both pulse opacity only, never width or transform, so an
+   indeterminate loading state stays inside the motion invariant
+   (background, color, border-color, opacity, nothing positional) the
+   same way Spinner cycles glyphs instead of rotating one.
+   ============================================================ */
+@keyframes anto-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.anto-skeleton { animation: anto-pulse 1.2s var(--ease) infinite; }
+.anto-progress-indeterminate { animation: anto-pulse 1s var(--ease) infinite; }
+
+/* ============================================================
+   COLLAPSE (disclosure)
+   A grid whose row track animates between 0fr and 1fr reaches the
+   content's natural height without measuring it in JS. This is the one
+   size-like transition the kit allows, and only for disclosure, where an
+   instant open would lose the reader's place. prefers-reduced-motion
+   zeroes animation-duration above, so the reduced path stays instant.
+   ============================================================ */
+@keyframes anto-collapse-in {
+  from { grid-template-rows: 0fr; opacity: 0; }
+  to   { grid-template-rows: 1fr; opacity: 1; }
+}
+@keyframes anto-collapse-out {
+  from { grid-template-rows: 1fr; opacity: 1; }
+  to   { grid-template-rows: 0fr; opacity: 0; }
+}
