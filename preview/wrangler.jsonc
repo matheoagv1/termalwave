@@ -24,6 +24,8 @@
     }
   ],
   "vars": {
+    // 1 = anonymous read-only access to the site (A-01); 0 = login required again
+    "PUBLIC_MODE": "1",
     "APP_NAME": "TermalWave Preview",
     // must match config/apis.toml [tiles] origin_host / key_header; key is the TILE_ORIGIN_KEY secret
     "TILE_ORIGIN": "https://origin.termalwave.space",

@@ -49,6 +49,14 @@ async function handle(request, env, ctx) {
   }
 
   const session = await readSession(request, env);
+  // PUBLIC_MODE=1 (wrangler var; rollback: set it to 0 and redeploy) lets anonymous visitors read the site:
+  // GET/HEAD only, normalized path, never /auth, and only the read-only /api routes listed below.
+  if (!session && env.PUBLIC_MODE === "1" && isPublicRead(request, path)) {
+    const api = await handleApi(request, env, ctx);
+    if (api) return api;
+    if (!env.ASSETS) return new Response("ASSETS binding missing", { status: 500 });
+    return withCachePolicy(path, await env.ASSETS.fetch(request));
+  }
   if (!session) {
     // only page loads get the login redirect; a fetch that follows it would
     // receive the login html with status 200 and cache it as data
@@ -67,6 +75,26 @@ async function handle(request, env, ctx) {
     return new Response("ASSETS binding missing", { status: 500 });
   }
   return withCachePolicy(path, await env.ASSETS.fetch(request));
+}
+
+const PUBLIC_API = new Set(["/api/search", "/api/ephemeris", "/api/satellites", "/api/firms", "/api/nisar/coverage", "/api/wind", "/api/clouds"]);
+
+/**
+ * @param {Request} request
+ * @param {string} rawPath
+ */
+function isPublicRead(request, rawPath) {
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  let p;
+  try {
+    p = decodeURIComponent(rawPath);
+  } catch {
+    return false;
+  }
+  if (p.includes("\\") || p.includes("\0") || p.includes("//") || p.split("/").includes("..")) return false;
+  if (p === "/auth" || p.startsWith("/auth/")) return false;
+  if (p.startsWith("/api/")) return PUBLIC_API.has(p) || p.startsWith("/api/clouds/");
+  return true;
 }
 
 // hashed build output never changes under the same name; everything else
