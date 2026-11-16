@@ -1,5 +1,5 @@
 import React from "react";
-import type { LayerCopy } from "./layer-copy";
+import { changeFormula, coreTitle, type LayerCopy } from "./layer-copy";
 import type { LayerRowModel } from "./layer-model";
 import { Provenance } from "./Provenance";
 
@@ -16,8 +16,11 @@ function Field({ k, children }: { k: string; children: React.ReactNode }): React
 
 export function LayerDetail({ id, row, c }: P): React.ReactElement {
   const d = row.detail;
+  const title = coreTitle(row.id, c.lang, row.label);
+  const formula = d.formula || changeFormula(row.id, d.formula);
   return (
     <div id={id} className="twl-detail">
+      <p className="twl-label">{title}</p>
       {d.note ? <p className="twl-note" role="note">{d.note}</p> : null}
       <dl className="twl-fields">
         {d.what ? <Field k={c.what}>{d.what}</Field> : null}
@@ -36,7 +39,7 @@ export function LayerDetail({ id, row, c }: P): React.ReactElement {
         ) : null}
         {d.unit ? <Field k={c.unit}>{d.unit}</Field> : null}
         {d.range ? <Field k={c.range}>{d.range}</Field> : null}
-        {d.formula ? <Field k={c.formula}><code className="twl-code">{d.formula}</code></Field> : null}
+        {formula ? <Field k={c.formula}><code className="twl-code">{formula}</code></Field> : null}
         {d.product ? <Field k={c.source}>{d.product}</Field> : null}
         {d.date ? <Field k={c.date}>{d.date}</Field> : null}
         <Field k={c.honesty}>

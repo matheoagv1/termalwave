@@ -65,7 +65,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     status: { online: true, terrain: true, basemap: true },
     dockOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     basemap: savedBasemap(this.props.basemaps),
-    tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
+    tlOpen: false,
     immersive: false,
     introOpen: !intro0.done,
     introDone: intro0.done,
@@ -80,8 +80,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     nisar: { status: "idle", count: 0, msg: "", passes: [] },
     clouds: { status: "idle", msg: "" },
     lang: detectLangSafe(),
-    railL: wideScreen() ? "data" : "",
-    railR: wideScreen() ? "area" : "",
+    railL: "",
+    railR: "",
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -1078,10 +1078,6 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       </LangProvider>
     );
   }
-}
-
-function wideScreen(): boolean {
-  return typeof window !== "undefined" && window.innerWidth >= 760;
 }
 
 function detectLangSafe(): Lang {

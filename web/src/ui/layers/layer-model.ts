@@ -4,7 +4,7 @@ import { fmtOf, type Copy, type Lang } from "../../app/i18n";
 import type { View } from "../../app/view";
 import { isExampleHonesty } from "../../data/radar-scale";
 import type { LayerDef } from "../../tw/contract";
-import { BUNDLED_META, layerCopy, type LayerCopy, type MetaRow } from "./layer-copy";
+import { BUNDLED_META, coreTitle, layerCopy, type LayerCopy, type MetaRow } from "./layer-copy";
 import { catalog, rampGradient, text as catText, useCatalogVersion } from "../../scene/catalog";
 import { dateText, statusText } from "../../scene/catalog/copy";
 
@@ -155,7 +155,7 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
     const def = defs[item.id];
     if (!def) continue;
     const meta = metaOf(item.id);
-    const label = pick(meta, "label") || item.label;
+    const label = coreTitle(item.id, lang, pick(meta, "label") || item.label);
     const frame = tick ? tick.frames[item.id] ?? null : null;
     const frameMeta = (frame ?? {}) as Record<string, unknown>;
     const honesty = normHonesty(frameMeta.honesty) ?? item.honesty;

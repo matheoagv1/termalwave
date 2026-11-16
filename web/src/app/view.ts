@@ -1,4 +1,5 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
+import { coreTitle } from "../ui/layers/layer-copy";
 import { isExampleHonesty, isPlaceholderRange, isRadarLayer, RADAR_HH, RADAR_HV, radarPol } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
 import { topicCopy } from "../ui/setup/missions";
@@ -77,7 +78,7 @@ export function buildView(m: Model) {
   const layers: LayerDef[] = ds
     ? ds.layers.map((l) => {
         const row = l as LayerDef & { label_en?: string; label_es?: string; what_en?: string; what_es?: string };
-        const label = S.lang === "es" ? row.label_es || l.label : row.label_en || l.label;
+        const label = coreTitle(l.id, S.lang, S.lang === "es" ? row.label_es || l.label : row.label_en || l.label);
         const note = S.lang === "es" ? row.what_es || l.note : row.what_en || l.note;
         return label === l.label && note === l.note ? l : { ...l, label, note };
       })
@@ -93,7 +94,7 @@ export function buildView(m: Model) {
   };
   const grad = (l: LayerDef): string =>
     "linear-gradient(90deg," + l.ramp.map((r) => `${r.color} ${r.at * 100}%`).join(",") + ")";
-  const cardOpen = isM ? S.sheet : S.ficha;
+  const cardOpen = isM ? S.sheet || !!S.railR : S.ficha;
   const panel = "var(--panel)";
   const bd = "1px solid var(--line)";
   const bl = "blur(10px)";

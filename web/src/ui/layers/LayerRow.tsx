@@ -1,5 +1,5 @@
 import React from "react";
-import type { LayerCopy } from "./layer-copy";
+import { changeFormula, coreTitle, type LayerCopy } from "./layer-copy";
 import type { LayerRowModel } from "./layer-model";
 import { LayerDetail } from "./LayerDetail";
 
@@ -24,13 +24,15 @@ export function ConfidenceMeter({ value, label }: { value: number; label: string
 
 export function LayerRow({ row, c, open, onOpen }: P): React.ReactElement {
   const detailId = `twl-detail-${row.key}`;
+  const title = coreTitle(row.id, c.lang, row.label);
+  const formula = changeFormula(row.id, row.detail.formula);
   const state = row.tone === "busy" ? "busy" : row.tone === "warn" ? "warn" : row.on ? "on" : "off";
   return (
     <li className={`twl-row${row.on ? " is-on" : ""}${open ? " is-open" : ""}`} data-layer-id={row.id}>
       <div className="twl-top">
-        <button type="button" className="twl-name" aria-expanded={open} aria-controls={detailId} title={c.details(row.label)} onClick={onOpen}>
+        <button type="button" className="twl-name" aria-expanded={open} aria-controls={detailId} title={c.details(title)} onClick={onOpen}>
           <span className="twl-swatch" aria-hidden="true" style={{ background: row.swatch }} />
-          <span className="twl-label">{row.label}</span>
+          <span className="twl-label">{title}</span>
           <span className="twl-caret" aria-hidden="true">{open ? "−" : "+"}</span>
         </button>
         <div className="twl-right">
@@ -41,8 +43,8 @@ export function LayerRow({ row, c, open, onOpen }: P): React.ReactElement {
               className={`twl-chip twl-chip--read${row.reading ? " is-on" : ""}`}
               aria-pressed={row.reading}
               aria-disabled={row.reading}
-              title={row.reading ? c.readingTitle : c.readTitle(row.label)}
-              aria-label={row.reading ? c.readingTitle : c.readTitle(row.label)}
+              title={row.reading ? c.readingTitle : c.readTitle(title)}
+              aria-label={row.reading ? c.readingTitle : c.readTitle(title)}
               onClick={row.read ?? undefined}
             >
               {row.reading ? c.reading : c.read}
@@ -59,7 +61,7 @@ export function LayerRow({ row, c, open, onOpen }: P): React.ReactElement {
               aria-disabled={!row.toggle || !!row.locked}
               aria-busy={row.tone === "busy"}
               title={row.toggleTitle}
-              aria-label={`${row.label}: ${row.toggleTitle}`}
+              aria-label={`${title}: ${row.toggleTitle}`}
               onClick={row.toggle ?? undefined}
             >
               {row.toggleText}
@@ -74,6 +76,12 @@ export function LayerRow({ row, c, open, onOpen }: P): React.ReactElement {
         ) : null}
       </div>
       {row.locked && !row.statusOnly && !row.reading ? <div className="twl-reason">{row.locked}</div> : null}
+      {formula ? (
+        <div className="twl-meta">
+          <span className="twl-status">{c.formula}</span>
+          <code className="twl-code">{formula}</code>
+        </div>
+      ) : null}
       {row.confidence != null ? <ConfidenceMeter value={row.confidence} label={c.confidence} /> : null}
       {open ? <LayerDetail id={detailId} row={row} c={c} /> : null}
     </li>

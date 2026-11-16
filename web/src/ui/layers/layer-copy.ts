@@ -197,6 +197,24 @@ export function layerCopy(lang: Lang): LayerCopy {
   return lang === "es" ? es : en;
 }
 
+// The core layer has one name in both surfaces. Remote copy often shortens it to "Radar".
+export function coreTitle(id: string, lang: Lang, fallback: string): string {
+  if (id !== "radar") return fallback;
+  const named = lang === "es" ? BUNDLED_META.radar?.label_es : BUNDLED_META.radar?.label_en;
+  return named || fallback;
+}
+
+// "Cambio entre fechas" reuses the change clause already written on the radar entry.
+export function changeFormula(id: string, published: string): string {
+  if (id !== "change") return "";
+  const own = published.trim();
+  if (own) return own;
+  const src = BUNDLED_META.radar?.formula ?? "";
+  const mark = "Change = ";
+  const at = src.indexOf(mark);
+  return at >= 0 ? src.slice(at).trim() : "";
+}
+
 export type MetaRow = Record<string, string>;
 
 // Mirror of config/layers.toml for builds whose app-config does not publish the
