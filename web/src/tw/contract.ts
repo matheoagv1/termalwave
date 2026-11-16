@@ -20,6 +20,8 @@ export interface LayerDef {
   ramp: Array<{ at: number; color: string }>;
   note: string;
   decimals?: number;
+  honesty?: string;
+  pol?: string;
   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
   category?: "data" | "prediction" | "inference";
   core?: boolean;
@@ -38,6 +40,7 @@ export interface FrameRef {
   bytes?: number;
   source?: string;
   quality?: "ok" | "partial";
+  honesty?: string;
 }
 
 export interface TimeTick {
@@ -177,6 +180,9 @@ export interface SceneApi {
   getState(): SceneState;
   flyTo(camera: CameraMode): Promise<void>;
   resetToOrbit(): Promise<void>;
+  // two-phase return to the wide view; does not clear panels, layers, or the search
+  backToEarth?(): Promise<void>;
+  fitBounds?(bounds: Bounds): Promise<void>;
   onChange(cb: (state: SceneState) => void): () => void;
   onPick(cb: (hotspotId: string | null) => void): () => void;
   status(): { online: boolean; terrain: boolean; basemap: boolean };

@@ -40,7 +40,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 onClick={a.togglePlay}
                 disabled={tl.noPlay}
                 aria-label={tl.playLabel}
-                title={`${tl.playLabel} (Espacio)`}
+                title={`${tl.playLabel} (${t.timeline.space})`}
                 style={s(`${sq};border:1px solid var(--line2);background:${tl.playBg};color:${tl.playFg};cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px`)}
               >
                 {v.playing ? (
@@ -64,7 +64,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
               className="tw-tl-sel"
               style={s("flex:1 1 160px;min-width:0;padding:4px 8px 4px 10px;border-left:3px solid var(--acc);background:var(--sel)")}
             >
-              <div style={s("font:11px var(--sans);color:var(--fg2)")}>{v.compareOn ? "Fecha activa para comparar" : "Fecha seleccionada"}</div><div style={s("font:600 15px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.name}</div>
+              <div style={s("font:11px var(--sans);color:var(--fg2)")}>{v.compareOn ? t.timeline.compareDate : t.timeline.selectedDate}</div><div style={s("font:600 15px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.name}</div>
               <div style={s("font:11px var(--mono);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{tl.meta}</div>
             </div>
             {v.compareOn && (
@@ -196,14 +196,14 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 </div>
                 <span>{tl.y1}</span>
-                <span title="Estás viendo esta fecha" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ Estás en: " + tl.name}</span>
+                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ " + t.timeline.youAreHere + ": " + tl.name}</span>
               </div>
               {v.compareOn && (
                 <div style={s("font:11px var(--sans);color:var(--fg2);line-height:1.35")}>{v.compareHint}</div>
               )}
             </>
           )}
-          {v.compareOn && v.tlOpen && <p style={s("margin:0;font:12px var(--sans);color:var(--fg2);line-height:1.35")}>Elegí A o B y después una fecha para comparar las dos imágenes.</p>}
+          {v.compareOn && v.tlOpen && <p style={s("margin:0;font:12px var(--sans);color:var(--fg2);line-height:1.35")}>{t.timeline.pickCompare}</p>}
           {tl.single && v.tlOpen && <div style={s("font:11px var(--mono);color:var(--fg2)")}>{t.timeline.singlePoint}</div>}
           {v.compareOn && v.tlOpen && (
             <div style={s("font:11px var(--sans);color:var(--fg2);padding:2px 0;line-height:1.35")}>{v.compareHint}</div>
@@ -303,7 +303,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                   )}
                 </div>
                 <span>{tl.y1}</span>
-                <span title="Estás viendo esta fecha" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ Estás en: " + tl.name}</span>
+                <span title={t.timeline.youAreHereTitle} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--acc-fg);border:1px solid var(--acc-fg);padding:1px 6px")}>{"◆ " + t.timeline.youAreHere + ": " + tl.name}</span>
                 {v.isD && <span style={s("font:11px var(--sans);max-width:330px;line-height:1.25")}>{t.timeline.scaleNote}</span>}
               </div>
             </>

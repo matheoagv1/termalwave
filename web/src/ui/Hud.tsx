@@ -2,6 +2,7 @@ import React from "react";
 import type { App } from "../app/App";
 import { s } from "../app/css";
 import type { View } from "../app/view";
+import { Icon } from "./icons";
 import { IntroOverlay } from "./IntroOverlay";
 import { MonigoteBuddy } from "./MonigoteBuddy";
 import { TipLayer } from "./TipLayer";
@@ -54,7 +55,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           onPointerDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           style={s(
-            `position:absolute;left:50%;transform:translateX(-50%);bottom:${lay.entB};max-width:calc(100% - 24px);pointer-events:auto;z-index:21;height:${lay.hit};padding:0 18px;touch-action:manipulation;${PRIMARY}`,
+            `position:absolute;left:50%;transform:translateX(-50%);bottom:${v.frameBottom};max-width:calc(100% - 24px);pointer-events:auto;z-index:21;height:${lay.hit};padding:0 18px;touch-action:manipulation;${PRIMARY}`,
           )}
         >
           {t.entry.backToArea}
@@ -134,8 +135,8 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             <div style={s("border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:8px")}>
               <p className="tw-pixel" style={s("margin:0;font-size:8px;line-height:1.6;color:var(--fg2);text-wrap:pretty")}>{t.layers.lead}</p>
               {v.basemapItems.length > 0 && (
-                <div role="radiogroup" aria-label="Mapa base" style={s("display:flex;flex-direction:column;gap:4px;margin-top:4px")}>
-                  <div className="tw-pixel" style={s("font-size:7px;line-height:1.6;color:var(--fg2)")}>Mapa base</div>
+                <div role="radiogroup" aria-label={t.layers.basemap} style={s("display:flex;flex-direction:column;gap:4px;margin-top:4px")}>
+                  <div className="tw-pixel" style={s("font-size:7px;line-height:1.6;color:var(--fg2)")}>{t.layers.basemap}</div>
                   {v.basemapItems.map((bm) => (
                     <button
                       key={bm.id}
@@ -220,7 +221,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                 />
               )}
               {l.core && (
-                <span title="Siempre activa: es el núcleo del producto" style={s("flex:none;font:9px var(--mono);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 4px;color:var(--fg2)")}>NÚCLEO</span>
+                <span title={t.layers.coreTitle} style={s("flex:none;font:9px var(--mono);letter-spacing:.06em;border:1px solid var(--line2);padding:1px 4px;color:var(--fg2)")}>{t.layers.core}</span>
               )}
               <span style={s("flex:none;font:11px var(--mono);color:var(--fg2)")}>{l.unit}</span>
             </button>
@@ -229,7 +230,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           })}
           {v.dockOpen && v.overlayItems.length > 0 && (
             <div role="group" aria-label="Superponer capas" style={s("border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-direction:column;gap:6px")}>
-              <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>Superponer</span>
+              <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>{t.layers.overlay}</span>
               <div style={s("display:flex;flex-wrap:wrap;gap:6px")}>
                 {v.overlayItems.map((o) => (
                   <button
@@ -238,7 +239,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
                     className="tw-hov"
                     aria-pressed={o.on}
                     disabled={o.core}
-                    title={o.core ? "Siempre activa: es el núcleo del producto" : o.on ? "Quitar de encima del mapa" : "Mostrar encima de la capa activa"}
+                    title={o.core ? t.layers.coreTitle : o.on ? t.layers.overlayOn : t.layers.overlayOff}
                     onClick={o.go}
                     style={s(`min-height:30px;padding:0 10px;border:1px solid ${o.on ? "var(--acc-fg)" : "var(--line2)"};background:${o.on ? "var(--sel)" : "transparent"};color:var(--fg);font:12px var(--sans);cursor:${o.core ? "default" : "pointer"}`)}
                   >
@@ -431,7 +432,7 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
           aria-label={t.camera.reset}
           style={s(`pointer-events:auto;height:40px;padding:0 10px;${PANEL};cursor:pointer;font:12px var(--sans);color:var(--fg);flex:none`)}
         >
-          Inicio
+          {t.camera.reset}
         </button>
       )}
       {v.searchField && (
@@ -513,6 +514,7 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
               </span>
             </button>
           )}
+          <LangSwitch v={v} a={a} />
           <button
             className="tw-hov"
             onClick={() => a.set({ help: !a.state.help })}
@@ -749,6 +751,14 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       <div style={s("font:500 15px var(--sans)")}>{v.areaName}</div>
                       <div style={s("font:11px var(--mono);color:var(--fg2)")}>{v.boundsText}</div>
                     </div>
+                    <button
+                      type="button"
+                      className="tw-hov"
+                      onClick={a.enter}
+                      style={s(`height:${lay.hit};padding:0 12px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
+                    >
+                      {t.entry.backToArea}
+                    </button>
                     <div>
                       <div style={s("font:11px var(--mono);color:var(--fg2)")}>
                         {v.layerName} · {v.momentName}
@@ -872,17 +882,37 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
             <span className="tw-pixel" style={s("font-size:8px;line-height:1.5")}>
               {t.legend.title}
             </span>
-            <span style={s("font:11px var(--mono);white-space:nowrap")}>
-              {leg.label} · {leg.unit}{leg.note?.trimStart().toUpperCase().startsWith("EJEMPLO") ? " · EJEMPLO" : ""}
+            <span style={s(`font:11px var(--mono);${leg.example ? "white-space:normal;text-align:right" : "white-space:nowrap"}`)}>
+              {leg.example ? leg.caption : `${leg.label} · ${leg.unit}`}
             </span>
           </div>
           <div style={s(`height:10px;background:${leg.grad}`)} />
-          <div style={s("display:flex;justify-content:space-between;font:11px var(--mono)")}>
-            <span>{leg.min}</span>
-            <span>{leg.max}</span>
-          </div>
+          {!leg.example && (
+            <div style={s("display:flex;justify-content:space-between;font:11px var(--mono)")}>
+              <span>{leg.min}</span>
+              <span>{leg.max}</span>
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function LangSwitch({ v, a }: { v: View; a: App }): React.ReactElement {
+  const { t } = v;
+  const lang = a.state.lang;
+  const seg = (on: boolean): string =>
+    `height:28px;min-width:32px;padding:0 6px;border:1px solid ${on ? "var(--acc-fg)" : "var(--line2)"};background:${on ? "var(--sel)" : "transparent"};cursor:pointer;font:11px var(--mono);color:${on ? "var(--acc-fg)" : "var(--fg2)"}`;
+  return (
+    <div role="group" aria-label={t.lang.label} style={s("display:flex;align-items:center;gap:4px")}>
+      <Icon.languages size={16} strokeWidth={2.25} aria-hidden />
+      <button type="button" className="tw-hov" aria-pressed={lang === "en"} onClick={() => a.setLang("en")} style={s(seg(lang === "en"))}>
+        {t.lang.en}
+      </button>
+      <button type="button" className="tw-hov" aria-pressed={lang === "es"} onClick={() => a.setLang("es")} style={s(seg(lang === "es"))}>
+        {t.lang.es}
+      </button>
     </div>
   );
 }

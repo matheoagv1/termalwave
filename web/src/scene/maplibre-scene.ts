@@ -58,6 +58,13 @@ const PLACE_FLY_KM = 0.45;
 const PLACE_ZOOM = 10;
 const PLACE_FLY_CURVE = 1.12;
 const CITY_HALF_DEG = 0.75;
+// wide view keeps the configured area in front; the fallback is only used when app-config has no aoi
+const GLOBE_ZOOM = 1.6;
+const ORBIT_ALTITUDE_ZOOM = 1.1;
+const ASCEND_MS = 2800;
+const SETTLE_MS = 1800;
+const GLOBE_FALLBACK: [number, number] = [-63.5, -27.5];
+const easeInOutCubic = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 // AOI image layers stay off until the footprint covers ~this fraction of the shorter viewport edge.
 const AOI_VIEWPORT_FRAC = 0.12;
 
@@ -138,10 +145,6 @@ export class MapLibreScene implements SceneApi {
   private markers: Marker[] = [];
   private ring: Marker | null = null;
   private handle!: HTMLDivElement;
-  private raf = 0;
-  private lastT = 0;
-  private interacting = false;
-  private resumeT: number | undefined;
   private flyId = 0;
   private slots: Slot[] = [
     { src: "tw-img-a", layer: "tw-img-a" },
@@ -161,6 +164,9 @@ export class MapLibreScene implements SceneApi {
   // zona activa desde busqueda; sin eso no hay outline ni PNG del AOI
   private placeOn = false;
   private placeBounds: Bounds | null = null;
+  // wide view is the framed continent; a place search turns it off until Back to Earth
+  private wide = true;
+  private flyingHome = false;
 
   constructor(o: Partial<MapSceneOptions> = {}) {
     this.o = {
@@ -186,8 +192,8 @@ export class MapLibreScene implements SceneApi {
     this.map = new maplibregl.Map({
       container: this.mapEl,
       style: this.baseStyle(),
-      center: this.o.home ?? [0, 0],
-      zoom: this.orbitZoom(),
+      center: this.globeCenter(),
+      zoom: GLOBE_ZOOM,
       minZoom: 0.6,
       maxZoom: 17,
       maxPitch: 70,
@@ -215,10 +221,6 @@ export class MapLibreScene implements SceneApi {
     this.bindHandle();
 
     this.map.on("style.load", () => this.onStyle());
-    this.map.on("dragstart", () => this.touch());
-    this.map.on("zoomstart", (e) => {
-      if ((e as { originalEvent?: unknown }).originalEvent) this.touch();
-    });
     this.map.on("move", () => {
       this.placeHandle();
       this.syncAoiOverlays();
@@ -234,13 +236,10 @@ export class MapLibreScene implements SceneApi {
       if (t instanceof HTMLElement && t.closest("[data-spot]")) return;
       this.cbP.forEach((cb) => cb(null));
     });
-    this.raf = requestAnimationFrame(this.loop);
   }
 
   destroy(): void {
-    cancelAnimationFrame(this.raf);
     cancelAnimationFrame(this.cmpRaf);
-    window.clearTimeout(this.resumeT);
     this.markers.forEach((m) => m.remove());
     this.ring?.remove();
     this.space?.destroy();
@@ -542,7 +541,8 @@ export class MapLibreScene implements SceneApi {
       map.setPaintProperty("tw-area", "line-opacity", on ? 1 : 0);
     }
     if (this.ring) {
-      this.ring.getElement().style.display = gate && c === "approach" ? "block" : "none";
+      const onOrbit = c === "orbit" && !!this.ds;
+      this.ring.getElement().style.display = onOrbit || (gate && c === "approach") ? "block" : "none";
     }
     this.syncAoiOverlays();
   }
@@ -898,6 +898,7 @@ export class MapLibreScene implements SceneApi {
   }
 
   private go(camera: CameraMode, opt: { fly: boolean; ms: number }): void {
+    if (this.flyingHome) return;
     try {
       this.goUnsafe(camera, opt);
     } catch (e) {
@@ -912,20 +913,15 @@ export class MapLibreScene implements SceneApi {
     const dur = this.dur(opt.ms);
     if (camera === "orbit") {
       const f = this.s.focus;
-      // sin focus: vista planeta neutra (0,0), no el centro del AOI
-      const center = f ? f.lonlat : (this.o.home ?? [0, 0]);
-      if (!f) {
+      if (this.wide || !f) {
         map.easeTo({
-          center: center as [number, number],
-          zoom: this.orbitZoom(),
-          pitch: 0,
-          bearing: 0,
-          padding: this.pad,
+          ...this.globeView(),
           duration: dur,
           essential: true,
         });
         return;
       }
+      const center = f.lonlat;
       const pitch = clamp(this.s.tilt, 25, 30);
       const bearing = this.s.northUp ? 0 : -18;
       const opts = {
@@ -972,11 +968,13 @@ export class MapLibreScene implements SceneApi {
   }
 
   flyTo(camera: CameraMode): Promise<void> {
+    if (camera === "orbit") return this.backToEarth();
+    this.wide = false;
     return new Promise((resolve) => {
       this.flyId += 1;
       const id = this.flyId;
       const from = this.s.camera;
-      let dur = camera === "orbit" ? 1800 : PLACE_FLY_MS;
+      let dur = PLACE_FLY_MS;
       if (camera === "territory" || camera === "detail") {
         const cam = this.territoryCam();
         const to =
@@ -985,7 +983,7 @@ export class MapLibreScene implements SceneApi {
             : cam?.center;
         if (to) dur = this.flightMsTo(to);
       }
-      this.s.camera = camera === "territory" || camera === "orbit" ? "approach" : camera;
+      this.s.camera = camera === "territory" ? "approach" : camera;
       this.emit();
       const finish = (): void => {
         if (id !== this.flyId) return resolve();
@@ -995,7 +993,7 @@ export class MapLibreScene implements SceneApi {
       };
       if (!this.ready) return finish();
       this.map.once("moveend", finish);
-      this.go(camera, { fly: from === "orbit" || camera === "orbit", ms: dur });
+      this.go(camera, { fly: from === "orbit", ms: dur });
       // sin moveend si reducedMotion o camara no calculable
       window.setTimeout(() => {
         if (id === this.flyId && !this.map.isMoving()) {
@@ -1007,9 +1005,122 @@ export class MapLibreScene implements SceneApi {
   }
 
   resetToOrbit(): Promise<void> {
-    if (this.s.focus) delete this.s.focus;
-    this.applyFocus();
-    return this.flyTo("orbit");
+    return this.backToEarth();
+  }
+
+  private globeCenter(): [number, number] {
+    const a = this.o.aoi;
+    if (!a) return GLOBE_FALLBACK;
+    return [(a.west + a.east) / 2, (a.south + a.north) / 2];
+  }
+
+  private globeView(): { center: [number, number]; zoom: number; pitch: number; bearing: number } {
+    return { center: this.globeCenter(), zoom: GLOBE_ZOOM, pitch: 0, bearing: 0 };
+  }
+
+  backToEarth(): Promise<void> {
+    return new Promise((resolve) => {
+      this.flyId += 1;
+      const id = this.flyId;
+      this.wide = true;
+      if (!this.ready) {
+        this.s.camera = "orbit";
+        this.flyingHome = false;
+        this.emit();
+        resolve();
+        return;
+      }
+      const map = this.map;
+      map.stop();
+      const view = this.globeView();
+      const finish = (): void => {
+        if (id !== this.flyId) {
+          resolve();
+          return;
+        }
+        this.flyingHome = false;
+        this.s.camera = "orbit";
+        this.emit();
+        resolve();
+      };
+      if (this.o.reducedMotion) {
+        map.jumpTo(view);
+        finish();
+        return;
+      }
+      this.flyingHome = true;
+      let cancelled = false;
+      const onUser = (): void => {
+        cancelled = true;
+        map.stop();
+      };
+      map.once("dragstart", onUser);
+      map.once("wheel", onUser);
+      const here = map.getCenter();
+      map.flyTo({
+        center: here,
+        zoom: ORBIT_ALTITUDE_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        duration: ASCEND_MS,
+        curve: 1.6,
+        essential: true,
+      });
+      map.once("moveend", () => {
+        map.off("dragstart", onUser);
+        map.off("wheel", onUser);
+        if (id !== this.flyId || cancelled) {
+          finish();
+          return;
+        }
+        map.easeTo({ ...view, duration: SETTLE_MS, easing: easeInOutCubic, essential: true });
+        map.once("moveend", finish);
+      });
+    });
+  }
+
+  fitBounds(bounds: Bounds): Promise<void> {
+    this.wide = false;
+    this.placeOn = true;
+    this.placeBounds = bounds;
+    return new Promise((resolve) => {
+      this.flyId += 1;
+      const id = this.flyId;
+      const finish = (): void => {
+        if (id !== this.flyId) {
+          resolve();
+          return;
+        }
+        this.s.camera = "territory";
+        this.emit();
+        resolve();
+      };
+      if (!this.ready) {
+        finish();
+        return;
+      }
+      const dur = this.dur(2000);
+      this.map.stop();
+      this.map.fitBounds(
+        [
+          [bounds.west, bounds.south],
+          [bounds.east, bounds.north],
+        ],
+        { padding: this.pad, duration: dur, maxZoom: 14, essential: true },
+      );
+      if (dur === 0) {
+        finish();
+        return;
+      }
+      const done = (): void => {
+        this.map.off("moveend", done);
+        finish();
+      };
+      this.map.once("moveend", done);
+      window.setTimeout(() => {
+        if (id === this.flyId && !this.map.isMoving()) done();
+      }, dur + 400);
+    });
   }
 
   set(n: Parameters<SceneApi["set"]>[0], opt: { instant?: boolean } = {}): void {
@@ -1113,7 +1224,7 @@ export class MapLibreScene implements SceneApi {
     this.pad = { ...p };
     this.host?.style.setProperty("--tw-pad-b", p.bottom + "px");
     this.host?.style.setProperty("--tw-pad-r", p.right + "px");
-    if (!this.ready) return;
+    if (!this.ready || this.flyingHome || this.map.isMoving()) return;
     const cam = this.s.camera;
     if (cam === "orbit") this.go("orbit", { fly: false, ms: 300 });
     else if (cam === "territory" || cam === "detail") this.go(cam, { fly: false, ms: 300 });
@@ -1129,20 +1240,4 @@ export class MapLibreScene implements SceneApi {
     return { x: p.x, y: p.y };
   }
 
-  private touch(): void {
-    this.interacting = true;
-    window.clearTimeout(this.resumeT);
-    this.resumeT = window.setTimeout(() => (this.interacting = false), 4000);
-  }
-
-  // El globo gira despacio en orbita, salvo que haya movimiento reducido o se lo esté tocando.
-  private loop = (t: number): void => {
-    this.raf = requestAnimationFrame(this.loop);
-    const dt = Math.min(0.1, (t - (this.lastT || t)) / 1000);
-    this.lastT = t;
-    if (!this.ready || this.s.camera !== "orbit" || this.interacting || this.s.focus || this.o.reducedMotion) return;
-    if (this.map.isMoving()) return;
-    const c = this.map.getCenter();
-    this.map.setCenter([c.lng + 3 * dt, c.lat]);
-  };
 }

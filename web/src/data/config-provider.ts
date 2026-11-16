@@ -15,6 +15,7 @@ import type {
 import bundledThemes from "../context/themes.json";
 import bundledTopics from "../context/topics.json";
 import { layerDef } from "./layer-defaults";
+import { applyRadarScales, type RadarRanges } from "./radar-scale";
 import {
   createPlaceSearch,
   searchConfigFromApp,
@@ -24,6 +25,7 @@ import {
 // Formato actual del backend (app-config.json): una lista plana de años.
 type DatasetFile = Dataset & {
   layers_taxonomy?: LegacyConfig["layers_taxonomy"];
+  radar_ranges?: RadarRanges;
 };
 
 type LegacyConfig = {
@@ -48,6 +50,7 @@ type LegacyConfig = {
     google_maps_enabled?: boolean;
   };
   scene?: { google_maps_enabled?: boolean };
+  radar_ranges?: RadarRanges;
   data_sources?: Record<
     string,
     {
@@ -128,6 +131,10 @@ async function tryJson<T>(url: string): Promise<T | null> {
   }
 }
 
+function radarRanges(cfg: LegacyConfig | null | undefined, extra?: { radar_ranges?: RadarRanges }): RadarRanges | undefined {
+  return extra?.radar_ranges ?? cfg?.radar_ranges;
+}
+
 function validBounds(b: Bounds | undefined): b is Bounds {
   return (
     !!b &&
@@ -171,10 +178,13 @@ export class ConfigProvider implements DataProvider {
             ramp: l.ramp?.length ? l.ramp : base.ramp,
             unit: l.unit || base.unit,
             range: l.range ?? base.range,
+            honesty: l.honesty ?? base.honesty,
+            pol: l.pol ?? base.pol,
           };
         }),
         cfg ?? (direct.layers_taxonomy ? { layers_taxonomy: direct.layers_taxonomy } : null),
       );
+      direct.layers = applyRadarScales(direct.layers, radarRanges(cfg, direct));
       if (!direct.themes?.length && direct.layers_taxonomy?.themes?.length) {
         direct.themes = direct.layers_taxonomy.themes;
       }
@@ -193,7 +203,7 @@ export class ConfigProvider implements DataProvider {
     const ds = this.fromLegacy(cfg);
     const remoteCtx = await tryJson<ContextEntry[]>(this.base + "context.json");
     ds.context = resolveContext(remoteCtx ?? undefined);
-    ds.layers = mergeLayerTaxonomy(ds.layers, cfg);
+    ds.layers = applyRadarScales(mergeLayerTaxonomy(ds.layers, cfg), cfg.radar_ranges);
     attachMeta(ds, cfg);
     this.check(ds);
     this.ds = ds;

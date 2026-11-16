@@ -116,3 +116,59 @@ Vocabulario preferido en copy visible: radar, NISAR, backscatter, capa, cambio, 
 ## Que no es este archivo
 
 Este archivo y `agents/*/AGENTS.md` **no** se sirven por `web/dist` ni se embeben en el frontend.
+
+## Guía de UI, UX y datos de Termal Wave
+
+### Producto
+- Termal Wave muestra cambios de superficie con radar NISAR y datos abiertos. Cada capa responde: **qué es, para quién, qué decisión ayuda a tomar**.
+- El núcleo NISAR está siempre presente; el usuario elige qué vista de NISAR ver.
+- Personas: brigada/Dirección de Bosques, asesor agro/INTA, docente/periodista.
+
+### Honestidad de datos (no negociable)
+- Toda capa declara su etiqueta: MEDIDO, DERIVADO, MODELO, INFERIDO o EJEMPLO, visible en la fila, la leyenda, la lectura y Fuentes.
+- Lo que falta es **"sin dato"** con motivo. Nunca 0, nunca cielo despejado, nunca un valor interpolado sin avisar.
+- Respuesta OK con 0 resultados = estado "sin datos en esta ventana" (neutro, no rojo).
+- Conteos parciales llevan "SOLO VISTA ACTUAL".
+- Fallback o cache: decirlo ("usando cache del 14 nov").
+- Inferencias muestran su fórmula y supuestos. Sismicidad: "susceptibilidad", nunca "predicción".
+- Paletas con rango físico fijo y unidades. Prohibido rotular dB una rampa 0–1.
+- Productos NISAR: mostrar producto exacto (`NISAR_L2_GCOV_V1`…), fecha de adquisición y madurez (validado/provisional/beta).
+- Lo decorativo (runas, brillos del HUD) se documenta como decorativo en el componente.
+- Nada de textos para desarrolladores, ni de puntaje/jurado, en strings de la UI.
+
+### Idiomas (ES/EN)
+- La app es bilingüe completa: inglés y español rioplatense. Ningún string visible fuera de `t()`; ningún componente con texto literal.
+- Diccionarios en `web/src/context/locales/{es,en}.ts` con las mismas claves. Una clave nueva se agrega en los dos a la vez.
+- Orden de idioma: `?lang=` en la URL > elección guardada (`tw-lang`) > **inglés por defecto** (período de evaluación).
+- Prohibido mezclar idiomas en una pantalla: datos externos (geocoder, Worker, `layers.toml`) también vienen en el idioma activo o se traducen por código.
+- Números, fechas y unidades con `Intl` según el idioma (ES `−17,8 dB` · `2 nov 2026, 19:22 ART`; EN `−17.8 dB` · `Nov 2, 2026, 7:22 PM ART`). Zona horaria fija `America/Argentina/Buenos_Aires`.
+- Traducir el sentido, no las palabras. El inglés suena nativo; el español usa voseo.
+
+### Arquitectura de capas
+- Una capa = fuente (consigue registros) + render (dibuja) + ficha (metadatos). Interfaz: init / enable / disable / update / destroy / getStats.
+- La fuente no toca el mapa; el render no hace fetch.
+- Secretos solo del lado servidor (Worker o pipeline). Nunca en el bundle, el board, notify ni la UI.
+- Capa nueva = ficha completa en `config/layers.toml` (id, label corto, category, honesty, what, decision, unit, range, ramp, nodata, source, product, resolution, cadence, license, needs_key, fetch, formula, caveats) + entrada en Fuentes + captura y video corto en el PR.
+- No redistribuir datos sin permiso: si la licencia no lo deja, se pide en runtime.
+
+### Layout y navegación
+- El globo manda; la UI es vidrio oscuro en los bordes.
+- Rail izquierdo: Datos · Modelos y pronósticos · Inferencias · Utilidades · Anotación y análisis · Visual.
+- Rail derecho: Área · Lectura · Fuentes · Leyenda · Inspección.
+- Un panel abierto por lado. El encabezado del panel queda fijo fuera del área con scroll.
+- Fila de capa: toggle + nombre corto + una línea meta (fuente · fecha · etiqueta). Ajustes en la tarjeta, plegados.
+- "Volver a la Tierra" = alejarse manteniendo el centro (~2,8 s) y luego ir a la vista inicial. No borra paneles, capas ni anotaciones.
+- Mobile: barra inferior de pestañas y hojas inferiores.
+
+### Estética de marca
+- Tokens `--tw-*` del kit; cian = radar, brasa = calor, dorado = acento/inferencias, naranja = EJEMPLO.
+- Press Start 2P solo para etiquetas cortas y HUD (8/16/24 px). Cuerpo en IBM Plex Sans; números en IBM Plex Mono. Fuentes servidas localmente con `@font-face`.
+- Íconos: solo `lucide-react` a través de `web/src/ui/icons.ts`. SVG propio solo si Lucide no lo tiene (sombrero, báculo, runas, glifos NISAR), en `web/src/ui/icons/custom/`, grilla 24, mismo trazo.
+- Animación con mesura: un elemento animado a la vez, 150–300 ms en UI, sin loops decorativos, todo apagable, respeta `prefers-reduced-motion`. Sonido apagado por defecto.
+- El monigote reacciona a estados (cargando, sin datos, error, éxito); nunca tapa paneles ni leyendas.
+
+### Calidad antes de mergear
+- Probar: panel abierto, plegado, oculto, deshabilitado y con error; foco de teclado; Escape; mouse y touch; último ítem con scroll; resize sin recargar; 390 px de ancho.
+- Nombres accesibles cortos (`aria-label`), descripción en `aria-describedby`.
+- Sin errores nuevos en consola; sin requests a endpoints inexistentes.
+- Flujo: LAND → FF ≤ 10 min → DEPLOY. Verificar en vivo que el hash del bundle cambió.

@@ -1,6 +1,7 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
+import { isExampleHonesty, isPlaceholderRange, isRadarLayer } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
-import { F, T } from "../tw/catalog.es-AR.js";
+import { copyOf, fmtOf } from "./i18n";
 import type { LayerDef, LayerTheme, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
 import type { AppState, Flat } from "./types";
 
@@ -37,6 +38,8 @@ const MOBILE = 760;
 
 export function buildView(m: Model) {
   const S = m.state;
+  const T = copyOf(S.lang);
+  const F = fmtOf(S.lang);
   const theme = m.theme;
   const ds = S.ds;
   const sc = S.scene;
@@ -48,7 +51,8 @@ export function buildView(m: Model) {
   const pad = isM ? 8 : 12;
   const hasDs = !!ds;
   const err = S.err;
-  const hud = (cam === "territory" || cam === "detail") && !err;
+  // the layer dock stays up on the wide view, including before a search
+  const hud = ((cam === "territory" || cam === "detail") || (cam === "orbit" && hasDs && S.introDone)) && !err;
   // la interfaz 2D es opcional: en modo inmersivo solo queda la escena y la cámara
   const chrome = hud && !S.immersive;
   const imm = S.immersive;
@@ -116,7 +120,11 @@ export function buildView(m: Model) {
 
   // capas — headings por tema (GEV); badge de categoría como secundario
   const CAT_ORDER = ["data", "prediction", "inference"];
-  const CAT_LABEL: Record<string, string> = { data: "Datos", prediction: "Predicciones", inference: "Inferencias" };
+  const CAT_LABEL: Record<string, string> = {
+    data: T.layers.catData,
+    prediction: T.layers.catPrediction,
+    inference: T.layers.catInference,
+  };
   const catOf = (l: LayerDef): string => l.category ?? "data";
   const themeRows: LayerTheme[] =
     ds?.themes?.length ? ds.themes : (bundledThemes as LayerTheme[]);
@@ -312,16 +320,22 @@ export function buildView(m: Model) {
         go: () => m.set({ trade: i }),
       }))
     : [];
+  const frameHonesty = (fr as { honesty?: string } | null)?.honesty;
+  const exampleLegend = !!L && isRadarLayer(L.id) && (
+    isExampleHonesty(frameHonesty) || isExampleHonesty(L.honesty) || (L.unit.trim().toLowerCase() === "db" && isPlaceholderRange(L.range))
+  );
   const leg = L
     ? {
         grad: grad(L),
-        min: F.value(L.range[0], L.unit, dec),
-        max: F.value(L.range[1], L.unit, dec),
+        min: exampleLegend ? "" : F.value(L.range[0], L.unit, dec) ?? "",
+        max: exampleLegend ? "" : F.value(L.range[1], L.unit, dec) ?? "",
         label: L.label,
-        unit: L.unit,
+        unit: exampleLegend ? "" : L.unit,
         note: L.note,
+        example: exampleLegend,
+        caption: exampleLegend ? T.legend.example : "",
       }
-    : { grad: "none", min: "", max: "", label: "", unit: "", note: "" };
+    : { grad: "none", min: "", max: "", label: "", unit: "", note: "", example: false, caption: "" };
 
   // linea de tiempo
   const isDark = theme === "dark";
@@ -627,17 +641,17 @@ export function buildView(m: Model) {
         key: x.provider,
         name: provName(x.provider),
         ok: x.ok,
-        note: !x.ok ? T.sources.failed : x.count == null ? "Cantidad no informada" : x.count === 0 ? "Sin registros" : T.sources.records(x.count),
+        note: !x.ok ? T.sources.failed : x.count == null ? T.sources.countUnknown : x.count === 0 ? T.sources.noRecords : T.sources.records(x.count),
         hint: sourceNote(x.provider) ?? "",
       })),
-      count: g.count == null ? "Cantidad no informada" : g.count === 0 ? "Sin detecciones en el área y periodo" : T.sources.records(g.count),
+      count: g.count == null ? T.sources.countUnknown : g.count === 0 ? T.sources.noneInArea : T.sources.records(g.count),
       fromCache: g.fromCache,
     };
   });
   const sourcesAt =
     ds?.sourcesAt && !Number.isNaN(+new Date(ds.sourcesAt))
       ? T.sources.updated(
-          new Date(ds.sourcesAt).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" }),
+          new Date(ds.sourcesAt).toLocaleDateString(S.lang === "es" ? "es-AR" : "en-US", { day: "numeric", month: "short", year: "numeric" }),
         )
       : "";
   const tilt = st.terrain ? sc.tilt : 0;
@@ -708,6 +722,7 @@ export function buildView(m: Model) {
     mixed: compareOn && !!fa && !!fb && fa.seg.kind !== fb.seg.kind,
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
     cardOn: chrome, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
+    frameBottom: chrome ? `calc(${lay.tlB} + ${S.tlH}px + 10px)` : lay.entB,
     legendOn: chrome && !!L && (isM ? S.sheet : cardOpen),
     noSeries,
     isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
@@ -720,7 +735,9 @@ export function buildView(m: Model) {
     tabReadLine: S.tab === "read" ? "var(--acc-fg)" : "transparent",
     cardToggleText: cardOpen ? T.card.close : T.card.open,
     cardToggleGlyph: cardOpen ? (isM ? "↓" : "–") : "+",
-    boundsText: b ? `${F.lat(b.south)} a ${F.lat(b.north)} · ${F.lon(b.west)} a ${F.lon(b.east)}` : "",
+    boundsText: b
+      ? `${T.entry.range(F.lat(b.south) ?? "", F.lat(b.north) ?? "")} · ${T.entry.range(F.lon(b.west) ?? "", F.lon(b.east) ?? "")}`
+      : "",
     layerName: L ? L.label : "", momentName: fa ? nameOf(fa) : "",
     valueText,
     areaValueLabel,
