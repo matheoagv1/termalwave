@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# Build portable vendor trees from official binary wheels (VPS / networked machine only).
+# Targets and pins come from config/runtime.json — zero hardcoding in this script.
+# Usage: bash scripts/vendor.sh
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required to run this script" >&2
+  exit 1
+fi
+
+if ! python3 -m pip --version >/dev/null 2>&1; then
+  echo "pip is required on this machine to download wheels" >&2
+  exit 1
+fi
+
+PIP=(python3 -m pip)
+
+# shellcheck disable=SC2207
+mapfile -t TARGET_LINES < <(python3 - <<'PY'
+import json
+from pathlib import Path
+runtime = json.loads(Path("config/runtime.json").read_text(encoding="utf-8"))
+py = runtime["python"]
+abi = f"cp{py['major']}{py['minor']}"
+print(f"META|{py['major']}{py['minor']}|{abi}")
+for entry in runtime["platforms"]:
+    packages = " ".join(entry["packages"])
+    print(f"{entry['tag']}|{entry['pip_platform']}|{packages}")
+PY
+)
+
+META_LINE="${TARGET_LINES[0]}"
+IFS='|' read -r _ META_PYVER META_ABI <<<"$META_LINE"
+PYTHON_VERSION="$META_PYVER"
+ABI="$META_ABI"
+TARGETS=("${TARGET_LINES[@]:1}")
+
+PATHS_JSON="$(python3 - <<'PY'
+import json
+from pathlib import Path
+print(json.dumps(json.loads(Path("config/runtime.json").read_text(encoding="utf-8"))["paths"]))
+PY
+)"
+WHEEL_DIR="$ROOT/vendor/.wheels"
+TMP_DIR="$ROOT/vendor/.tmp"
+PYTHON_VENDOR="$ROOT/$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['vendor_python'])" "$PATHS_JSON")"
+MANIFEST_JSON="$ROOT/$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['manifest'])" "$PATHS_JSON")"
+MANIFEST_MD="$(dirname "$MANIFEST_JSON")/MANIFEST.md"
+
+rm -rf "$WHEEL_DIR" "$TMP_DIR"
+mkdir -p "$WHEEL_DIR" "$TMP_DIR" "$PYTHON_VENDOR"
+
+download_for_platform() {
+  local tag="$1"
+  local plat="$2"
+  local packages="$3"
+  local dest="$WHEEL_DIR/$tag"
+  mkdir -p "$dest"
+  echo "==> Downloading wheels for $tag ($plat): $packages"
+  # shellcheck disable=SC2086
+  "${PIP[@]}" download \
+    --only-binary=:all: \
+    --python-version "$PYTHON_VERSION" \
+    --platform "$plat" \
+    --implementation cp \
+    --abi "$ABI" \
+    --dest "$dest" \
+    $packages
+}
+
+extract_wheels() {
+  local tag="$1"
+  local src="$WHEEL_DIR/$tag"
+  local out="$PYTHON_VENDOR/$tag"
+  rm -rf "$out"
+  mkdir -p "$out"
+  echo "==> Extracting into $out"
+  local wheel
+  for wheel in "$src"/*.whl; do
+    [[ -f "$wheel" ]] || continue
+    python3 - "$wheel" "$out" <<'PY'
+import sys, zipfile
+from pathlib import Path
+wheel = Path(sys.argv[1])
+out = Path(sys.argv[2])
+with zipfile.ZipFile(wheel) as zf:
+    zf.extractall(out)
+print(f"  extracted {wheel.name}")
+PY
+  done
+}
+
+write_manifest() {
+  echo "==> Writing $MANIFEST_JSON and $MANIFEST_MD"
+  python3 - "$ROOT" "$MANIFEST_JSON" "$MANIFEST_MD" "$PYTHON_VENDOR" "${TARGETS[@]}" <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+manifest_json = Path(sys.argv[2])
+manifest_md = Path(sys.argv[3])
+vendor_python = Path(sys.argv[4])
+targets = sys.argv[5:]
+runtime = json.loads((root / "config" / "runtime.json").read_text(encoding="utf-8"))
+
+platforms = {}
+md_rows = []
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+package_names = []
+for item in targets:
+    tag, _plat, packages = item.split("|", 2)
+    for spec in packages.split():
+        name = spec.split("==", 1)[0]
+        if name not in package_names:
+            package_names.append(name)
+    out = vendor_python / tag
+    entries = []
+    for dist_info in sorted(out.glob("*.dist-info")):
+        meta = dist_info / "METADATA"
+        if not meta.is_file():
+            continue
+        digest = sha256_file(meta)
+        name = dist_info.name[: -len(".dist-info")]
+        ver = ""
+        for line in meta.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("Name:"):
+                name = line.split(":", 1)[1].strip()
+            elif line.startswith("Version:"):
+                ver = line.split(":", 1)[1].strip()
+        rel = str(meta.relative_to(out)).replace("\\", "/")
+        entries.append({
+            "name": name,
+            "version": ver,
+            "path": rel,
+            "sha256": digest,
+        })
+        md_rows.append((tag, name, ver, digest))
+    platforms[tag] = entries
+
+py = runtime["python"]
+py_label = f"{py['major']}.{py['minor']}"
+tags = [p["tag"] for p in runtime["platforms"]]
+manifest = {
+    "python": py_label,
+    "packages": package_names,
+    "platforms": platforms,
+}
+manifest_json.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+lines = [
+    "# Vendor manifest",
+    "",
+    "Generated by `scripts/vendor.sh` from `config/runtime.json`. Do not edit by hand.",
+    "",
+    "Hackathon note: license bundling is skipped for now.",
+    "",
+    f"Pinned Python: **{py_label}**",
+    "",
+    f"Runtime packages: {', '.join(package_names)} (plus transitive wheels).",
+    "",
+    "Supported tags: " + ", ".join(f"`{t}`" for t in tags) + ".",
+    "",
+    "| Platform tag | Package | Version | SHA256 (METADATA) |",
+    "|--------------|---------|---------|-------------------|",
+]
+for tag, name, ver, digest in md_rows:
+    lines.append(f"| `{tag}` | {name} | {ver} | `{digest}` |")
+lines.append("")
+manifest_md.write_text("\n".join(lines), encoding="utf-8")
+print(f"  platforms: {', '.join(platforms)}")
+print(f"  entries: {sum(len(v) for v in platforms.values())}")
+PY
+}
+
+for item in "${TARGETS[@]}"; do
+  IFS='|' read -r tag plat packages <<<"$item"
+  download_for_platform "$tag" "$plat" "$packages"
+  extract_wheels "$tag"
+done
+
+write_manifest
+
+rm -rf "$WHEEL_DIR" "$TMP_DIR"
+echo "Done. Vendored trees are in $PYTHON_VENDOR/"

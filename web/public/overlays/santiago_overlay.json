@@ -1,0 +1,13 @@
+{
+  "type": "termalwave_overlay",
+  "source": "santiago_sample.h5",
+  "png": "santiago_overlay.png",
+  "bounds": {
+    "west": -64.35,
+    "east": -64.15,
+    "south": -27.9,
+    "north": -27.7
+  },
+  "width": 160,
+  "height": 128
+}

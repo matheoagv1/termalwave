@@ -1,0 +1,516 @@
+{
+  "area": {
+    "name": "Santiago del Estero",
+    "bounds": {
+      "west": -64.35,
+      "east": -64.15,
+      "south": -27.9,
+      "north": -27.7
+    },
+    "center": [
+      -64.25,
+      -27.799999999999997
+    ]
+  },
+  "layers": [
+    {
+      "id": "radar",
+      "label": "Radar",
+      "unit": "dB",
+      "range": [
+        -30,
+        -5
+      ],
+      "ramp": [],
+      "note": "",
+      "honesty": "measured",
+      "note_en": "Before NISAR (launched 2025)",
+      "note_es": "Antes de NISAR (lanzado en 2025)"
+    },
+    {
+      "id": "suelo",
+      "label": "Estado del suelo",
+      "unit": "m³/m³",
+      "range": [
+        0.05,
+        0.4
+      ],
+      "ramp": [],
+      "note": "Open-Meteo (ERA5/ICON)",
+      "honesty": "model",
+      "decimals": 2
+    },
+    {
+      "id": "contaminacion",
+      "label": "Contaminacion",
+      "unit": "µg/m³",
+      "range": [
+        0.0,
+        40.0
+      ],
+      "ramp": [],
+      "note": "Open-Meteo Air Quality (CAMS)",
+      "honesty": "model",
+      "decimals": 0
+    },
+    {
+      "id": "incendios",
+      "label": "Incendios",
+      "unit": "detecciones",
+      "range": [
+        0,
+        203
+      ],
+      "ramp": [],
+      "note": "NASA FIRMS (VIIRS SNPP)",
+      "honesty": "measured",
+      "decimals": 0
+    },
+    {
+      "id": "change",
+      "label": "Change between dates",
+      "label_en": "Change between dates",
+      "label_es": "Cambio entre fechas",
+      "unit": "dB",
+      "range": [
+        -6,
+        6
+      ],
+      "ramp": [],
+      "note": "",
+      "honesty": "derived"
+    },
+    {
+      "id": "rvi",
+      "label": "Vegetation index",
+      "label_en": "Vegetation index",
+      "label_es": "Índice de vegetación",
+      "unit": "index",
+      "note": "4*HV/(HH+HV)",
+      "decimals": 2,
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": "",
+      "honesty": "inferred"
+    }
+  ],
+  "segments": [
+    {
+      "id": "anual",
+      "label": "Anos",
+      "from": "2018-01-01",
+      "to": "2026-12-31",
+      "granularity": "year",
+      "kind": "composite",
+      "ticks": [
+        {
+          "id": "y-2018",
+          "start": "2018-01-01",
+          "end": "2018-12-31",
+          "label": "2018",
+          "frames": {
+            "radar": null,
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.21745326967592593
+            },
+            "contaminacion": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 99
+            },
+            "change": null,
+            "rvi": null
+          }
+        },
+        {
+          "id": "y-2020",
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "label": "2020",
+          "frames": {
+            "radar": null,
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.17796006944444445
+            },
+            "contaminacion": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 203
+            },
+            "change": null,
+            "rvi": null
+          }
+        },
+        {
+          "id": "y-2022",
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "label": "2022",
+          "frames": {
+            "radar": null,
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.16807978877314814
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 5.9596875,
+              "quality": "partial"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 114
+            },
+            "change": null,
+            "rvi": null
+          }
+        },
+        {
+          "id": "y-2024",
+          "start": "2024-01-01",
+          "end": "2024-12-31",
+          "label": "2024",
+          "frames": {
+            "radar": null,
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.1863410734953704
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 6.158072916666666
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 155
+            },
+            "change": null,
+            "rvi": null
+          }
+        },
+        {
+          "id": "y-2026",
+          "start": "2026-01-01",
+          "end": "2026-12-31",
+          "label": "2026",
+          "frames": {
+            "radar": {
+              "url": "./overlays/nisar/20261102_t140_f102_HV.png",
+              "bounds": {
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
+              },
+              "kind": "acquisition",
+              "honesty": "measured",
+              "product": "NISAR_L2_GCOV_V1",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "maturity": "validated",
+              "pol": "HV",
+              "mean_db": -15.45017148522371
+            },
+            "suelo": {
+              "url": "./overlays/timeline/suelo/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.18576085069444445,
+              "quality": "partial"
+            },
+            "contaminacion": {
+              "url": "./overlays/timeline/contaminacion/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 5.766377314814815,
+              "quality": "partial"
+            },
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 48
+            },
+            "change": {
+              "url": "./overlays/nisar/change_20261021_20261102_HV.png",
+              "bounds": {
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
+              },
+              "kind": "acquisition",
+              "honesty": "derived",
+              "product": "GCOV_CHANGE",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "pol": "HV",
+              "mean_db": 0.6228802761237683
+            },
+            "rvi": {
+              "url": "./overlays/nisar/20261102_t140_f102_RVI.png",
+              "bounds": {
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
+              },
+              "kind": "acquisition",
+              "honesty": "inferred",
+              "product": "RVI",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "formula": "4*HV/(HH+HV)"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "context": [],
+  "sources": [
+    {
+      "kind": "fires",
+      "strategy": "union_dedupe",
+      "status": "ok",
+      "selected": [],
+      "tried": [
+        {
+          "provider": "firms_viirs_sp",
+          "ok": true,
+          "count": 0
+        },
+        {
+          "provider": "firms_viirs_nrt",
+          "ok": true,
+          "count": 0
+        },
+        {
+          "provider": "firms_modis",
+          "ok": true,
+          "count": 0
+        }
+      ],
+      "fromCache": false,
+      "count": 0
+    },
+    {
+      "kind": "weather",
+      "strategy": "first_available",
+      "status": "ok",
+      "selected": [
+        "open_meteo_archive"
+      ],
+      "tried": [
+        {
+          "provider": "open_meteo_archive",
+          "ok": true,
+          "count": 3240
+        },
+        {
+          "provider": "meteomatics",
+          "ok": false,
+          "count": null
+        }
+      ],
+      "fromCache": false,
+      "count": 3240
+    },
+    {
+      "kind": "optical",
+      "strategy": "least_cloudy_near_nisar",
+      "status": "ok",
+      "selected": [
+        "planetary_computer_s2"
+      ],
+      "tried": [
+        {
+          "provider": "planetary_computer_s2",
+          "ok": true,
+          "count": 50
+        }
+      ],
+      "fromCache": false,
+      "count": 1
+    },
+    {
+      "kind": "radar",
+      "strategy": "prefer_validated",
+      "status": "ok",
+      "selected": [],
+      "tried": [
+        {
+          "provider": "earthdata_nisar_gcov",
+          "ok": true,
+          "count": 0
+        }
+      ],
+      "fromCache": false,
+      "count": 0
+    },
+    {
+      "kind": "vessels",
+      "strategy": "union_dedupe",
+      "status": "ok",
+      "selected": [],
+      "tried": [
+        {
+          "provider": "aisstream",
+          "ok": true,
+          "count": 0
+        }
+      ],
+      "fromCache": false,
+      "count": 0
+    },
+    {
+      "kind": "aviation",
+      "strategy": "first_available",
+      "status": "ok",
+      "selected": [],
+      "tried": [
+        {
+          "provider": "opensky",
+          "ok": true,
+          "count": 0
+        }
+      ],
+      "fromCache": false,
+      "count": 0
+    },
+    {
+      "kind": "traffic",
+      "strategy": "first_available",
+      "status": "ok",
+      "selected": [],
+      "tried": [
+        {
+          "provider": "tomtom_traffic",
+          "ok": true,
+          "count": 0
+        }
+      ],
+      "fromCache": false,
+      "count": 0
+    }
+  ],
+  "sourcesAt": "2026-11-14T20:28:10.002602+00:00",
+  "isMock": false
+}

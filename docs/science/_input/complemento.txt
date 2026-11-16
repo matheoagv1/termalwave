@@ -1,0 +1,650 @@
+Sí. El otro chat te está pidiendo las **ecuaciones originales de las 17 propuestas**, incluidas las fórmulas establecidas que yo había dejado afuera al seleccionar solo los modelos propuestos.
+
+Te dejo a continuación un **complemento para enviarle junto con el texto de las 21 formulaciones**. Está organizado según los números originales F01 a F17, para evitar confusiones.
+
+---
+
+# Complemento: ecuaciones originales de las 17 propuestas de TermalWave
+
+Este texto complementa el documento de las 21 formulaciones propuestas. Incluye las ecuaciones establecidas y auxiliares que aparecen en las fichas originales de la investigación.
+
+Las fórmulas se presentan para revisión. Su inclusión **no confirma que estén correctamente aplicadas a TermalWave**, ni que ya haya datos reales suficientes para utilizarlas.
+
+## F01. Retrodispersión y cambio de superficie
+
+### Señal radar en decibeles
+
+\[
+B_{p,t}=10\log_{10}(\gamma^0_{p,t})
+\]
+
+### Cambio de señal entre dos fechas
+
+\[
+\Delta B_p=10\log_{10}
+\left(\frac{\gamma^0_{p,t_2}}{\gamma^0_{p,t_1}}\right)
+\]
+
+Donde:
+
+- \(\gamma^0\): potencia de retrodispersión normalizada, adimensional.
+- \(p\): polarización disponible.
+- \(t_1,t_2\): fechas comparadas.
+- \(B\) y \(\Delta B\): señal y cambio en decibeles.
+
+Las fechas deben tener geometría, polarización y procesamiento compatibles. El cambio radar no identifica por sí solo su causa.
+
+## F02. Sequía meteorológica y déficit climático
+
+### Precipitación acumulada
+
+\[
+X_{t,k}=\sum_{j=0}^{k-1}P_{t-j}
+\]
+
+- \(P_t\): precipitación mensual, en mm.
+- \(k\): cantidad de meses.
+- \(X_{t,k}\): precipitación acumulada.
+
+### Distribución gamma para SPI
+
+\[
+g(x)=\frac{x^{\alpha-1}e^{-x/\beta}}
+{\beta^\alpha\Gamma(\alpha)},\qquad x>0
+\]
+
+\[
+H(x)=q+(1-q)\int_0^xg(u)\,du
+\]
+
+\[
+SPI_{t,k}=\Phi^{-1}[H(X_{t,k})]
+\]
+
+- \(\alpha\): parámetro de forma.
+- \(\beta\): parámetro de escala, en mm.
+- \(q\): proporción de ceros.
+- \(\Gamma\): función gamma.
+- \(\Phi^{-1}\): cuantil de la distribución normal estándar.
+
+### Balance para SPEI
+
+\[
+D_t=P_t-ET_{0,t}
+\]
+
+\[
+D_{t,k}=\sum_{j=0}^{k-1}D_{t-j}
+\]
+
+### Distribución y transformación para SPEI
+
+\[
+F_D(x)=
+\left[
+1+\left(\frac{\alpha_D}{x-\xi_D}\right)^{\beta_D}
+\right]^{-1},
+\qquad x>\xi_D
+\]
+
+\[
+SPEI_{t,k}=\Phi^{-1}[F_D(D_{t,k})]
+\]
+
+- \(ET_0\): evapotranspiración de referencia, en mm.
+- \(\alpha_D\) y \(\xi_D\): parámetros de escala y ubicación, en mm.
+- \(\beta_D\): parámetro de forma.
+
+### Evapotranspiración de referencia FAO-56
+
+\[
+ET_0=
+\frac{
+0.408\Delta(R_n-G)+
+\gamma\frac{900}{T+273}u_2(e_s-e_a)
+}{
+\Delta+\gamma(1+0.34u_2)
+}
+\]
+
+Donde:
+
+- \(ET_0\): evapotranspiración, en mm/día.
+- \(R_n,G\): radiación neta y flujo de calor del suelo, en MJ/m²/día.
+- \(T\): temperatura media a dos metros, en °C.
+- \(u_2\): velocidad del viento a dos metros, en m/s.
+- \(e_s,e_a\): presiones de vapor de saturación y real, en kPa.
+- \(\Delta,\gamma\): pendiente de saturación y constante psicrométrica, en kPa/°C.
+
+Las constantes corresponden a esas unidades y a un paso diario.
+
+**Fuentes citadas en la investigación:** [guía SPI de la OMM](https://www.droughtmanagement.info/literature/WMO_standardized_precipitation_index_user_guide_en_2012.pdf), [SPEI](https://journals.ametsoc.org/abstract/journals/clim/23/7/2009jcli2909.1.xml) y [FAO-56](https://www.fao.org/4/X0490E/x0490e06.htm).
+
+## F03. Estado vegetal y estrés compatible con sequía
+
+### NDVI
+
+\[
+NDVI=
+\frac{\rho_{\mathrm{NIR}}-\rho_{\mathrm{rojo}}}
+{\rho_{\mathrm{NIR}}+\rho_{\mathrm{rojo}}}
+\]
+
+### NDMI
+
+\[
+NDMI=
+\frac{\rho_{\mathrm{NIR}}-\rho_{\mathrm{SWIR1}}}
+{\rho_{\mathrm{NIR}}+\rho_{\mathrm{SWIR1}}}
+\]
+
+Las \(\rho\) son reflectancias de superficie, adimensionales.
+
+### Anomalía estacional
+
+\[
+z_{v,t}=\frac{v_t-\mu_{v,d}}{s_{v,d}}
+\]
+
+- \(v_t\): índice observado.
+- \(\mu_{v,d}\): media histórica comparable.
+- \(s_{v,d}\): desviación estándar histórica, mayor que cero.
+
+El modelo propuesto de probabilidad de estrés está incluido como formulación 1 en el documento anterior de las 21 ecuaciones.
+
+## F04. Humedad del suelo superficial
+
+### Humedad volumétrica
+
+\[
+\theta=\frac{V_{\mathrm{agua}}}{V_{\mathrm{suelo}}}
+\]
+
+Se expresa en m³ de agua por m³ de suelo.
+
+### Modelo de nube de agua
+
+\[
+\sigma^0_{\mathrm{obs}}
+=A V_1\cos\iota(1-\tau^2)
++\tau^2\sigma^0_{\mathrm{suelo}}
+\]
+
+\[
+\tau^2=\exp\left(-\frac{2BV_2}{\cos\iota}\right)
+\]
+
+Donde:
+
+- \(\sigma^0_{\mathrm{obs}}\): retrodispersión observada.
+- \(\sigma^0_{\mathrm{suelo}}\): componente de retrodispersión del suelo.
+- \(\iota\): ángulo de incidencia.
+- \(V_1,V_2\): descriptores de vegetación.
+- \(A,B\): parámetros que requieren calibración.
+- \(\tau^2\): transmisividad de ida y vuelta.
+
+### Relación aproximada entre magnitudes radar
+
+\[
+\sigma^0\approx\eta\gamma^0
+\]
+
+\(\eta\) representa el factor de corrección correspondiente al producto. La investigación advierte que la conversión debe comprobarse para el producto específico.
+
+El índice relativo de humedad \(W_t\) está incluido como formulación 2 en el documento anterior.
+
+**Fuente citada:** [Attema y Ulaby, 1978](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/RS013i002p00357).
+
+## F05. Balance radicular y riego
+
+### Balance diario de agotamiento
+
+\[
+D_{r,t}=D_{r,t-1}-(P_t-RO_t)-I_t-CR_t+ET_{c,t}+DP_t
+\]
+
+- \(D_r\): agotamiento en la zona radicular.
+- \(P\): precipitación.
+- \(RO\): escorrentía.
+- \(I\): riego neto infiltrado.
+- \(CR\): ascenso capilar.
+- \(ET_c\): evapotranspiración del cultivo.
+- \(DP\): percolación profunda.
+
+Todos se expresan en mm por período de cálculo.
+
+### Agua disponible total y fácilmente disponible
+
+\[
+TAW=1000(\theta_{FC}-\theta_{WP})Z_r
+\]
+
+\[
+RAW=p\,TAW
+\]
+
+- \(\theta_{FC}\): humedad a capacidad de campo, en m³/m³.
+- \(\theta_{WP}\): humedad en el punto de marchitez, en m³/m³.
+- \(Z_r\): profundidad de raíces, en metros.
+- \(p\): fracción tolerable de agotamiento.
+
+### Coeficiente de estrés hídrico
+
+\[
+K_s=
+\begin{cases}
+1,&D_r\le RAW\\[4pt]
+\dfrac{TAW-D_r}{TAW-RAW},&RAW<D_r\le TAW
+\end{cases}
+\]
+
+### Evapotranspiración del cultivo
+
+\[
+ET_c=(K_sK_{cb}+K_e)ET_0
+\]
+
+- \(K_s\): coeficiente de estrés.
+- \(K_{cb}\): coeficiente basal del cultivo.
+- \(K_e\): coeficiente de evaporación.
+
+**Fuente citada:** [FAO-56: estrés hídrico](https://www.fao.org/4/X0490E/x0490e0e.htm).
+
+## F06. Agua superficial, inundación e hidroperíodo
+
+### MNDWI
+
+\[
+MNDWI=
+\frac{\rho_{\mathrm{verde}}-\rho_{\mathrm{SWIR1}}}
+{\rho_{\mathrm{verde}}+\rho_{\mathrm{SWIR1}}}
+\]
+
+### Superficie observada con agua
+
+\[
+A_t=\sum_i a_iI_{i,t}
+\]
+
+- \(a_i\): área del píxel, en m².
+- \(I_{i,t}\): indicador de agua o no agua.
+- \(A_t\): superficie observada, en m².
+
+### Frecuencia entre observaciones válidas
+
+\[
+O_i=
+\frac{\sum_t m_{i,t}I_{i,t}}
+{\sum_t m_{i,t}}
+\]
+
+\(m_{i,t}\) indica si la observación es válida.
+
+### Altura respecto del drenaje conectado
+
+\[
+HAND_i=z_i-z_{d(i)}
+\]
+
+\(HAND\) es una diferencia de elevación en metros; no es profundidad de inundación.
+
+## F07. Fuego activo y riesgo
+
+### Energía radiativa aproximada
+
+\[
+FRE\approx
+\sum_{j=1}^{n-1}
+\frac{FRP_j+FRP_{j+1}}{2}(t_{j+1}-t_j)
+\]
+
+- \(FRP\): potencia radiativa, en MW.
+- \(t\): tiempo, en segundos.
+- \(FRE\): energía aproximada, en MJ.
+
+La integración solo es defendible si la serie es suficientemente densa y consistente.
+
+## F08. Quemado, severidad y recuperación
+
+### NBR
+
+\[
+NBR_t=
+\frac{\rho_{\mathrm{NIR},t}-\rho_{\mathrm{SWIR2},t}}
+{\rho_{\mathrm{NIR},t}+\rho_{\mathrm{SWIR2},t}}
+\]
+
+### Cambio antes y después
+
+\[
+dNBR=NBR_{\mathrm{antes}}-NBR_{\mathrm{después}}
+\]
+
+### Comparación con una zona de control
+
+\[
+\Delta_t=
+(v_{\mathrm{quemado},t}-v_{\mathrm{control},t})
+-
+(v_{\mathrm{quemado},pre}-v_{\mathrm{control},pre})
+\]
+
+La interpretación causal requiere controles comparables y revisar otros cambios ocurridos en las zonas.
+
+El modelo exponencial de recuperación está incluido como formulación 3 en el documento anterior.
+
+## F09. Cobertura, uso y desmonte
+
+La clasificación probabilística está incluida como formulación 4 en el documento anterior.
+
+### Descomposición de una serie temporal
+
+\[
+y_t=T_t+S_t+\varepsilon_t
+\]
+
+\[
+S_t=\sum_{k=1}^{K}
+[a_k\sin(2\pi kt/f)+b_k\cos(2\pi kt/f)]
+\]
+
+- \(T_t\): tendencia.
+- \(S_t\): estacionalidad.
+- \(\varepsilon_t\): residuo.
+- \(f\): frecuencia anual de la serie regularizada.
+
+La investigación relaciona esta estructura con BFAST y aclara que la detección de rupturas necesita un procedimiento definido.
+
+## F10. Fenología y rendimiento
+
+El inicio de crecimiento, el índice vegetal integrado y la regresión de rendimiento están incluidos como formulaciones 5, 6 y 7 en el documento anterior.
+
+### Grados-día diarios
+
+\[
+GDD_t=
+\max\left(
+0,\frac{T_{\max,t}+T_{\min,t}}{2}-T_b
+\right)
+\]
+
+### Grados-día acumulados
+
+\[
+GDD_{1:n}=\sum_tGDD_t
+\]
+
+- \(T_{\max},T_{\min}\): temperaturas en °C.
+- \(T_b\): temperatura base del cultivo.
+- La suma se expresa en °C·día.
+
+## F11. Biomasa leñosa y carbono
+
+### Biomasa aérea de un árbol
+
+\[
+AGB_j=0.0673(\rho_jD_j^2H_j)^{0.976}
+\]
+
+- \(AGB_j\): kg secos.
+- \(\rho_j\): densidad de madera, en g/cm³.
+- \(D_j\): diámetro, en cm.
+- \(H_j\): altura, en metros.
+
+### Biomasa por hectárea
+
+\[
+AGBD=\frac{\sum_jAGB_j}{1000A_{\mathrm{parcela}}}
+\]
+
+El área está en hectáreas y el resultado en Mg/ha.
+
+### Carbono almacenado
+
+\[
+C=f_C\,AGBD
+\]
+
+\(f_C\) es una fracción de carbono que debe justificarse.
+
+### Incertidumbre de un cambio de biomasa
+
+\[
+\operatorname{Var}(\Delta AGBD)=
+\operatorname{Var}(AGBD_2)+
+\operatorname{Var}(AGBD_1)-
+2\operatorname{Cov}(AGBD_1,AGBD_2)
+\]
+
+La ecuación por árbol debe evaluarse para las especies locales.
+
+**Fuente citada:** [Chave et al., 2014](https://doi.org/10.1111/gcb.12629).
+
+## F12. Degradación, erosión y carbono del suelo
+
+La anomalía vegetal propuesta está incluida como formulación 8 en el documento anterior.
+
+### Erosión hídrica RUSLE
+
+\[
+A=R\,K\,L\,S\,C\,P_s
+\]
+
+- \(A\): pérdida media anual estimada de suelo, en t/ha/año.
+- \(R\): erosividad de la lluvia.
+- \(K\): erosionabilidad del suelo.
+- \(L,S\): factores de longitud e inclinación.
+- \(C\): cobertura y manejo.
+- \(P_s\): prácticas de conservación.
+
+### Carbono almacenado en una capa del suelo
+
+\[
+SOC_{\mathrm{stock}}=10\,c\,\rho_b\,d(1-f_g)
+\]
+
+- \(c\): concentración de carbono, en g/kg.
+- \(\rho_b\): densidad aparente, en Mg/m³.
+- \(d\): profundidad, en metros.
+- \(f_g\): fracción volumétrica de fragmentos gruesos.
+- Resultado: Mg C/ha.
+
+**Fuente citada para erosión:** [manual RUSLE del USDA](https://www.ars.usda.gov/ARSUserFiles/60600505/RUSLE/AH_703%20-%20Predicting%20Soil%20Erosion%20by%20Water%20-%20A%20Guide%20to%20Conservation%20Planning%20With%20the%20RUSLE%20%28RUSLE%29.pdf).
+
+## F13. Salinidad y sodicidad
+
+La ecuación propuesta para estimar salinidad está incluida como formulación 9 en el documento anterior. La investigación no presenta otra ecuación cuantitativa para esta ficha.
+
+## F14. Temperatura superficial
+
+### Conversión para Landsat Collection 2
+
+\[
+T_s[\mathrm K]=0.00341802\,DN+149.0
+\]
+
+\[
+T_s[^\circ\mathrm C]=T_s[\mathrm K]-273.15
+\]
+
+### Anomalía térmica
+
+\[
+\Delta T_{s,t}=T_{s,t}-\mu_{s,d}
+\]
+
+- \(DN\): valor digital válido del producto.
+- \(T_s\): temperatura superficial.
+- \(\mu_{s,d}\): referencia comparable para la época y cobertura.
+
+**Fuente citada:** [USGS: temperatura superficial Landsat](https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature).
+
+## F15. Turbidez y sedimentos
+
+\[
+T=\frac{A_T\rho_w}{1-\rho_w/C_T}
+\]
+
+- \(T\): turbidez, en FNU.
+- \(\rho_w\): reflectancia del agua.
+- \(A_T,C_T\): coeficientes que dependen del sensor, banda y régimen óptico.
+
+El método requiere procesamiento apropiado y validación con mediciones locales.
+
+**Fuente citada:** [Dogliotti et al., 2015](https://www.sciencedirect.com/science/article/pii/S0034425714003654).
+
+## F16. Humo y calidad del aire
+
+La corrección estadística propuesta para PM2,5 está incluida como formulación 10 en el documento anterior. La investigación no presenta otra ecuación cuantitativa para esta ficha.
+
+## F17. Deformación del terreno
+
+### Relación entre fase y desplazamiento
+
+\[
+\Delta\phi_{\mathrm{corr}}
+=-\frac{4\pi}{\lambda}\Delta R
+\]
+
+\[
+\Delta R=
+-\frac{\lambda}{4\pi}\Delta\phi_{\mathrm{corr}}
+\]
+
+- \(\Delta\phi_{\mathrm{corr}}\): cambio de fase corregido, en radianes.
+- \(\lambda\): longitud de onda, en metros.
+- \(\Delta R\): desplazamiento en la línea de observación.
+
+El signo debe comprobarse según la convención del producto. El modelo lineal de velocidad está incluido como formulación 11 en el documento anterior.
+
+---
+
+# Fórmulas generales adicionales
+
+Estas ecuaciones aparecen en la investigación para combinar datos, representar incertidumbre y evaluar resultados.
+
+## Promedio espacial y fracción válida
+
+\[
+\bar x_A=
+\frac{\sum_i a_i m_i x_i}
+{\sum_i a_i m_i}
+\qquad
+c_A=\frac{\sum_i a_i m_i}{\sum_i a_i}
+\]
+
+- \(x_i\): valor de la variable.
+- \(a_i\): área de intersección.
+- \(m_i\): indicador de validez.
+- \(c_A\): fracción válida.
+
+## Combinación de estimaciones de la misma magnitud
+
+\[
+\hat x=\mathbf w^T\mathbf x
+\]
+
+\[
+\mathbf w=
+\frac{\Sigma^{-1}\mathbf1}
+{\mathbf1^T\Sigma^{-1}\mathbf1}
+\]
+
+La investigación indica que esta combinación supone estimaciones comparables y sin sesgo. No corresponde usarla para sumar directamente lluvia, NDVI y radar.
+
+## Propagación aproximada de incertidumbre
+
+\[
+\operatorname{Var}(y)\approx J\Sigma J^T
+\qquad
+J=\frac{\partial f}{\partial\mathbf x}
+\]
+
+Para relaciones no lineales o umbrales puede ser necesario otro método, como simulación de Monte Carlo.
+
+## Pronóstico probabilístico
+
+\[
+\hat F_{t,h}(y)=
+\Pr(Y_{t+h}\le y\mid\mathcal I_t)
+\]
+
+\(\mathcal I_t\) contiene la información disponible al momento de emitir el pronóstico.
+
+## Balance hídrico general
+
+\[
+\frac{dS}{dt}
+=P_A-ET_A+Q_{\mathrm{entrada}}
+-Q_{\mathrm{salida}}-W
+\]
+
+\(S\) es el almacenamiento, en m³; los términos del lado derecho son flujos, en m³/s.
+
+## Métricas de error
+
+Sea:
+
+\[
+e_i=\hat y_i-y_i
+\]
+
+### Error medio absoluto
+
+\[
+MAE=\frac1n\sum_i|e_i|
+\]
+
+### Raíz del error cuadrático medio
+
+\[
+RMSE=\sqrt{\frac1n\sum_i e_i^2}
+\]
+
+### Sesgo
+
+\[
+bias=\frac1n\sum_i e_i
+\]
+
+### Error cuadrático medio sin sesgo
+
+\[
+ubRMSE=
+\sqrt{\frac1n\sum_i(e_i-bias)^2}
+\]
+
+### Puntaje de Brier
+
+\[
+Brier=\frac1n\sum_i(p_i-y_i)^2
+\]
+
+### Coincidencia espacial
+
+\[
+IoU=\frac{TP}{TP+FP+FN}
+\]
+
+### Evaluación de distribuciones predictivas
+
+\[
+CRPS(F,y)=
+\int_{-\infty}^{\infty}
+[F(z)-\mathbf1(y\le z)]^2\,dz
+\]
+
+### Comparación con una referencia
+
+\[
+Skill=
+1-\frac{L_{\mathrm{modelo}}}{L_{\mathrm{referencia}}}
+\]
+
+Los modelos generales de predicción y las funciones de entrenamiento están incluidos como formulaciones 12 a 21 en el documento anterior.
+
+---
+
+Al enviarlo, podés agregarle al otro chat:
+
+> Este texto complementa las 21 formulaciones que ya has revisado. Ahora tenés las ecuaciones de las fichas originales F01 a F17 y las fórmulas generales adicionales. Revisá su transcripción, unidades, supuestos y aplicabilidad, e indicá cualquier dato o ecuación que siga faltando.

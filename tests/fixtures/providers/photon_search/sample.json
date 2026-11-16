@@ -1,0 +1,162 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "R",
+        "osm_id": 2271182,
+        "osm_key": "place",
+        "osm_value": "town",
+        "type": "city",
+        "name": "Termas de Río Hondo",
+        "county": "Departamento Río Hondo",
+        "state": "Santiago del Estero",
+        "country": "Argentina",
+        "postcode": "G4220",
+        "countrycode": "AR",
+        "extra": {
+          "admin_level": "8"
+        },
+        "extent": [
+          -64.884099,
+          -27.4764806,
+          -64.8386533,
+          -27.5190507
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -64.8640783,
+          -27.4959255
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 344493263,
+        "osm_key": "aeroway",
+        "osm_value": "aerodrome",
+        "type": "house",
+        "housenumber": "1101",
+        "name": "Aeropuerto Internacional Termas de Río Hondo",
+        "street": "Ruta Nacional 9",
+        "city": "Termas de Rio Hondo",
+        "county": "Departamento Río Hondo",
+        "state": "Santiago del Estero",
+        "country": "Argentina",
+        "postcode": "G4220",
+        "countrycode": "AR",
+        "extent": [
+          -64.9391046,
+          -27.4786306,
+          -64.9315515,
+          -27.5136596
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -64.9352475,
+          -27.4965282
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 341878304,
+        "osm_key": "leisure",
+        "osm_value": "sports_centre",
+        "type": "house",
+        "name": "Autódromo de Termas de Río Hondo",
+        "street": "Avenida Costanera",
+        "city": "Villa Turística Embalse",
+        "county": "Departamento Río Hondo",
+        "state": "Santiago del Estero",
+        "country": "Argentina",
+        "postcode": "G4220",
+        "countrycode": "AR",
+        "extent": [
+          -64.9243625,
+          -27.4973828,
+          -64.9018219,
+          -27.5154425
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -64.9124835,
+          -27.5067621
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 1378133849,
+        "osm_key": "highway",
+        "osm_value": "residential",
+        "type": "street",
+        "name": "Termas de Río Hondo",
+        "district": "Malvinas Argentinas",
+        "city": "Mar del Plata",
+        "county": "Partido de General Pueyrredón",
+        "state": "Buenos Aires",
+        "country": "Argentina",
+        "postcode": "B7602GGC",
+        "countrycode": "AR",
+        "extent": [
+          -57.5966183,
+          -37.9682733,
+          -57.5926259,
+          -37.9732241
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -57.5946216,
+          -37.9707491
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 1365087758,
+        "osm_key": "highway",
+        "osm_value": "residential",
+        "type": "street",
+        "name": "Termas de Río Hondo",
+        "district": "Malvinas Argentinas",
+        "city": "Mar del Plata",
+        "county": "Partido de General Pueyrredón",
+        "state": "Buenos Aires",
+        "country": "Argentina",
+        "postcode": "B7600ARH",
+        "countrycode": "AR",
+        "extent": [
+          -57.5893617,
+          -37.9602507,
+          -57.5861409,
+          -37.964238
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -57.587761,
+          -37.9622365
+        ]
+      }
+    }
+  ]
+}

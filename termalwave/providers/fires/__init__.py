@@ -1,0 +1,1 @@
+"""Fire hotspot providers."""

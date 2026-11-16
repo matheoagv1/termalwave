@@ -1,0 +1,70 @@
+{
+  "python": "3.11",
+  "packages": [
+    "numpy",
+    "h5py",
+    "Pillow"
+  ],
+  "platforms": {
+    "win_amd64-cp311": [
+      {
+        "name": "h5py",
+        "version": "3.14.0",
+        "path": "h5py-3.14.0.dist-info/METADATA",
+        "sha256": "bd719b3815a37ce31054d83de52c7334d78b3a91b50175cfae2bda3463ae2ba4"
+      },
+      {
+        "name": "numpy",
+        "version": "2.2.6",
+        "path": "numpy-2.2.6.dist-info/METADATA",
+        "sha256": "229f3544b02805e0f6a12030e155d8a45fd3a4100b3291574175e6a76f20e1e1"
+      },
+      {
+        "name": "pillow",
+        "version": "12.2.0",
+        "path": "pillow-12.2.0.dist-info/METADATA",
+        "sha256": "500a4dcf2154f5291661ea4a9025898081d536c3026d506c648c31b68a7a66cc"
+      }
+    ],
+    "linux_musl_x86_64-cp311": [
+      {
+        "name": "h5py",
+        "version": "3.15.1",
+        "path": "h5py-3.15.1.dist-info/METADATA",
+        "sha256": "33b50e60766d3902ad187b220a677d232c8e7507514d70a6d86e9fe01b1b6cd3"
+      },
+      {
+        "name": "numpy",
+        "version": "2.2.6",
+        "path": "numpy-2.2.6.dist-info/METADATA",
+        "sha256": "22d648f53848429464ca643b40d73b49a920d47876fc77c395d4dca4e834904a"
+      },
+      {
+        "name": "pillow",
+        "version": "12.2.0",
+        "path": "pillow-12.2.0.dist-info/METADATA",
+        "sha256": "f921b97ad0d1c94e6e0fe84ac579c998f2c285a8b35f7f934d3fa0c2657e65ab"
+      }
+    ],
+    "linux_x86_64-cp311": [
+      {
+        "name": "h5py",
+        "version": "3.14.0",
+        "path": "h5py-3.14.0.dist-info/METADATA",
+        "sha256": "8f558b10c122da9e199d83d37c42fd29200c42a4f461396461918d3cda100cb7"
+      },
+      {
+        "name": "numpy",
+        "version": "2.2.6",
+        "path": "numpy-2.2.6.dist-info/METADATA",
+        "sha256": "22d648f53848429464ca643b40d73b49a920d47876fc77c395d4dca4e834904a"
+      },
+      {
+        "name": "pillow",
+        "version": "12.2.0",
+        "path": "pillow-12.2.0.dist-info/METADATA",
+        "sha256": "f921b97ad0d1c94e6e0fe84ac579c998f2c285a8b35f7f934d3fa0c2657e65ab"
+      }
+    ]
+  }
+}

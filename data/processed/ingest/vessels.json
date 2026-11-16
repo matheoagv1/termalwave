@@ -1,0 +1,16 @@
+{
+  "kind": "vessels",
+  "strategy": "union_dedupe",
+  "status": "ok",
+  "tried": [
+    {
+      "provider": "aisstream",
+      "ok": true,
+      "count": 0
+    }
+  ],
+  "from_cache": false,
+  "records": [],
+  "selected_sources": [],
+  "count": 0
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "cambio",
+    "label": "Surface change",
+    "text": "Move the timeline and compare two NISAR radar passes. The signal shows where the surface changed. To explain why, you need a field visit and other sources.",
+    "label_es": "Cambio de superficie",
+    "text_es": "Mové la línea de tiempo y compará dos pasadas del radar NISAR. La señal muestra dónde cambió la superficie. Para explicar por qué hace falta ir al lugar y sumar otras fuentes."
+  },
+  {
+    "id": "fuego",
+    "label": "Fires",
+    "text": "Hot spots seen by satellite, with the wind that moves the smoke. A point on the map does not confirm the size of the fire or what happens on the ground.",
+    "label_es": "Incendios",
+    "text_es": "Focos de calor vistos por satélite, con el viento que mueve el humo. Un punto en el mapa no confirma el tamaño del fuego ni lo que pasa en el terreno."
+  },
+  {
+    "id": "clima",
+    "label": "Weather",
+    "text": "Clouds, wind and rain around the radar pass, to read the sky at the time of the observation. It is context, not a forecast for your plans.",
+    "label_es": "Tiempo",
+    "text_es": "Nubes, viento y lluvia cerca de la pasada del radar, para leer el cielo en el momento de la observación. Es contexto, no un pronóstico para planificar."
+  },
+  {
+    "id": "vegetacion",
+    "label": "Vegetation",
+    "text": "How green and dense the plant cover is. It is not a yield map or a species map. Check the date and compare with the field.",
+    "label_es": "Vegetación",
+    "text_es": "Qué tan verde y densa está la cobertura vegetal. No es un mapa de rendimiento ni de especies. Revisá la fecha y compará con el terreno."
+  },
+  {
+    "id": "agua",
+    "label": "Water",
+    "text": "Surface water, wet soil and rain. Check the date and the cloud cover. These layers do not measure river flow or water level.",
+    "label_es": "Agua",
+    "text_es": "Agua en superficie, suelo húmedo y lluvia. Revisá la fecha y las nubes. Estas capas no miden caudal ni nivel de agua."
+  },
+  {
+    "id": "movimiento",
+    "label": "Ground motion",
+    "text": "Where the ground rose, sank or slid between two radar passes. A few centimeters can be noise: look for patterns, not single pixels.",
+    "label_es": "Movimiento del suelo",
+    "text_es": "Dónde el suelo subió, bajó o se deslizó entre dos pasadas del radar. Unos pocos centímetros pueden ser ruido: buscá patrones, no píxeles sueltos."
+  },
+  {
+    "id": "todo",
+    "label": "Everything",
+    "text": "Every layer this build has, on at once. Good for a first look; turn off what you do not need in the Layers panel.",
+    "label_es": "Todo",
+    "text_es": "Todas las capas de esta versión encendidas a la vez. Sirve para una primera mirada; apagá lo que no uses en el panel de capas."
+  },
+  {
+    "id": "ambiente",
+    "label": "Soil and pollution",
+    "text": "Soil and pollution signs inferred from the radar. They are examples or inferences, not lab measurements, and do not replace a visit.",
+    "label_es": "Suelo y contaminación",
+    "text_es": "Señales de suelo y contaminación inferidas del radar. Son ejemplos o inferencias, no mediciones de laboratorio, y no reemplazan una visita al lugar."
+  }
+]

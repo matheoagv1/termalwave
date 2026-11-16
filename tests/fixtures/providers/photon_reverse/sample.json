@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "R",
+        "osm_id": 2271182,
+        "osm_key": "place",
+        "osm_value": "town",
+        "type": "city",
+        "name": "Termas de Río Hondo",
+        "county": "Departamento Río Hondo",
+        "state": "Santiago del Estero",
+        "country": "Argentina",
+        "postcode": "G4220",
+        "countrycode": "AR",
+        "extra": {
+          "admin_level": "8"
+        },
+        "extent": [
+          -64.884099,
+          -27.4764806,
+          -64.8386533,
+          -27.5190507
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -64.8640783,
+          -27.4959255
+        ]
+      }
+    }
+  ]
+}

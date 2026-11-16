@@ -1,0 +1,31 @@
+{
+  "name": "termalwave-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --configLoader runner",
+    "build": "tsc --noEmit && vite build --configLoader runner",
+    "preview": "vite preview --configLoader runner",
+    "sync-brand": "node scripts/sync-brand.mjs",
+    "predev": "node scripts/sync-brand.mjs",
+    "prebuild": "node scripts/sync-brand.mjs"
+  },
+  "dependencies": {
+    "gl-matrix": "^3.4.4",
+    "lucide-react": "^1.73.0",
+    "maplibre-gl": "^5.24.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "satellite.js": "^6.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.2"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

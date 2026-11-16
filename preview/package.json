@@ -1,0 +1,14 @@
+{
+  "name": "termalwave-preview",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "d1:local": "wrangler d1 execute termalwave-preview-auth --local --file=./schema.sql",
+    "d1:remote": "wrangler d1 execute termalwave-preview-auth --remote --file=./schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.162.0"
+  }
+}

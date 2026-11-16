@@ -1,0 +1,27 @@
+{
+  "capas": {
+    "radar": "El radar NISAR registra la señal que vuelve de la superficie (retrodispersión). Comparar fechas ayuda a ver cambios. Humedad, vegetación, rugosidad y geometría influyen; hace falta contrastar otras fuentes para interpretar la causa.",
+    "optico": "Imagen óptica cerca de la pasada de radar. Nubes y sombras pueden dejar huecos. Sirve para comparar cobertura, no para medir humedad ni contaminantes.",
+    "suelo": "EJEMPLO / inferencia derivada del radar. No es medición de humedad del suelo ni de laboratorio; hace falta método, dato procesado y validación en campo.",
+    "contaminacion": "EJEMPLO / índice inferido de apoyo. No es concentración medida ni análisis de laboratorio; NISAR no confirma contaminación del agua o del suelo.",
+    "incendios": "Los focos térmicos indican señales de calor por satélite. No todos son incendios; la ausencia de un foco no demuestra que no haya fuego. Contrastá fecha y avisos oficiales.",
+    "firms": "Focos térmicos globales en tiempo casi real. La densidad del mapa no es el perímetro del fuego; contrastá fecha y avisos locales.",
+    "clouds": "Cobertura de nubes sobre el globo. Ayuda a ver si el cielo estaba despejado; no reemplaza imagen óptica ni un modelo meteorológico.",
+    "wind": "Viento a 10 m (Open-Meteo). Las partículas siguen el campo; no es un pronóstico de ráfagas locales ni reemplaza mediciones en tierra.",
+    "vegetacion": "NDVI / verdor. Orienta sobre cobertura vegetal; no es mapa de rendimiento, especies ni forraje disponible.",
+    "agua": "Agua o humedad superficial desde óptico (p. ej. MNDWI). Apoyo al radar; no reemplaza caudales ni aforo.",
+    "relieve": "Elevación del terreno (DEM). Contexto del área; no es modelo de inundación ni de pendiente para obra."
+  },
+  "fuentes": {
+    "earthdata_nisar_gcov": "NASA Earthdata entrega productos radar NISAR (GCOV). Revisá la fecha, la colección y si esa observación ya está validada. Si no hay granulos, la timeline puede ser de ejemplo.",
+    "planetary_computer_s2": "Sentinel-2 suma imagen óptica para comparar cobertura. Nubes y sombras pueden dejar huecos cerca de la pasada de radar.",
+    "open_meteo_archive": "Open-Meteo aporta clima de archivo para contextualizar las pasadas. La escala depende de la variable que mires.",
+    "meteomatics": "Meteomatics puede sumar clima cuando está configurado. Revisá qué variable llega y con qué cobertura.",
+    "firms_viirs_sp": "FIRMS VIIRS procesado: focos térmicos. Son detecciones satelitales, no el perímetro completo del fuego ni confirmación en terreno.",
+    "firms_viirs_nrt": "FIRMS VIIRS de disponibilidad rápida. Puede corregirse o filtrarse después.",
+    "firms_modis": "FIRMS MODIS: focos a otra escala. Si no aparece un foco, no asumas que no hubo actividad.",
+    "open_meteo_elevation": "Elevación Open-Meteo (Copernicus DEM). Un punto de referencia del área, no un mapa de riesgo.",
+    "opentopodata_srtm30m": "Elevación SRTM vía OpenTopoData. Resolución ~30 m; contrastá con otras fuentes si hace falta precisión."
+  },
+  "aviso": "Si la capa es de ejemplo o inferencia, tiene que decirlo en pantalla. No la presentes como una medición observada."
+}

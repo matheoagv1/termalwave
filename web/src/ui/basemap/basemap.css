@@ -1,0 +1,53 @@
+.tw-bm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+.tw-bm-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid var(--line2);
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg2);
+  font: 10px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
+}
+.tw-bm-chip:hover {
+  background: var(--sel);
+  color: var(--fg);
+}
+.tw-bm-chip:focus-visible {
+  outline: 1px solid var(--acc);
+  outline-offset: 2px;
+}
+.tw-bm-chip[aria-checked="true"] {
+  border-color: var(--acc);
+  background: var(--sel);
+  color: var(--acc);
+}
+.tw-bm-swatch {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+}
+.tw-bm-chip[aria-checked="true"] .tw-bm-swatch {
+  border-color: var(--acc);
+}
+.tw-bm-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-bm-chip { transition: none; }
+}

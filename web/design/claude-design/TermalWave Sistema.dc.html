@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>html,body{margin:0;background:#06080a}a{color:oklch(0.82 0.15 78)}a:hover{color:#e8ecef}h2{margin:0}</style>
+</helmet>
+<div style="min-height:100vh;background:#06080a;color:#e8ecef;font:13px/1.5 'IBM Plex Sans','Segoe UI',system-ui,sans-serif">
+<main style="max-width:1040px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:48px">
+  <header>
+    <div style="font:11px ui-monospace,Menlo,monospace;color:#a2acb5">TermalWave</div>
+    <h1 style="margin:4px 0 8px;font:500 28px/1.2 system-ui">Sistema visual, componentes y notas de integración</h1>
+    <p style="margin:0;color:#a2acb5;max-width:60ch">Instrumento oscuro y denso, cantos rectos, paneles translúcidos. <a href="TermalWave.dc.html">Prototipo</a> · <a href="TermalWave Estados.dc.html">Estados</a></p>
+  </header>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Color</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+      <sc-for list="{{ colors }}" as="c" hint-placeholder-count="12">
+        <div style="border:1px solid #3a4651"><div style="height:36px;background:{{ c.dark }}"></div><div style="height:36px;background:{{ c.light }};border-top:1px solid #3a4651"></div><div style="padding:6px 8px;font:11px ui-monospace,Menlo,monospace"><div>{{ c.name }}</div><div style="color:#7c8792">{{ c.use }}</div></div></div>
+      </sc-for>
+    </div>
+    <p style="color:#a2acb5;max-width:70ch">Arriba el valor oscuro, abajo el claro. El acento se usa como relleno con tinta oscura encima (--acc, --acc-ink) y como texto o línea con --acc-fg. El momento B de la comparación usa --accB.</p>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Tipografía y espaciado</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      <div style="border:1px solid #232c34;padding:16px;display:flex;flex-direction:column;gap:6px">
+        <div style="font:500 32px/1.1 system-ui">Santiago del Estero</div><div style="font:500 15px system-ui">Título de panel 15</div><div style="font:13px system-ui">Texto base 13, secundario 12</div>
+        <div style="font:600 20px ui-monospace,Menlo,monospace">29 %</div><div style="font:11px ui-monospace,Menlo,monospace;color:#a2acb5">Meta mono 11 · Compuesto 2022</div>
+        <div style="color:#7c8792;font-size:12px">IBM Plex Sans para la interfaz y IBM Plex Mono para fechas, valores, coordenadas y marca. Sin archivos locales cae a la fuente del sistema.</div></div>
+      <div style="border:1px solid #232c34;padding:16px;display:flex;flex-direction:column;gap:6px;font:12px ui-monospace,Menlo,monospace">
+        <div>Base 4 px. Márgenes de panel 12 px (móvil 8 px).</div><div>Padding interno 12 px. Separación entre paneles 8 px.</div><div>Controles 32 px de alto, 44 px en móvil.</div><div>Radio 0 en todo. Sin sombras. Borde de 1 px.</div><div>Foco: contorno de 2 px en acento, 1 px de separación.</div><div>Íconos: formas CSS (triángulo, barras, círculo). Sin fuente de íconos.</div></div>
+    </div>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Rampas por capa</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ ramps }}" as="r" hint-placeholder-count="4">
+        <div><div style="display:flex;justify-content:space-between;font:11px ui-monospace,Menlo,monospace;color:#a2acb5"><span>{{ r.label }} · {{ r.unit }}</span><span>{{ r.min }} a {{ r.max }}</span></div><div style="height:14px;background:{{ r.grad }}"></div></div>
+      </sc-for>
+      <div style="color:#7c8792" aria-live="polite">{{ rampsNote }}</div>
+    </div>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Movimiento</h2>
+    <div style="border:1px solid #232c34">
+      <sc-for list="{{ motion }}" as="m" hint-placeholder-count="8">
+        <div style="display:grid;grid-template-columns:1.1fr 2fr 1.2fr;gap:12px;padding:8px 12px;border-top:1px solid #232c34;font:12px system-ui"><span style="font-family:ui-monospace,Menlo,monospace">{{ m.a }}</span><span>{{ m.b }}</span><span style="color:#a2acb5">{{ m.c }}</span></div>
+      </sc-for>
+    </div>
+    <p style="color:#a2acb5;max-width:70ch">El movimiento reducido se activa con prefers-reduced-motion, con la propiedad movimientoReducido o con rm=1 en la URL.</p>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Componentes</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px">
+      <sc-for list="{{ comps }}" as="c" hint-placeholder-count="12">
+        <div style="border:1px solid #232c34;padding:10px 12px"><div style="font:600 12px ui-monospace,Menlo,monospace">{{ c.n }}</div><div style="color:#a2acb5;font-size:12px">{{ c.p }}</div><div style="color:#7c8792;font-size:12px">{{ c.s }}</div></div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Línea de tiempo: reglas</h2>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:78ch">
+      <sc-for list="{{ rules }}" as="r" hint-placeholder-count="6"><li>{{ r }}</li></sc-for>
+    </ul>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Catálogo es-AR</h2>
+    <div style="border:1px solid #232c34;max-height:420px;overflow:auto">
+      <sc-for list="{{ catalog }}" as="e" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:minmax(120px,1fr) 3fr;gap:12px;padding:5px 12px;border-top:1px solid #232c34;font:11px ui-monospace,Menlo,monospace"><span style="color:#a2acb5;overflow-wrap:anywhere">{{ e.k }}</span><span style="overflow-wrap:anywhere">{{ e.v }}</span></div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section><h2 style="font:500 18px system-ui;margin-bottom:12px">Notas de integración</h2>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;max-width:80ch">
+      <sc-for list="{{ notes }}" as="n" hint-placeholder-count="10"><li>{{ n }}</li></sc-for>
+    </ul>
+  </section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ramps: [], catalog: [], note: 'Cargando rampas del MockProvider' };
+  async componentDidMount() {
+    const imp = (p) => import(new URL(p, document.baseURI).href);
+    const [cat, prov] = await Promise.all([imp('tw/catalog.es-AR.js'), imp('tw/mock-provider.js')]);
+    const flat = [], walk = (o, p) => Object.keys(o).forEach((k) => {
+      const v = o[k], key = p ? p + '.' + k : k;
+      if (typeof v === 'function') { let ex = ''; try { ex = String(v('A', 'B', 'C')); } catch (e) {} flat.push({ k: key + '()', v: ex }); }
+      else if (Array.isArray(v)) flat.push({ k: key, v: v.map((x) => (Array.isArray(x) ? x.join(' : ') : x)).join(' | ') });
+      else if (v && typeof v === 'object') walk(v, key);
+      else flat.push({ k: key, v: String(v) });
+    });
+    walk(cat.T, 'T');
+    this.setState({ catalog: flat });
+    const ds = await new prov.MockProvider().load(), F = cat.F;
+    this.setState({
+      note: 'Leídas del dataset de ejemplo.',
+      ramps: ds.layers.map((l) => ({ label: l.label, unit: l.unit, min: F.value(l.range[0], l.unit, l.decimals), max: F.value(l.range[1], l.unit, l.decimals), grad: 'linear-gradient(90deg,' + l.ramp.map((s) => `${s.color} ${s.at * 100}%`).join(',') + ')' })),
+    });
+  }
+  renderVals() {
+    const colors = [
+      ['--bg', '#06080a', '#e7eaec', 'fondo'], ['--panel', '#0b0f12', '#f6f7f8', 'panel translúcido'], ['--line', '#232c34', '#cdd3d8', 'borde'], ['--line2', '#3a4651', '#9aa4ad', 'borde de control'],
+      ['--fg', '#e8ecef', '#0e1215', 'texto'], ['--fg2', '#a2acb5', '#47515a', 'texto secundario'], ['--fg3', '#7c8792', '#5d6770', 'texto terciario'],
+      ['--acc', 'oklch(0.82 0.15 78)', 'oklch(0.80 0.15 78)', 'momento A, foco, relleno'], ['--acc-fg', 'oklch(0.82 0.15 78)', 'oklch(0.50 0.12 65)', 'acento como texto'],
+      ['--accB', 'oklch(0.80 0.11 215)', 'oklch(0.62 0.12 230)', 'momento B'], ['--warn', 'oklch(0.80 0.14 55)', 'oklch(0.55 0.15 50)', 'aviso, datos de ejemplo'], ['--ok', 'oklch(0.78 0.13 155)', 'oklch(0.55 0.13 155)', 'en línea'],
+    ].map(([name, dark, light, use]) => ({ name, dark, light, use }));
+    const motion = [
+      ['Entrar al área', '2200 ms: el globo centra el área, se acerca y se apaga; el territorio aparece con escala .55 a 1 y la inclinación sube', 'Fundido de 300 ms'],
+      ['Volver a la Tierra', '1600 ms, recorrido inverso', 'Fundido de 300 ms'], ['Cambio de momento', 'Fundido de imagen de 260 ms, lineal', 'Corte'],
+      ['Detalle', 'Transformación de 700 ms hacia el punto', 'Corte'], ['Inclinación y norte', 'Transformación de 700 ms', 'Corte'],
+      ['Paneles', 'Opacidad y fondo en 100 ms, lineal', 'Sin transición'], ['Rotación del globo', '3 grados por segundo en órbita', 'Detenida'], ['Anillo del área', 'Pulso de 2 s', 'Estático'],
+    ].map(([a, b, c]) => ({ a, b, c }));
+    const comps = [
+      ['TopBar', 'área, mock, estado, onHelp', 'con y sin búsqueda abierta (móvil)'], ['SearchField', 'q, results, onPick', 'vacío, con resultados, sin resultados'],
+      ['StatusChips', 'online, terrain', 'en línea, sin conexión, sin relieve'], ['EntryCard', 'area, ready, onEnter, onExplore', 'cargando, listo'], ['ErrorCard', 'code, onRetry', 'error de configuración'],
+      ['LayerDock', 'layers, active, gapIds, onSelect', 'activa, hueco en este punto, cargando; móvil como fila'], ['CameraControls', 'northUp, tilt, terrain, onReset', 'sin relieve deshabilita la inclinación'],
+      ['MapLabel', 'layer, tick', 'aria-live; aproximación; cargando'], ['CompareBanner', 'a, b, mixed', 'aviso de naturaleza distinta'], ['GapNotice', 'layer', 'capa sin imagen en el punto'],
+      ['AreaCard', 'dataset, series, tab', 'plegada, abierta, hoja móvil (plegada y abierta)'], ['Sparkline', 'series, a, b, segments', 'huecos cortan la línea'], ['Legend', 'layer', 'rampa, mínimo, máximo, nota'],
+      ['Timeline', 'segments, events, state', 'cargando, un tramo, un punto, rango largo, móvil'], ['TimelineSegment', 'segment, tone, zoomed, collapsed', 'normal, expandido, plegado, vacío'],
+      ['TimelineTick', 'tick, active, b, gap', 'compuesto, pasada, hueco, A, B'], ['AvailabilityMatrix', 'layers, frames', 'imagen, parcial, hueco'], ['RealTimeStrip', 'segments, a, b', 'duración real por tramo'],
+      ['PlaybackControls', 'playing, scope', 'pausa, reproduciendo, deshabilitado con un punto'], ['DetailCard', 'hotspot, layer, moment', 'con y sin variación'], ['SegmentToast', 'message', 'cruce de tramo'],
+      ['HelpOverlay', 'keys', 'abierto, cerrado'], ['BottomSheet', 'open, children', 'plegada 44 px, abierta 70 %'],
+    ].map(([n, p, s]) => ({ n, p: 'Props: ' + p, s: 'Estados: ' + s }));
+    const rules = [
+      'El ancho de cada tramo depende de la cantidad de puntos, con un mínimo táctil por punto (6 px en escritorio, 3 px en móvil). Años y pasadas no ocupan el mismo ancho por unidad de tiempo.',
+      'La franja Tiempo real, debajo de la pista, muestra la duración verdadera de cada tramo y las fechas de A y B. Explica la deformación sin texto largo.',
+      'Tocar la cabecera de un tramo lo expande (34 px por punto) y pliega los demás a 20 px. Vista completa vuelve. En móvil, tocar un punto expande su tramo.',
+      'El tono del tramo va de gris azulado tenue (lo más viejo) a claro (lo más reciente). Compuesto es bloque lleno, pasada es línea vertical.',
+      'Bajo cada punto, una fila por capa indica imagen, imagen parcial o hueco. Un hueco se muestra con el rayado, nunca se esconde.',
+      'Reproducción: año 1300 ms, trimestre 1000, mes 650, semana 600, día 500, pasada 800. Al cruzar de tramo se avisa y se pausa 1100 ms más.',
+      'Teclado: flechas, Re Pág y Av Pág, Inicio y Fin. Con la comparación activa mueven el punto elegido (A o B).',
+    ];
+    const notes = [
+      'Contrato: se agregaron DataProvider.search, SceneApi.setDataset, setHotspots, setPadding, project, setReducedMotion, refreshStyle y destroy, el segundo argumento { instant } de set, null para borrar compare y focus, y LayerDef.decimals. Todo está marcado en tw/contract.ts.',
+      'Hotspot.id debe ser estable entre momentos de la misma capa, así la tarjeta de detalle sigue abierta mientras se arrastra el tiempo.',
+      'MapLibre: setPadding se traduce a map.setPadding o a easeTo({ padding }). project se traduce a map.project. El espacio de los paneles flotantes lo calcula la interfaz.',
+      'MapLibre: cada imagen es una fuente image o raster con coordinates tomadas de FrameRef.bounds. El fundido entre momentos usa raster-fade-duration (0 con movimiento reducido).',
+      'MapLibre: la cortina de comparación necesita dos capas con recorte o dos mapas sincronizados. La interfaz solo manda compare.split (0 a 1) y el elemento de control con data-scene-handle debe ser accesible por teclado.',
+      'MapLibre: focus.zoom en el mock es un factor de escala (1,7). En el mapa real es un nivel de zoom.',
+      'Relieve: si terrain es falso, la escena debe forzar tilt 0 (setTerrain(null)). La interfaz deshabilita los botones de inclinación.',
+      'El globo y el vuelo (orbit, approach, territory) los resuelve la escena. La interfaz solo llama a flyTo, resetToOrbit y set({ camera }) y escucha onChange.',
+      'El tramo de 2024 a 2025 se llama Últimos 24 meses porque tiene 24 puntos. El handoff decía 12 meses.',
+      'La interfaz escribe el estado en el hash (c, l, t, cmp, tilt, n, pick, zoom). Los parámetros escenario, tema, ficha, tab, ayuda, explorar y rm son solo de preparación.',
+      'Todos los datos del mock llevan isMock: true y la interfaz muestra Datos de ejemplo.',
+      'Sin conexión: la interfaz no usa red para nada esencial. Las fuentes caen a las del sistema si no hay archivos locales.',
+    ];
+    return { colors, motion, comps, rules, notes, ramps: this.state.ramps, rampsNote: this.state.note, catalog: this.state.catalog };
+  }
+}
+</script>
+</body>
+</html>
