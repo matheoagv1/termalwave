@@ -421,8 +421,12 @@ export class CloudsLayer implements SpaceLayer {
     try {
       const res = await fetch(`${cfg.endpoint}/manifest`);
       if (res.ok && res.headers.get("content-type")?.includes("json")) {
-        m = (await res.json()) as CloudsManifest;
-        this.direct = false;
+        const body = (await res.json()) as CloudsManifest & { degraded?: boolean; status?: string };
+        const listed = Array.isArray(body.times) ? body.times : [];
+        if (!body.degraded && body.status !== "unavailable" && body.latest && listed.length) {
+          m = body;
+          this.direct = false;
+        }
       } else {
         // no worker in vite dev; nowcoast sends access-control-allow-origin: *
         const caps = await fetch(wmsUrl(cfg.upstream, { request: "GetCapabilities" }));

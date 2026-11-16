@@ -51,6 +51,7 @@ export const T = {
     other: "Ninguno de estos",
     ready: (n) => `Listo, ${n}. Afino el mapa y quedo en la esquina para ayudarte.`,
     guest: "visitante",
+    skip: "Seguir como visitante",
     namePh: "Tu nombre",
     continue: "Seguir",
     start: "Empezar",
