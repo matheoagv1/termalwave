@@ -1,7 +1,8 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
 import { isExampleHonesty, isPlaceholderRange, isRadarLayer } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
-import { copyOf, fmtOf } from "./i18n";
+import { copyOf, fmt, fmtOf, type Copy } from "./i18n";
+import type { NisarPass } from "../data/nisar-passes";
 import type { LayerDef, LayerTheme, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
 import type { AppState, Flat } from "./types";
 
@@ -35,6 +36,22 @@ export interface Model {
 }
 
 const MOBILE = 760;
+
+function areaKm(b: { west: number; east: number; south: number; north: number }): number {
+  const mid = ((b.south + b.north) / 2) * (Math.PI / 180);
+  const dx = (b.east - b.west) * 111.32 * Math.cos(mid);
+  const dy = (b.north - b.south) * 110.57;
+  return Math.abs(dx * dy);
+}
+
+function passLine(p: NisarPass, T: Copy, date: (iso: string) => string): string {
+  const when = p.date && !Number.isNaN(+new Date(p.date)) ? date(p.date) : p.date;
+  const dir = p.direction === "ascending" ? T.nisar.ascending : p.direction === "descending" ? T.nisar.descending : p.direction;
+  const maturity = p.maturity === "validated" ? T.nisar.validated : p.maturity === "provisional" ? T.nisar.provisional : p.maturity;
+  return [when, p.track ? `${T.nisar.track} ${p.track}` : "", dir, p.frame ? `${T.nisar.frame} ${p.frame}` : "", p.pol, maturity]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 export function buildView(m: Model) {
   const S = m.state;
@@ -357,7 +374,8 @@ export function buildView(m: Model) {
       if (fr.bytes != null) imgRows.push({ k: T.card.size, v: F.bytes(fr.bytes) });
     } else imgRows = [{ k: T.card.image, v: T.map.gap(L.label) }];
   }
-  const b = ds ? ds.area.bounds : null;
+  const placeBounds = S.activePlace?.bounds ?? ds?.area.bounds ?? null;
+  const b = placeBounds;
   const trades = ds
     ? ds.context.map((c, i) => ({
         id: c.id ?? String(i),
@@ -734,7 +752,15 @@ export function buildView(m: Model) {
   return {
     theme, t: T, lay, isM, isD: !isM,
     railTitle, inspectCenter, inspectRows,
-    hasDs, noDs: !hasDs && !err, areaName: ds ? ds.area.name : "", mock,
+    hasDs, noDs: !hasDs && !err,
+    areaName: S.activePlace?.label || (ds ? ds.area.name : ""),
+    areaSurface: b ? T.area.surface(fmt(S.lang).num(areaKm(b), 0)) : "",
+    passRows: S.nisar.passes.slice(0, 8).map((p) => ({
+      id: p.id,
+      line: passLine(p, T, fmt(S.lang).date),
+    })),
+    passesPending: S.nisar.status === "ok" && S.nisar.count > 0 && S.nisar.passes.length === 0,
+    mock,
     brandOn: (!isM || !S.searchOpen) && !imm,
     brandMark: "./brand/icon-32.png",
     showName: false,

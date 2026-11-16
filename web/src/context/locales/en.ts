@@ -23,6 +23,7 @@ export const F = {
 export const T = {
   locale: "en-US",
   brand: "TermalWave",
+  wordmark: "Termal Wave",
   mock: { tag: "Example data", detail: "Made-up values. Not measurements." },
 
   top: {
@@ -171,7 +172,21 @@ export const T = {
   nisar: {
     loading: "Checking NISAR coverage…",
     empty: "No NISAR coverage in this area",
-    count: (n: number): string => (n === 1 ? "1 scene" : `${n} scenes`),
+    count: (n: number): string => (n === 1 ? "1 pass" : `${n} passes`),
+    offline: "Offline: NISAR coverage could not be checked.",
+    disabled: "NISAR coverage is not enabled in this environment yet.",
+    denied: "Sign in to check NISAR coverage.",
+    failed: "NISAR coverage could not be checked. Try again in a few minutes.",
+    pending: "This response does not list the passes yet.",
+    track: "track",
+    frame: "frame",
+    ascending: "ascending",
+    descending: "descending",
+    validated: "validated",
+    provisional: "provisional",
+  },
+  area: {
+    surface: (km: string): string => `${km} km²`,
   },
   globals: {
     clouds: "Clouds",

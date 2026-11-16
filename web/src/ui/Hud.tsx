@@ -11,6 +11,14 @@ import { Timeline } from "./Timeline";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
 
+const wordmarks = import.meta.glob("../context/brand/Wordmark.tsx", { eager: true }) as Record<
+  string,
+  { Wordmark?: React.ComponentType }
+>;
+const Wordmark = Object.values(wordmarks)
+  .map((mod) => mod.Wordmark)
+  .find((Cmp): Cmp is React.ComponentType => !!Cmp);
+
 const PANEL = "background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px)";
 const PRIMARY = "border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);cursor:pointer;font-weight:600";
 const SECONDARY = "border:1px solid var(--line2);background:transparent;cursor:pointer";
@@ -428,7 +436,10 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      {v.dockOn && (
+      <span style={s("pointer-events:none;height:40px;display:flex;align-items:center;padding:0 8px;font-size:8px;color:var(--acc-fg)")}>
+        {Wordmark ? <Wordmark /> : <span className="tw-pixel">{t.wordmark}</span>}
+      </span>
+      {!v.isM && (v.railsOn || v.dockOn) && (
         <button
           type="button"
           className="tw-hov"
@@ -761,7 +772,14 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                     <div>
                       <div style={s("font:500 15px var(--sans)")}>{v.areaName}</div>
                       <div style={s("font:11px var(--mono);color:var(--fg2)")}>{v.boundsText}</div>
+                      {v.areaSurface ? <div style={s("font:11px var(--mono);color:var(--fg2)")}>{v.areaSurface}</div> : null}
                     </div>
+                    {v.passRows.length > 0 && (
+                      <div style={s("display:flex;flex-direction:column;gap:4px;font:11px var(--mono);color:var(--fg2)")}>
+                        {v.passRows.map((p) => <div key={p.id}>{p.line}</div>)}
+                      </div>
+                    )}
+                    {v.passesPending ? <div style={s("font:12px var(--sans);color:var(--fg2)")}>{t.nisar.pending}</div> : null}
                     <button
                       type="button"
                       className="tw-hov"

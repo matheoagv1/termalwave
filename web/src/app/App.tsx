@@ -1,5 +1,6 @@
 import React from "react";
 import { PRESETS } from "../data/layer-defaults";
+import { parsePasses } from "../data/nisar-passes";
 import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
@@ -73,7 +74,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     // nubes + focos encendidos al abrir: el globo no arranca vacio en el AOI
     extras: ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
-    nisar: { status: "idle", count: 0, msg: "" },
+    nisar: { status: "idle", count: 0, msg: "", passes: [] },
     clouds: { status: "idle", msg: "" },
     lang: detectLangSafe(),
     railL: wideScreen() ? "data" : "",
@@ -678,29 +679,28 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.nisarKey = key;
     const seq = ++this.nisarSeq;
     if (!key) {
-      this.setState({ nisar: { status: "idle", count: 0, msg: "" } });
+      this.setState({ nisar: { status: "idle", count: 0, msg: "", passes: [] } });
       return;
     }
-    this.setState({ nisar: { status: "loading", count: 0, msg: "" } });
+    this.setState({ nisar: { status: "loading", count: 0, msg: "", passes: [] } });
     fetch(`/api/nisar/coverage?bbox=${key}`, { credentials: "same-origin" })
       .then(async (r) => {
-        if (r.status === 503) throw new Error("La cobertura NISAR todavía no está habilitada en este entorno.");
-        if (r.status === 401) throw new Error("Iniciá sesión para consultar la cobertura NISAR.");
-        if (!r.ok) throw new Error("No pudimos consultar la cobertura NISAR. Probá de nuevo en unos minutos.");
+        if (r.status === 503) throw new Error(this.copy.nisar.disabled);
+        if (r.status === 401) throw new Error(this.copy.nisar.denied);
+        if (!r.ok) throw new Error(this.copy.nisar.failed);
         return r.json() as Promise<Record<string, unknown>>;
       })
       .then((j) => {
         if (seq !== this.nisarSeq) return;
-        const arr = (v: unknown): unknown[] | null => (Array.isArray(v) ? v : null);
-        const list = arr(j.frames) ?? arr(j.scenes) ?? arr(j.features) ?? arr(j.items) ?? [];
-        const n = typeof j.count === "number" ? j.count : list.length;
-        this.setState({ nisar: { status: n ? "ok" : "empty", count: n, msg: "" } });
+        const passes = parsePasses(j);
+        const n = typeof j.count === "number" ? j.count : passes.length;
+        this.setState({ nisar: { status: n ? "ok" : "empty", count: n, msg: "", passes } });
       })
       .catch((e: Error) => {
         if (seq !== this.nisarSeq) return;
         this.nisarKey = "";
         const net = e instanceof TypeError;
-        this.setState({ nisar: { status: "error", count: 0, msg: net ? "Sin conexión: no pudimos consultar la cobertura NISAR." : e.message } });
+        this.setState({ nisar: { status: "error", count: 0, msg: net ? this.copy.nisar.offline : e.message, passes: [] } });
       });
   }
 

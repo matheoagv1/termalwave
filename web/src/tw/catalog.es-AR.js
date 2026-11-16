@@ -21,6 +21,7 @@ export const F = {
 export const T = {
   locale: "es-AR",
   brand: "TermalWave",
+  wordmark: "Termal Wave",
   mock: { tag: "Datos de ejemplo", detail: "Valores inventados. No son mediciones." },
 
   top: { search: "Buscar lugar o coordenadas", searchOpen: "Abrir búsqueda", searchClose: "Cerrar búsqueda", help: "Ayuda" },
@@ -164,7 +165,21 @@ export const T = {
   nisar: {
     loading: "Consultando cobertura NISAR…",
     empty: "Sin cobertura NISAR en esta zona",
-    count: (n) => (n === 1 ? "1 escena" : `${n} escenas`),
+    count: (n) => (n === 1 ? "1 pasada" : `${n} pasadas`),
+    offline: "Sin conexión: no pudimos consultar la cobertura NISAR.",
+    disabled: "La cobertura NISAR todavía no está habilitada en este entorno.",
+    denied: "Iniciá sesión para consultar la cobertura NISAR.",
+    failed: "No pudimos consultar la cobertura NISAR. Probá de nuevo en unos minutos.",
+    pending: "La lista de pasadas todavía no viene en esta respuesta.",
+    track: "traza",
+    frame: "frame",
+    ascending: "ascendente",
+    descending: "descendente",
+    validated: "validado",
+    provisional: "provisional",
+  },
+  area: {
+    surface: (km) => `${km} km²`,
   },
   globals: {
     clouds: "Nubes",

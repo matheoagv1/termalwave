@@ -1,3 +1,4 @@
+import type { NisarPass } from "../data/nisar-passes";
 import type { Lang } from "./i18n";
 import type { BasemapOption,
   CameraMode,
@@ -73,7 +74,12 @@ export type AppState = {
   helpText: string;
   extras: string[];
   // focos de calor globales (FIRMS): estado de la consulta, no del mapa
-  nisar: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
+  nisar: {
+    status: "idle" | "loading" | "ok" | "empty" | "error";
+    count: number;
+    msg: string;
+    passes: NisarPass[];
+  };
   firms: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
   clouds: { status: "idle" | "loading" | "ok" | "unavailable"; msg: string };
   lang: Lang;
