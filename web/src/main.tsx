@@ -1,5 +1,8 @@
 import { createRoot } from "react-dom/client";
 import "./app/theme.css";
+// carne's font sheet, when C-06 has landed; a missing file leaves this empty
+const brandFonts = import.meta.glob("./fonts/fonts.css", { eager: true });
+void brandFonts;
 import { App } from "./app/App";
 import { hashParams } from "./app/hash";
 import { ConfigProvider } from "./data/config-provider";

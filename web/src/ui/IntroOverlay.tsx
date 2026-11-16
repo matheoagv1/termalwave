@@ -4,7 +4,8 @@ import { useLang, type Lang } from "../app/i18n";
 import { themeChoices, writeIntroPrefs } from "./intro-prefs";
 import { Sfx } from "./sfx";
 
-const MONI = "./brand/monigote.png";
+const MONI = "./brand/monigote-si.png";
+const MONI_FALLBACK = "./brand/monigote.png";
 const PANEL = "background:var(--panel-solid);border:1px solid var(--line2)";
 const NONE = "none";
 
@@ -92,6 +93,9 @@ export function IntroOverlay({ sound, reduced, onDone }: P): React.ReactElement 
         <img
           className={reduced ? undefined : "tw-bob"}
           src={MONI}
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith("monigote.png")) e.currentTarget.src = MONI_FALLBACK;
+          }}
           alt=""
           aria-hidden="true"
           decoding="async"

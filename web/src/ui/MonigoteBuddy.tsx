@@ -1,7 +1,8 @@
 import React from "react";
 import { s } from "../app/css";
 
-const MONI = "./brand/monigote.png";
+const MONI = "./brand/monigote-si.png";
+const MONI_FALLBACK = "./brand/monigote.png";
 
 type P = {
   tip: string;
@@ -82,6 +83,9 @@ export function MonigoteBuddy({
       >
         <img
           src={MONI}
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith("monigote.png")) e.currentTarget.src = MONI_FALLBACK;
+          }}
           alt=""
           aria-hidden="true"
           decoding="async"
