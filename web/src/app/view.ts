@@ -89,7 +89,7 @@ export function buildView(m: Model) {
     tlR: pad + "px",
     tlB: isM ? "52px" : "12px",
     exploreB: (isM ? 52 + S.tlH + 14 : S.tlH + 22) + "px",
-    exploreL: isM ? pad + "px" : S.dockOpen ? "248px" : "64px",
+    exploreL: isM ? pad + "px" : S.railL ? "348px" : "72px",
     toastB: imm ? "12px" : (isM ? 52 : 12) + S.tlH + 12 + "px",
     entL: isM ? "8px" : "12px",
     entR: isM ? "8px" : "auto",
@@ -98,9 +98,9 @@ export function buildView(m: Model) {
     entW: isM ? "auto" : "340px",
     entTf: "none",
     cL: isM ? "0" : "auto",
-    cR: isM ? "0" : "12px",
+    cR: isM ? "0" : "68px",
     cT: isM ? "auto" : "64px",
-    cB: isM ? "0" : S.tlH + 24 + "px",
+    cB: isM ? "52px" : S.tlH + 24 + "px",
     cW: isM ? "auto" : cardOpen ? "280px" : "auto",
     cH: isM ? (cardOpen ? "70%" : "44px") : "auto",
     cJ: isM ? "flex-start" : "space-between",
@@ -140,7 +140,31 @@ export function buildView(m: Model) {
     return CAT_ORDER.indexOf(catOf(a)) - CAT_ORDER.indexOf(catOf(b));
   });
   const nz = S.nisar;
-  const nisarText = nz.status === "loading" ? "Consultando cobertura NISAR…" : nz.status === "empty" ? "Sin cobertura NISAR en esta zona" : nz.status === "ok" ? `${nz.count} ${nz.count === 1 ? "escena" : "escenas"}` : nz.status === "error" ? nz.msg : "";
+  const nisarText =
+    nz.status === "loading" ? T.nisar.loading
+    : nz.status === "empty" ? T.nisar.empty
+    : nz.status === "ok" ? T.nisar.count(nz.count)
+    : nz.status === "error" ? (nz.msg || T.state.unavailable)
+    : "";
+  const honestyOf = (l: LayerDef): "measured" | "derived" | "model" | "inferred" | "example" => {
+    const h = (l.honesty ?? "").toLowerCase();
+    if (h === "example" || h === "ejemplo" || h === "demo") return "example";
+    if (h === "derived" || h === "derivado") return "derived";
+    if (h === "model" || h === "modelo") return "model";
+    if (h === "inferred" || h === "inferido") return "inferred";
+    if (h === "measured" || h === "medido") return "measured";
+    const note = l.note.trim().toUpperCase();
+    if (note.startsWith("EJEMPLO") || note.startsWith("EXAMPLE")) return "example";
+    if (l.category === "inference") return "inferred";
+    if (l.category === "prediction") return "model";
+    return "measured";
+  };
+  const honestyLabel = (h: ReturnType<typeof honestyOf>): string => T.honesty[h];
+  const bucketOf = (l: LayerDef): "data" | "models" | "inference" => {
+    if ((l.category ?? "data") === "inference") return "inference";
+    if (l.category === "prediction") return "models";
+    return "data";
+  };
   const firstCoreId = sortedLayers.find((x) => x.core)?.id;
   const layerItems = sortedLayers.map((l, i) => {
     const on = l.id === sc.layer;
@@ -159,6 +183,10 @@ export function buildView(m: Model) {
       catBadge: CAT_LABEL[catOf(l)] ?? "",
       on,
       gap,
+      bucket: bucketOf(l),
+      honesty: honestyOf(l),
+      honestyLabel: honestyLabel(honestyOf(l)),
+      stateText: fa && !fa.tick.frames[l.id] ? T.state.nodata : "",
       grad: grad(l),
       bg: on ? "var(--sel)" : "transparent",
       chipBg: on ? "var(--sel)" : panel,
@@ -167,23 +195,27 @@ export function buildView(m: Model) {
   });
   // capas globales (GEV): un interruptor cada una, dentro de su tema
   const GLOBALS = [
-    { id: "clouds", theme: "clima", label: "Nubes", note: "Mosaico infrarrojo casi en tiempo real sobre el globo." },
-    { id: "wind", theme: "clima", label: "Viento", note: "Campo de viento a 10 m (Open-Meteo). Las rayas muestran dirección y fuerza relativa." },
-    { id: "firms", theme: "fuego", label: "Focos de calor", note: "Detecciones térmicas satelitales (NASA FIRMS). Un foco no confirma tamaño ni daño." },
+    { id: "clouds", theme: "clima", bucket: "models" as const, label: T.globals.clouds, note: T.globals.cloudsNote },
+    { id: "wind", theme: "clima", bucket: "models" as const, label: T.globals.wind, note: T.globals.windNote },
+    { id: "firms", theme: "fuego", bucket: "data" as const, label: T.globals.firms, note: T.globals.firmsNote },
   ];
   const fm = S.firms;
   const globalInfo = (id: string): { text: string; tone: "" | "warn" } => {
+    if (id === "clouds" && S.extras.includes("clouds")) {
+      if (S.clouds.status === "loading") return { text: T.state.loading, tone: "" };
+      if (S.clouds.status === "unavailable") return { text: T.state.unavailable, tone: "warn" };
+    }
     if (id !== "firms" || !S.extras.includes("firms")) return { text: "", tone: "" };
-    if (fm.status === "loading") return { text: "Consultando focos…", tone: "" };
-    if (fm.status === "empty") return { text: "Sin detecciones", tone: "" };
-    if (fm.status === "error") return { text: fm.msg, tone: "warn" };
-    if (fm.status === "ok") return { text: `${fm.count} detecciones`, tone: "" };
+    if (fm.status === "loading") return { text: T.state.loading, tone: "" };
+    if (fm.status === "empty") return { text: T.state.firmsEmpty, tone: "" };
+    if (fm.status === "error") return { text: T.state.unavailable, tone: "warn" };
+    if (fm.status === "ok") return { text: T.state.firmsCount(fm.count), tone: "" };
     return { text: "", tone: "" };
   };
   type PanelRow =
     | { kind: "head"; key: string; label: string }
     | { kind: "layer"; key: string; item: (typeof layerItems)[number] }
-    | { kind: "global"; key: string; id: string; label: string; note: string; on: boolean; info: string; warn: boolean; go: () => void };
+    | { kind: "global"; key: string; id: string; bucket: "data" | "models"; label: string; note: string; on: boolean; info: string; warn: boolean; go: () => void };
   const knownThemes = new Set(themeOrder);
   const panelRows: PanelRow[] = [];
   const themeIds = [...themeOrder, ...new Set([...layers.map(themeOf), ...GLOBALS.map((g) => g.theme)].filter((t) => !knownThemes.has(t)))];
@@ -195,9 +227,25 @@ export function buildView(m: Model) {
     ls.forEach((item) => panelRows.push({ kind: "layer", key: item.id, item }));
     gs.forEach((g) => {
       const info = globalInfo(g.id);
-      panelRows.push({ kind: "global", key: `g-${g.id}`, id: g.id, label: g.label, note: g.note, on: S.extras.includes(g.id), info: info.text, warn: info.tone === "warn", go: () => m.toggleExtra(g.id) });
+      panelRows.push({ kind: "global", key: `g-${g.id}`, id: g.id, bucket: g.bucket, label: g.label, note: g.note, on: S.extras.includes(g.id), info: info.text, warn: info.tone === "warn", go: () => m.toggleExtra(g.id) });
     });
   }
+  const railBucket = S.railL === "data" || S.railL === "models" || S.railL === "inference" ? S.railL : "";
+  const railRows = panelRows.filter((row) => {
+    if (!railBucket) return false;
+    if (row.kind === "head") return false;
+    if (row.kind === "layer") return row.item.bucket === railBucket;
+    return row.bucket === railBucket;
+  });
+  const exampleNames = sortedLayers.filter((l) => honestyOf(l) === "example").map((l) => l.label);
+  const chipLabel = !sortedLayers.length
+    ? ""
+    : exampleNames.length === 0
+      ? T.state.chipReal
+      : exampleNames.length === sortedLayers.length
+        ? T.state.chipAll
+        : T.state.chipMixed(exampleNames.length);
+  const chipTitle = exampleNames.join(", ");
   const activeLayer = L;
 
   // ficha y valor
@@ -670,8 +718,22 @@ export function buildView(m: Model) {
     else if (hud) moniTip = T.moni.territory;
   }
 
+  const here = S.activePlace?.lonlat ?? ds?.area.center;
+  const inspectCenter = here ? `${F.lat(here[1])} · ${F.lon(here[0])}` : "";
+  const inspectRows = sortedLayers
+    .filter((l) => l.id === sc.layer || S.extras.includes(l.id))
+    .map((l) => ({
+      id: l.id,
+      label: l.label,
+      honesty: honestyOf(l),
+      honestyLabel: honestyLabel(honestyOf(l)),
+      value: l.id === L?.id && valueText ? valueText : T.state.nodata,
+    }));
+  const railTitle = S.railR ? T.rail[S.railR] : S.railL ? T.rail[S.railL] : "";
+
   return {
     theme, t: T, lay, isM, isD: !isM,
+    railTitle, inspectCenter, inspectRows,
     hasDs, noDs: !hasDs && !err, areaName: ds ? ds.area.name : "", mock,
     brandOn: (!isM || !S.searchOpen) && !imm,
     brandMark: "./brand/icon-32.png",
@@ -691,7 +753,7 @@ export function buildView(m: Model) {
     sceneSoft: S.introOpen,
     introOpen: S.introOpen,
     moniB: S.tlH + (isM ? 116 : 0) + 20 + "px",
-    moniOn: S.introDone && !S.introOpen && !imm && !(chrome && !!L && (isM ? S.sheet : cardOpen)),
+    moniOn: S.introDone && !S.introOpen && !imm && !S.railR,
     moniTip: S.helpText || moniTip,
     moniOpen: S.moniOpen,
     soundOn: S.soundOn,
@@ -700,7 +762,16 @@ export function buildView(m: Model) {
     showExplore: cam === "orbit" && S.explore && !err,
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
-    dockOn: chrome && !isM, chipsOn: chrome && isM, layerItems, panelRows,
+    railsOn: chrome,
+    railL: S.railL,
+    railR: S.railR,
+    railRows,
+    chipLabel,
+    chipTitle,
+    showBasemap: S.railL === "utilities",
+    showAnnotate: S.railL === "annotate",
+    showVisual: S.railL === "visual",
+    dockOn: false, chipsOn: false, layerItems, panelRows,
     dockMaxH: Math.max(140, S.H - 64 - S.tlH - 16) + "px",
     overlayItems: sortedLayers
       .filter((l) => l.id !== sc.layer)
@@ -721,11 +792,17 @@ export function buildView(m: Model) {
     compareOn, compareBanner: compareOn && fa && fb ? T.compare.banner(nameOf(fb), nameOf(fa)) : "",
     mixed: compareOn && !!fa && !!fb && fa.seg.kind !== fb.seg.kind,
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
-    cardOn: chrome, mClosed: isM && !S.sheet, mOpenOrDesk: !isM || S.sheet, cardOpen,
+    cardOn: chrome && !!S.railR,
+    mClosed: false,
+    mOpenOrDesk: true,
+    cardOpen: !!S.railR,
     frameBottom: chrome ? `calc(${lay.tlB} + ${S.tlH}px + 10px)` : lay.entB,
-    legendOn: chrome && !!L && (isM ? S.sheet : cardOpen),
+    legendOn: chrome && !!S.railR && S.railR === "legend" && !!L,
     noSeries,
-    isTabArea: S.tab === "area", isTabRead: S.tab === "read", isTabSources: S.tab === "sources",
+    isTabArea: S.railR === "area",
+    isTabRead: S.railR === "insight",
+    isTabSources: S.railR === "sources",
+    isInspect: S.railR === "inspect",
     tabSourcesLine: S.tab === "sources" ? "var(--acc-fg)" : "transparent",
     sources,
     sourcesAt,
