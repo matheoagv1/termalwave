@@ -4,8 +4,9 @@ import { edgeJson, json } from "./edge-cache.js";
 const EDGE = "https://edge.termalwave/firms";
 const BROWSER_S = 120;
 const DEFAULT_TTL_S = 600;
-const DEFAULT_DAYS = 1;
-const DEFAULT_SOURCE = "VIIRS_SNPP_NRT";
+const DEFAULT_DAYS = 2;
+// VIIRS_SNPP_NRT returns 0 rows since NASA dropped it; these are tried in order until one has hotspots
+const SOURCES = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"];
 
 /**
  * @param {URL} url
@@ -17,25 +18,40 @@ export async function handleFirms(url, env, ctx, cfg) {
   const key = env.FIRMS_MAP_KEY;
   if (!key) return json({ error: "firms_disabled" }, 503);
   const upstream = cfg?.upstream || "https://firms.modaps.eosdis.nasa.gov/api/area/csv";
-  const source = cfg?.source || DEFAULT_SOURCE;
+  const sources = cfg?.source && cfg.source !== "VIIRS_SNPP_NRT" ? [cfg.source, ...SOURCES.filter((s) => s !== cfg.source)] : SOURCES;
   const days = Math.min(10, Math.max(1, Number(cfg?.day_range || DEFAULT_DAYS)));
   const ttl = Number(cfg?.cache_ttl_s || DEFAULT_TTL_S);
   // optional viewport bbox; default = world (shell / far LOD)
   const bbox = parseBbox(url.searchParams.get("bbox")) || [-180, -90, 180, 90];
-  const cacheKey = `${EDGE}/${source}/${days}/${bbox.map((v) => v.toFixed(2)).join(",")}`;
+  const cacheKey = `${EDGE}/v2/${days}/${bbox.map((v) => v.toFixed(2)).join(",")}`;
   try {
     const out = await edgeJson(cacheKey, ttl, ctx, async () => {
-      const path = `${upstream.replace(/\/$/, "")}/${encodeURIComponent(key)}/${source}/${bbox.join(",")}/${days}`;
-      const res = await fetch(path, { headers: { Accept: "text/csv" } });
-      if (!res.ok) throw new Error(`firms ${res.status}`);
-      const text = await res.text();
+      let used = sources[0];
+      let features = [];
+      let reached = false;
+      for (const source of sources) {
+        try {
+          const path = `${upstream.replace(/\/$/, "")}/${encodeURIComponent(key)}/${source}/${bbox.join(",")}/${days}`;
+          const res = await fetch(path, { headers: { Accept: "text/csv" }, signal: AbortSignal.timeout(8000) });
+          if (!res.ok) continue;
+          reached = true;
+          features = csvToFeatures(await res.text());
+          used = source;
+          if (features.length) break;
+        } catch (err) {
+          console.warn("firms source", source, err && err.name); // never log the url: it carries the key
+        }
+      }
+      if (!reached) throw new Error("firms unreachable");
       return {
         type: "FeatureCollection",
         attribution: cfg?.attribution || "NASA FIRMS",
-        source,
+        status: features.length ? "ok" : "empty",
+        code: features.length ? "ok" : "no_hotspots_in_range",
+        source: used,
         day_range: days,
         bbox,
-        features: csvToFeatures(text),
+        features,
       };
     });
     return json(out, 200, BROWSER_S);

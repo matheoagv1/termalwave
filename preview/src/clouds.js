@@ -3,6 +3,7 @@
 // nowcoast stretches each GetMap independently — single 256 tiles seam. we fetch 4×4 metatiles
 // (1024 px) so the stretch is shared, and the client crops the 256 it needs
 import { edgeBytes, edgeJson, json } from "./edge-cache.js";
+import { relayFetch } from "./relay.js";
 
 const EDGE = "https://edge.termalwave/clouds";
 const TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
@@ -30,14 +31,14 @@ export async function handleClouds(url, env, ctx, cfg) {
   if (!cfg?.upstream || !cfg.layer) return json({ error: "clouds_disabled" }, 503);
   const rest = url.pathname.slice(cfg.endpoint.length);
   try {
-    if (rest === "/manifest") return json(await manifest(cfg, ctx), 200, MANIFEST_BROWSER_S);
+    if (rest === "/manifest") return json(await manifest(cfg, ctx, env), 200, MANIFEST_BROWSER_S);
     const world = /^\/([0-9TZ:-]{20})\/world\.png$/.exec(rest);
-    if (world) return await worldTile(cfg, ctx, world[1]);
+    if (world) return await worldTile(cfg, ctx, world[1], env);
     const m = TILE_PATH.exec(rest);
     if (!m) return json({ error: "not_found" }, 404);
     const metaN = m[5] ? Number(m[6]) : 1;
     if (metaN !== 1 && metaN !== META) return json({ error: "bad_meta" }, 400);
-    return await tile(cfg, ctx, m[1], Number(m[2]), Number(m[3]), Number(m[4]), metaN);
+    return await tile(cfg, ctx, m[1], Number(m[2]), Number(m[3]), Number(m[4]), metaN, env);
   } catch (err) {
     if (err instanceof NotListed) return json({ error: "unknown_time" }, 404);
     console.warn("clouds", err && err.message);
@@ -46,12 +47,12 @@ export async function handleClouds(url, env, ctx, cfg) {
 }
 
 /** @returns {Promise<{ layer: string, latest: string, times: string[], bounds: number[] }>} */
-function manifest(cfg, ctx) {
+function manifest(cfg, ctx, env) {
   const ttl = cfg.manifest_ttl_s;
   const layer = encodeURIComponent(cfg.layer);
   return edgeJson(`${EDGE}/l2/manifest/${layer}`, ttl, ctx, async () => {
     const caps = await edgeJson(`${EDGE}/l1/capabilities/${layer}`, ttl, ctx, async () => {
-      const res = await fetch(wmsUrl(cfg, { request: "GetCapabilities" }));
+      const res = await relayFetch(env, wmsUrl(cfg, { request: "GetCapabilities" }));
       if (!res.ok) throw new Error(`capabilities ${res.status}`);
       return { xml: await res.text() };
     });
@@ -59,13 +60,14 @@ function manifest(cfg, ctx) {
   });
 }
 
-async function worldTile(cfg, ctx, time) {
+async function worldTile(cfg, ctx, time, env) {
   if (!TIME.test(time) || canonical(time) !== time) return json({ error: "bad_time" }, 400);
   const key = `${EDGE}/world/${encodeURIComponent(cfg.layer)}/${time}.png`;
   const img = await edgeBytes(key, ARCHIVE_EDGE_S, ctx, async () => {
-    const { times } = await manifest(cfg, ctx);
+    const { times } = await manifest(cfg, ctx, env);
     if (!times.includes(time)) throw new NotListed(time);
-    const res = await fetch(
+    const res = await relayFetch(
+      env,
       wmsUrl(cfg, {
         request: "GetMap",
         layers: cfg.layer,
@@ -89,7 +91,7 @@ async function worldTile(cfg, ctx, time) {
 /**
  * @param {number} spanTiles 1 = single tile; META = metatile origin (multiple of META)
  */
-async function tile(cfg, ctx, time, z, x, y, spanTiles) {
+async function tile(cfg, ctx, time, z, x, y, spanTiles, env) {
   const side = 2 ** z;
   if (!TIME.test(time) || canonical(time) !== time) return json({ error: "bad_time" }, 400);
   if (z > cfg.max_zoom || x % spanTiles || y % spanTiles) return json({ error: "tile_out_of_range" }, 404);
@@ -98,10 +100,10 @@ async function tile(cfg, ctx, time, z, x, y, spanTiles) {
   const key = `${EDGE}/${kind}/${encodeURIComponent(cfg.layer)}/${time}/${z}/${x}/${y}.png`;
   // cache before manifest: hours that left the upstream list stay servable
   const img = await edgeBytes(key, ARCHIVE_EDGE_S, ctx, async () => {
-    const { times } = await manifest(cfg, ctx);
+    const { times } = await manifest(cfg, ctx, env);
     // wms answers unknown hours with the nearest one — never archive those under this key
     if (!times.includes(time)) throw new NotListed(time);
-    const res = await fetch(wmsUrl(cfg, getMapParams(cfg.layer, time, z, x, y, spanTiles)));
+    const res = await relayFetch(env, wmsUrl(cfg, getMapParams(cfg.layer, time, z, x, y, spanTiles)));
     const type = res.headers.get("content-type") || "";
     if (!res.ok || !type.startsWith("image/png")) throw new Error(`getmap ${res.status} ${type}`);
     return { body: await res.arrayBuffer(), type: "image/png" };
