@@ -6,6 +6,8 @@ import { handleEphemeris } from "./ephemeris.js";
 import { handleFirms } from "./firms.js";
 import { handleNisarCoverage } from "./nisar-coverage.js";
 import { handleDerived } from "./derived/index.js";
+import { handleCatalog } from "./catalog.js";
+import { handleGunwCoverage } from "./insar/gunw-coverage.js";
 import { handleSatellites } from "./satellites.js";
 import { handleTile } from "./tiles.js";
 import { handleWind } from "./wind.js";
@@ -54,6 +56,8 @@ export async function handleApi(request, env, ctx) {
     return handleFirms(url, env, ctx, cfg.space?.firms || cfg.firms || {});
   }
   if (url.pathname.startsWith("/api/derived/")) return handleDerived(url, env, ctx, await loadAppConfig(request, env));
+  if (url.pathname === "/api/catalog/eonet") return handleCatalog(url, env, ctx);
+  if (url.pathname === "/api/insar/gunw") return handleGunwCoverage(url, env, ctx);
   if (url.pathname === "/api/nisar/coverage") {
     const cfg = await loadAppConfig(request, env);
     return handleNisarCoverage(url, env, ctx, cfg, request);
