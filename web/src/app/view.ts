@@ -143,7 +143,7 @@ export function buildView(m: Model) {
   const results = S.results.map((r) => ({ label: r.label, go: () => m.goResult(r) }));
   const st = S.status;
 
-  // capas — headings por tema; badge de categoría como secundario
+  // capas: headings por tema; badge de categoria como secundario
   const CAT_ORDER = ["data", "prediction", "inference"];
   const CAT_LABEL: Record<string, string> = {
     data: T.layers.catData,
@@ -276,6 +276,9 @@ export function buildView(m: Model) {
   // ficha y valor
   const fb: Flat | null = ds && sc.compare ? (m.flat[m.idx[sc.compare.tickId] ?? -1] ?? null) : null;
   const compareOn = !!sc.compare && !!fb && !!fa;
+  const compareMode = sc.compare?.mode === "side" ? "side" : "curtain";
+  const canCompare = m.flat.length >= 2;
+  const compareGap = !!(compareOn && L && fa && fb && (!fa.tick.frames[L.id] || !fb.tick.frames[L.id]));
   const iA = fa ? (m.idx[sc.tickId] ?? -1) : -1;
   const iB = fb && sc.compare ? (m.idx[sc.compare.tickId] ?? -1) : -1;
   const rawSeries = L ? S.series[L.id] : undefined;
@@ -469,6 +472,7 @@ export function buildView(m: Model) {
           const gap = !!L && !f0;
           const isA = tk.id === sc.tickId;
           const isB = compareOn && sc.compare?.tickId === tk.id;
+          const editingB = compareOn && S.cmpTarget === "B";
           const layersBg: string[] = [];
           if (seg.kind === "acquisition")
             layersBg.push(lineG(isA ? "var(--acc-ink)" : isB ? "var(--accB-ink)" : tone, isA || isB ? 3 : 2));
@@ -490,7 +494,7 @@ export function buildView(m: Model) {
             key: tk.id,
             order: m.idx[tk.id] ?? 0,
             title,
-            cur: isA,
+            cur: editingB ? isB : isA,
             hot,
             before,
             example: isExampleHonesty((f0 as { honesty?: string } | null)?.honesty),
@@ -552,12 +556,14 @@ export function buildView(m: Model) {
         flex: Math.max(1, (+new Date(seg.to) - +new Date(seg.from)) / 864e5 + 1),
         tone: segs[i]?.tone ?? "var(--line2)",
       }));
-  const evNow = fa && ds ? ds.events.find((ev) => ev.date >= fa.tick.start && ev.date <= fa.tick.end) : undefined;
-  const anyFr = fa ? (fa.tick.frames[sc.layer] ?? Object.values(fa.tick.frames).find(Boolean)) : null;
-  const meta = fa
+  const tgtB = S.cmpTarget === "B" && !!fb;
+  const shown = tgtB && fb ? fb : fa;
+  const evNow = shown && ds ? ds.events.find((ev) => ev.date >= shown.tick.start && ev.date <= shown.tick.end) : undefined;
+  const anyFr = shown ? (shown.tick.frames[sc.layer] ?? Object.values(shown.tick.frames).find(Boolean)) : null;
+  const meta = shown
     ? [
-        fa.seg.label,
-        m.granText(fa.seg),
+        shown.seg.label,
+        m.granText(shown.seg),
         anyFr && anyFr.resolutionM != null ? T.card.meters(anyFr.resolutionM) : "",
         anyFr && anyFr.source ? anyFr.source : "",
         evNow ? T.timeline.event(evNow.label) : "",
@@ -565,7 +571,6 @@ export function buildView(m: Model) {
         .filter(Boolean)
         .join(" · ")
     : "";
-  const tgtB = S.cmpTarget === "B";
   const selPips = fa
     ? layers.map((l) => {
         const f = fa.tick.frames[l.id];
@@ -583,14 +588,14 @@ export function buildView(m: Model) {
     ox: zs ? "auto" : "hidden",
     segs,
     real,
-    name: fa ? nameOf(fa) : "",
+    name: shown ? nameOf(shown) : "",
     meta,
     y0: firstSeg ? F.year(firstSeg.from) : "",
     y1: lastSeg ? F.year(lastSeg.to) : "",
     aLeft: pctOf(fa),
     bLeft: pctOf(fb),
     max: Math.max(0, totalPts - 1),
-    idx: Math.max(0, iA),
+    idx: Math.max(0, tgtB && iB >= 0 ? iB : iA),
     noPlay: totalPts < 2,
     single: totalPts === 1,
     hasExample: segs.some((seg) => seg.ticks.some((tk) => tk.example)),
@@ -843,7 +848,8 @@ export function buildView(m: Model) {
     tiltText: T.camera.deg(Math.round(tilt)), tiltOff: !st.terrain,
     tiltTitle: st.terrain ? T.camera.tilt : T.camera.tiltOff,
     mapLabel, labelDisplay: mapLabel ? "block" : "none",
-    compareOn, compareBanner: compareOn && fa && fb ? T.compare.banner(nameOf(fb), nameOf(fa)) : "",
+    compareOn, compareMode, canCompare, compareGap,
+    compareBanner: compareOn && fa && fb ? T.compare.banner(nameOf(fb), nameOf(fa)) : "",
     mixed: compareOn && !!fa && !!fb && fa.seg.kind !== fb.seg.kind,
     gapOn, gapText: L ? T.map.gap(L.label) : "", offlineNote: hud && !online && !isM,
     cardOn: chrome && !!S.railR,
@@ -884,7 +890,7 @@ export function buildView(m: Model) {
     noTrades: !!ds && ds.context.length === 0, leg,
     dc, toast: S.toast,
     showKey: W >= 1240, tlOn: chrome, tlLoading: !ds && !err, tlReady: !!ds, tl, selPips,
-    compareHint: compareOn ? T.timeline.compareActive : T.timeline.compareIdle,
+    compareHint: !compareOn ? T.timeline.compareIdle : compareMode === "side" ? T.timeline.compareSide : T.timeline.compareActive,
     playing: S.playing,
     scopeAll: S.scope === "all", scopeSeg: S.scope === "seg",
     scopeAllBg: S.scope === "all" ? "var(--sel)" : "transparent",

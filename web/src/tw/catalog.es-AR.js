@@ -349,8 +349,9 @@ export const T = {
     scopeSeg: "Este tramo",
     compare: "Comparar",
     compareOff: "Dejar de comparar",
-    compareIdle: "Comparar dos momentos: cortina en el mapa",
+    compareIdle: "Comparar dos fechas de la capa activa, lado a lado o con una cortina.",
     compareActive: "Cortina activa: arrastrá en el mapa o elegí el punto B",
+    compareSide: "Las dos fechas quedan una al lado de la otra. Elegí A o B en la línea de tiempo.",
     layersHere: "Capas en este punto",
     target: "Punto que se mueve",
     a: "A",
@@ -378,6 +379,25 @@ export const T = {
   },
   orbits: {
     legend: "Pasadas de satélites SAR (órbitas)",
+  },
+
+  utilities: {
+    lead: (name) => `Sobre ${name}, la capa que estás leyendo.`,
+    needLayer: "Elegí una capa para usar las herramientas.",
+    compare: "Comparar fechas",
+    side: "Lado a lado",
+    curtain: "Cortina",
+    draw: "Dibujar",
+    measure: "Medir",
+    on: "SÍ",
+    off: "NO",
+    mode: "Vista",
+    dateA: "Fecha A",
+    dateB: "Fecha B",
+    pick: "Elegí A o B y después una fecha en la línea de tiempo.",
+    needDates: "Hacen falta dos fechas en la línea de tiempo.",
+    noFrame: "Sin imagen de esta capa en una de las dos fechas.",
+    later: "Dibujar y medir quedan para cuando estén las herramientas. Por ahora podés comparar fechas.",
   },
 
   compare: {

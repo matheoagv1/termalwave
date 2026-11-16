@@ -100,6 +100,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   private unP: (() => void) | null = null;
   private timer: number | undefined;
   private toastT: number | undefined;
+  private spaceT: number | undefined;
   private qt: number | undefined;
   private posRaf = 0;
   private bootId = 0;
@@ -217,6 +218,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   teardown(): void {
     window.clearTimeout(this.timer);
     window.clearTimeout(this.toastT);
+    window.clearTimeout(this.spaceT);
     cancelAnimationFrame(this.posRaf);
     this.unC?.();
     this.unP?.();
@@ -325,10 +327,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       viewScale: vista,
     };
     if (hp.cmp) {
-      const [cid, sp] = hp.cmp.split(",");
+      const [cid, sp, modeTok] = hp.cmp.split(",");
       if (cid && this.idx[cid] != null) {
         const split = parseFloat(sp ?? "");
-        set.compare = { tickId: cid, split: Number.isNaN(split) ? 0.5 : split };
+        set.compare = { tickId: cid, split: Number.isNaN(split) ? 0.5 : split, mode: modeTok === "side" ? "side" : "curtain" };
       }
     }
     this.scene.set(set, { instant: true });
@@ -485,7 +487,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     if (o.tema) p.push("tema=" + o.tema);
     if (o.mock) p.push("mock=" + o.mock);
     p.push("c=" + (st.camera === "approach" ? "territory" : st.camera), "l=" + st.layer, "t=" + st.tickId);
-    if (st.compare) p.push(`cmp=${st.compare.tickId},${st.compare.split.toFixed(2)}`);
+    if (st.compare) {
+      const mode = st.compare.mode === "side" ? ",side" : "";
+      p.push(`cmp=${st.compare.tickId},${st.compare.split.toFixed(2)}${mode}`);
+    }
     p.push("tilt=" + Math.round(st.tilt), "n=" + (st.northUp ? 1 : 0));
     if (this.state.pick) p.push("pick=" + this.state.pick);
     if (this.state.zoomSeg) p.push("zoom=" + this.state.zoomSeg);
@@ -708,18 +713,47 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   }
 
   toggleCompare = (): void => {
+    if (this.state.scene.compare) this.setCompare(null);
+    else this.setCompare("curtain");
+  };
+
+  setCompareMode = (mode: "curtain" | "side"): void => {
+    const cur = this.state.scene.compare;
+    if (!cur) {
+      this.setCompare(mode);
+      return;
+    }
+    if ((cur.mode === "side" ? "side" : "curtain") === mode) return;
+    this.scene?.set({ compare: { ...cur, mode } });
+  };
+
+  private setCompare(mode: "curtain" | "side" | null): void {
     if (!this.scene) return;
-    const sc = this.state.scene;
-    if (sc.compare) {
+    if (!mode) {
       this.scene.set({ compare: null });
       this.setState({ cmpTarget: "A" });
       return;
     }
+    const sc = this.state.scene;
     const bi = (this.idx[sc.tickId] ?? 0) > 0 ? 0 : this.flat.length - 1;
     const other = this.flat[bi];
-    if (!other) return;
-    this.scene.set({ compare: { tickId: other.tick.id, split: 0.5 } });
-    this.setState({ cmpTarget: "B" });
+    if (!other || other.tick.id === sc.tickId) return;
+    this.scene.set({ compare: { tickId: other.tick.id, split: 0.5, mode } });
+    this.setState({ cmpTarget: "B", tlOpen: true });
+  }
+
+  // la capa en lectura no tiene un "apagado": vuelve al nucleo y sale de las superpuestas
+  turnOffLayer = (id: string): void => {
+    const ds = this.state.ds;
+    if (!ds) return;
+    if (!GLOBAL_IDS.includes(id) && !this.state.activePlace) {
+      this.showToast(this.copy.search.needPlace);
+      return;
+    }
+    const fallback = ds.layers.find((l) => l.core && l.id !== id)?.id;
+    const next = this.state.extras.filter((x) => x !== id);
+    if (next.length !== this.state.extras.length) this.setState({ extras: next });
+    if (this.state.scene.layer === id && fallback) this.scene?.set({ layer: fallback });
   };
 
   // camara y busqueda
@@ -802,10 +836,12 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const on = this.state.extras;
     this.scene?.setSpaceLayer?.("clouds", on.includes("clouds"));
     this.scene?.setSpaceLayer?.("wind", on.includes("wind"));
-    // la escena monta el espacio de forma asincrona: se reaplica una vez
-    window.setTimeout(() => {
-      this.scene?.setSpaceLayer?.("clouds", this.state.extras.includes("clouds"));
-      this.scene?.setSpaceLayer?.("wind", this.state.extras.includes("wind"));
+    // el montaje del espacio es async: una sola reaplicacion, con el estado de ese momento
+    window.clearTimeout(this.spaceT);
+    this.spaceT = window.setTimeout(() => {
+      const now = this.state.extras;
+      this.scene?.setSpaceLayer?.("clouds", now.includes("clouds"));
+      this.scene?.setSpaceLayer?.("wind", now.includes("wind"));
     }, 3500);
     const clouds = on.includes("clouds");
     if (clouds !== this.cloudsOn) {

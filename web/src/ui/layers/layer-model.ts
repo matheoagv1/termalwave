@@ -161,7 +161,7 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
     const honesty = normHonesty(frameMeta.honesty) ?? item.honesty;
     const frameNote = typeof frameMeta[`note_${lang}`] === "string" ? (frameMeta[`note_${lang}`] as string) : "";
     const on = item.on || item.core || S.extras.includes(item.id);
-    const locked = !hasPlace ? C.needPlace : item.core ? C.lockedCore : item.on ? C.lockedReading : "";
+    const locked = !hasPlace ? C.needPlace : item.core ? C.lockedCore : "";
     const relative = honesty === "example" || isExampleHonesty(def.honesty);
     const dec = def.decimals ?? 0;
     rows.push({
@@ -171,7 +171,7 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
       label,
       swatch: item.grad,
       on,
-      toggle: item.core || item.on ? null : () => a.toggleExtra(item.id),
+      toggle: item.core ? null : () => (item.on ? a.turnOffLayer(item.id) : a.toggleExtra(item.id)),
       toggleText: item.core ? C.core : on ? C.on : C.off,
       toggleTitle: locked || (on ? C.turnOff(label) : C.turnOn(label)),
       locked,

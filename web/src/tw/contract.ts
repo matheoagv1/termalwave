@@ -25,7 +25,7 @@ export interface LayerDef {
   // taxonomia de capas (config/layers.toml): el nucleo SAR nunca se apaga
   category?: "data" | "prediction" | "inference";
   core?: boolean;
-  /** Agrupa el panel Capas por tema */
+  /** Agrupa el panel de capas por tema */
   theme?: string;
 }
 
@@ -133,12 +133,13 @@ export interface DataProvider {
 
 export type CameraMode = "orbit" | "approach" | "territory" | "detail";
 export type ViewScale = "campo" | "urbano";
+export type CompareMode = "curtain" | "side";
 
 export interface SceneState {
   camera: CameraMode;
   layer: LayerId;
   tickId: string;
-  compare?: { tickId: string; split: number };
+  compare?: { tickId: string; split: number; mode?: CompareMode };
   tilt: number;
   northUp: boolean;
   viewScale: ViewScale;

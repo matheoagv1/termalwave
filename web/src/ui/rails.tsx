@@ -9,6 +9,7 @@ import { Icon } from "./icons";
 import { layerCopy } from "./layers/layer-copy";
 import { LayerPanel } from "./layers/LayerPanel";
 import { HonestyBadge } from "./layers/LayerRow";
+import { UtilitiesPanel } from "./utilities/UtilitiesPanel";
 
 export { HonestyBadge };
 
@@ -70,9 +71,10 @@ export function LeftRail({ v, a }: P): React.ReactElement {
         })}
       </div>
       {v.railL && (
-        <div style={s(`pointer-events:auto;width:min(${LAYER_RAIL[v.railL] ? 320 : 280}px,calc(100vw - 88px));max-height:100%;overflow:auto;${GLASS}`)}>
+        <div style={s(`pointer-events:auto;width:min(${LAYER_RAIL[v.railL] || v.railL === "utilities" ? 320 : 280}px,calc(100vw - 88px));max-height:100%;overflow:auto;${GLASS}`)}>
           <RailHead title={LAYER_RAIL[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
-          {v.showBasemap && <BasemapList v={v} />}
+          {v.railL === "utilities" && <UtilitiesPanel v={v} a={a} />}
+          {v.showBasemap && v.basemapItems.length > 0 && <BasemapList v={v} />}
           {v.showAnnotate && <p style={s("margin:0;padding:12px;font:13px/1.45 var(--sans);color:var(--fg2)")}>{t.state.annotate}</p>}
           {v.showVisual && (
             <div style={s("padding:12px;display:flex;flex-direction:column;gap:8px")}>
@@ -151,7 +153,8 @@ export function MobileSheet({ v, a }: P): React.ReactElement | null {
   return (
     <div style={s(`position:absolute;left:0;right:0;bottom:52px;max-height:56%;overflow:auto;pointer-events:auto;z-index:23;${GLASS}`)}>
       <RailHead title={LAYER_RAIL[v.railL] ? layerCopy(a.state.lang).panelTitle : t.rail[v.railL]} onClose={() => a.set({ railL: "" })} closeLabel={t.card.close} />
-      {v.showBasemap && <BasemapList v={v} />}
+      {v.railL === "utilities" && <UtilitiesPanel v={v} a={a} />}
+      {v.showBasemap && v.basemapItems.length > 0 && <BasemapList v={v} />}
       {v.showAnnotate && <p style={s("margin:0;padding:12px;color:var(--fg2)")}>{t.state.annotate}</p>}
       {v.showVisual && <p style={s("margin:0;padding:12px;color:var(--fg2)")}>{t.state.visual}</p>}
       {LAYER_RAIL[v.railL] && <LayerPanel v={v} a={a} />}

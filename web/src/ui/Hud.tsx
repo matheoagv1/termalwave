@@ -665,7 +665,7 @@ function ExploreTools({ v, a }: { v: View; a: App }): React.ReactElement {
         className="tw-hov"
         type="button"
         aria-pressed={v.compareOn}
-        title={v.compareOn ? t.explore.compareOn : t.explore.compare}
+        title={v.compareHint}
         onClick={a.toggleCompare}
         style={s(`height:${lay.hit};padding:0 10px;border:1px solid ${v.compareOn ? "var(--acc-fg)" : "var(--line2)"};background:${v.compareOn ? "var(--sel)" : "transparent"};cursor:pointer;font:11px var(--mono)`)}
       >

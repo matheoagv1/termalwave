@@ -176,6 +176,10 @@ export class MapLibreScene implements SceneApi {
   private pending: ((e: MapSourceDataEvent) => void) | null = null;
   private images = new Map<string, HTMLImageElement>();
   private cmpRaf = 0;
+  private cmpSeq = 0;
+  private cmpPainted = "";
+  // last requested visibility, applied again when a layer finishes mounting
+  private spaceWant = new Map<string, boolean>();
   private territoryZoom = 11;
   private aoiMinZoom = 8;
   private intendedOpacity = new Map<string, number>();
@@ -460,15 +464,17 @@ export class MapLibreScene implements SceneApi {
         new SatellitesLayer(aoi, { labels: true, swath: true, footprint: false, tracks: true }),
         true,
       );
-      await this.space.add(new CloudsLayer({ opacity: 0.85 }), true);
+      await this.space.add(new CloudsLayer({ opacity: 0.85 }), this.spaceWant.get("clouds") ?? true);
       // wind off by default; App toggles via setSpaceLayer("wind", ...)
-      await this.space.add(new WindLayer(), false);
+      await this.space.add(new WindLayer(), this.spaceWant.get("wind") ?? false);
+      for (const [id, on] of this.spaceWant) this.space.setVisible(id, on);
     } catch (e) {
       console.warn("escena espacial:", e);
     }
   }
 
   setSpaceLayer(id: string, on: boolean): void {
+    this.spaceWant.set(id, on);
     this.space?.setVisible(id, on);
   }
 
@@ -934,29 +940,47 @@ export class MapLibreScene implements SceneApi {
     });
   }
 
-  // comparar (cortina)
+  // comparar: cortina deslizable, o las dos fechas una al lado de la otra
 
   private applyCompare(): void {
     if (!this.ready || !this.ds || !this.map.getSource("tw-cmp")) return;
     const c = this.s.compare;
+    this.cmpSeq += 1;
     if (!c) {
-      this.setOpacity("tw-cmp", 0);
-      (this.map.getSource("tw-curtain") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: [] });
-      this.handle.style.display = "none";
+      this.clearCompareOverlay();
       return;
     }
-    const b = this.ds.area.bounds;
-    const lon = b.west + c.split * (b.east - b.west);
+    const mode = c.mode === "side" ? "side" : "curtain";
+    const layer = this.s.layer;
+    const frA = this.ticks[this.s.tickId]?.frames[layer] ?? null;
+    const frB = this.ticks[c.tickId]?.frames[layer] ?? null;
+    if (mode === "side" ? !frA || !frB : !frB) {
+      this.clearCompareOverlay();
+      return;
+    }
+    const split = mode === "side" ? 0.5 : c.split;
+    const box = mode === "side" && frA ? frA.bounds : this.ds.area.bounds;
+    const lon = box.west + split * (box.east - box.west);
     (this.map.getSource("tw-curtain") as GeoJSONSource).setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "LineString", coordinates: [[lon, b.south], [lon, b.north]] },
+      geometry: { type: "LineString", coordinates: [[lon, box.south], [lon, box.north]] },
     });
-    this.handle.style.display = "block";
-    this.handle.setAttribute("aria-valuenow", String(Math.round(c.split * 100)));
+    this.handle.style.display = mode === "curtain" ? "block" : "none";
+    if (mode === "curtain") this.handle.setAttribute("aria-valuenow", String(Math.round(c.split * 100)));
     this.placeHandle();
+    const paintKey = `${mode}|${layer}|${this.s.tickId}|${c.tickId}|${mode === "curtain" ? split.toFixed(3) : ""}`;
+    if (paintKey === this.cmpPainted) return;
+    const seq = this.cmpSeq;
     cancelAnimationFrame(this.cmpRaf);
-    this.cmpRaf = requestAnimationFrame(() => void this.drawCmp());
+    this.cmpRaf = requestAnimationFrame(() => void this.paintCompare(seq, paintKey, mode, layer, c.tickId, split));
+  }
+
+  private clearCompareOverlay(): void {
+    this.cmpPainted = "";
+    this.setOpacity("tw-cmp", 0);
+    (this.map.getSource("tw-curtain") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: [] });
+    this.handle.style.display = "none";
   }
 
   private loadImage(url: string): Promise<HTMLImageElement> {
@@ -973,35 +997,78 @@ export class MapLibreScene implements SceneApi {
     });
   }
 
-  // La cortina recorta la imagen B en su parte izquierda y la dibuja encima de A.
-  private async drawCmp(): Promise<void> {
+  private compareLive(seq: number, mode: "curtain" | "side", layer: string, tickB: string, split: number): boolean {
     const c = this.s.compare;
-    if (!c || !this.ds) return;
-    const fr = this.frameOf(c.tickId);
-    if (!fr) {
-      this.setOpacity("tw-cmp", 0);
+    if (seq !== this.cmpSeq || this.dead || !c || c.tickId !== tickB || this.s.layer !== layer) return false;
+    const live = c.mode === "side" ? "side" : "curtain";
+    if (live !== mode) return false;
+    return mode === "side" || Math.abs(c.split - split) < 0.0005;
+  }
+
+  // La cortina recorta la imagen B a la izquierda. Lado a lado pone B y A enteras en el mismo encuadre.
+  private async paintCompare(
+    seq: number,
+    paintKey: string,
+    mode: "curtain" | "side",
+    layer: string,
+    tickB: string,
+    split: number,
+  ): Promise<void> {
+    if (!this.compareLive(seq, mode, layer, tickB, split) || !this.ds) return;
+    const frB = this.ticks[tickB]?.frames[layer] ?? null;
+    const frA = this.ticks[this.s.tickId]?.frames[layer] ?? null;
+    if (mode === "curtain") {
+      if (!frB) return;
+      const b = this.ds.area.bounds;
+      const lon = b.west + split * (b.east - b.west);
+      const fb = frB.bounds;
+      const f = clamp((lon - fb.west) / (fb.east - fb.west), 0, 1);
+      if (f <= 0.002) {
+        this.setOpacity("tw-cmp", 0);
+        return;
+      }
+      const img = await this.loadImage(absolute(frB.url)).catch(() => null);
+      if (!img || !this.compareLive(seq, mode, layer, tickB, split)) return;
+      const w = Math.max(1, Math.round((img.naturalWidth || 1) * f));
+      const h = Math.max(1, img.naturalHeight || 1);
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      cv.getContext("2d")?.drawImage(img, 0, 0, w, h, 0, 0, w, h);
+      const east = fb.west + f * (fb.east - fb.west);
+      if (!this.compareLive(seq, mode, layer, tickB, split)) return;
+      const src = this.map.getSource("tw-cmp") as ImageSource | undefined;
+      src?.updateImage({ url: cv.toDataURL("image/png"), coordinates: coordsOf({ ...fb, east }) });
+      this.setOpacity("tw-cmp", frB.quality === "partial" ? 0.7 : 0.92);
+      this.cmpPainted = paintKey;
       return;
     }
-    const b = this.ds.area.bounds;
-    const lon = b.west + c.split * (b.east - b.west);
-    const fb = fr.bounds;
-    const f = clamp((lon - fb.west) / (fb.east - fb.west), 0, 1);
-    if (f <= 0.002) {
-      this.setOpacity("tw-cmp", 0);
-      return;
-    }
-    const tickAtStart = c.tickId;
-    const img = await this.loadImage(absolute(fr.url)).catch(() => null);
-    if (!img || this.s.compare?.tickId !== tickAtStart) return;
-    const w = Math.max(1, Math.round(img.naturalWidth * f));
+    if (!frA || !frB) return;
+    const [imgA, imgB] = await Promise.all([
+      this.loadImage(absolute(frA.url)).catch(() => null),
+      this.loadImage(absolute(frB.url)).catch(() => null),
+    ]);
+    if (!imgA || !imgB || !this.compareLive(seq, mode, layer, tickB, split)) return;
+    const max = 768;
+    const fit = (img: HTMLImageElement): number => Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+    const s = Math.min(fit(imgA), fit(imgB));
+    const w = Math.max(1, Math.round(Math.max(imgA.naturalWidth, imgB.naturalWidth) * s));
+    const h = Math.max(1, Math.round(Math.max(imgA.naturalHeight, imgB.naturalHeight) * s));
+    const gap = Math.max(2, Math.round(w * 0.012));
     const cv = document.createElement("canvas");
-    cv.width = w;
-    cv.height = img.naturalHeight;
-    cv.getContext("2d")?.drawImage(img, 0, 0, w, img.naturalHeight, 0, 0, w, img.naturalHeight);
-    const east = fb.west + f * (fb.east - fb.west);
+    cv.width = w * 2 + gap;
+    cv.height = h;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(imgB, 0, 0, w, h);
+    ctx.fillStyle = "#0b1220";
+    ctx.fillRect(w, 0, gap, h);
+    ctx.drawImage(imgA, w + gap, 0, w, h);
+    if (!this.compareLive(seq, mode, layer, tickB, split)) return;
     const src = this.map.getSource("tw-cmp") as ImageSource | undefined;
-    src?.updateImage({ url: cv.toDataURL("image/png"), coordinates: coordsOf({ ...fb, east }) });
-    this.setOpacity("tw-cmp", fr.quality === "partial" ? 0.7 : 0.92);
+    src?.updateImage({ url: cv.toDataURL("image/png"), coordinates: coordsOf(frA.bounds) });
+    this.setOpacity("tw-cmp", 1);
+    this.cmpPainted = paintKey;
   }
 
   private bindHandle(): void {
@@ -1011,7 +1078,7 @@ export class MapLibreScene implements SceneApi {
       h.setPointerCapture(e.pointerId);
     });
     h.addEventListener("pointermove", (e) => {
-      if (!this.dragCurtain || !this.s.compare || !this.ds) return;
+      if (!this.dragCurtain || !this.s.compare || this.s.compare.mode === "side" || !this.ds) return;
       const r = this.host.getBoundingClientRect();
       const ll = this.map.unproject([e.clientX - r.left, e.clientY - r.top]);
       const b = this.ds.area.bounds;
@@ -1021,7 +1088,7 @@ export class MapLibreScene implements SceneApi {
       this.dragCurtain = false;
     });
     h.addEventListener("keydown", (e) => {
-      if (!this.s.compare) return;
+      if (!this.s.compare || this.s.compare.mode === "side") return;
       const d = e.key === "ArrowLeft" ? -0.05 : e.key === "ArrowRight" ? 0.05 : 0;
       if (d) {
         e.preventDefault();
@@ -1032,7 +1099,7 @@ export class MapLibreScene implements SceneApi {
   }
 
   private setSplit(v: number): void {
-    if (!this.s.compare) return;
+    if (!this.s.compare || this.s.compare.mode === "side") return;
     this.s.compare = { ...this.s.compare, split: v };
     this.applyCompare();
     this.emit();

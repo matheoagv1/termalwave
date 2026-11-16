@@ -360,8 +360,9 @@ export const T = {
     scopeSeg: "This stretch",
     compare: "Compare",
     compareOff: "Stop comparing",
-    compareIdle: "Compare two moments: a curtain on the map",
+    compareIdle: "Compare two dates of the active layer, side by side or with a curtain.",
     compareActive: "Curtain on: drag on the map, or pick point B",
+    compareSide: "The two dates sit side by side. Pick A or B on the timeline.",
     layersHere: "Layers at this step",
     target: "Point that moves",
     a: "A",
@@ -389,6 +390,25 @@ export const T = {
   },
   orbits: {
     legend: "SAR satellite passes (orbits)",
+  },
+
+  utilities: {
+    lead: (name: string): string => `On ${name}, the layer you are reading.`,
+    needLayer: "Pick a layer to use the tools.",
+    compare: "Compare dates",
+    side: "Side by side",
+    curtain: "Curtain",
+    draw: "Draw",
+    measure: "Measure",
+    on: "ON",
+    off: "OFF",
+    mode: "View",
+    dateA: "Date A",
+    dateB: "Date B",
+    pick: "Pick A or B, then a date on the timeline.",
+    needDates: "The timeline needs two dates.",
+    noFrame: "This layer has no image on one of the two dates.",
+    later: "Drawing and measuring are for when the tools exist. For now you can compare dates.",
   },
 
   compare: {
