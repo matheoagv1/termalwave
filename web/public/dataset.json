@@ -16,14 +16,14 @@
     {
       "id": "radar",
       "label": "Radar",
-      "unit": "",
+      "unit": "dB",
       "range": [
-        0,
-        1
+        -30,
+        -5
       ],
       "ramp": [],
       "note": "",
-      "honesty": "example",
+      "honesty": "measured",
       "note_en": "Before NISAR (launched 2025)",
       "note_es": "Antes de NISAR (lanzado en 2025)"
     },
@@ -62,6 +62,34 @@
       "ramp": [],
       "note": "",
       "honesty": "example"
+    },
+    {
+      "id": "change",
+      "label": "Change between dates",
+      "label_en": "Change between dates",
+      "label_es": "Cambio entre fechas",
+      "unit": "dB",
+      "range": [
+        -6,
+        6
+      ],
+      "ramp": [],
+      "note": "",
+      "honesty": "derived"
+    },
+    {
+      "id": "rvi",
+      "label": "RVI",
+      "label_en": "RVI",
+      "label_es": "RVI",
+      "unit": "",
+      "range": [
+        0,
+        1
+      ],
+      "ramp": [],
+      "note": "",
+      "honesty": "inferred"
     }
   ],
   "segments": [
@@ -124,7 +152,9 @@
               },
               "kind": "composite",
               "honesty": "example"
-            }
+            },
+            "change": null,
+            "rvi": null
           }
         },
         {
@@ -178,7 +208,9 @@
               },
               "kind": "composite",
               "honesty": "example"
-            }
+            },
+            "change": null,
+            "rvi": null
           }
         },
         {
@@ -232,7 +264,9 @@
               },
               "kind": "composite",
               "honesty": "example"
-            }
+            },
+            "change": null,
+            "rvi": null
           }
         },
         {
@@ -286,7 +320,9 @@
               },
               "kind": "composite",
               "honesty": "example"
-            }
+            },
+            "change": null,
+            "rvi": null
           }
         },
         {
@@ -296,15 +332,21 @@
           "label": "2026",
           "frames": {
             "radar": {
-              "url": "./overlays/timeline/radar/2026.png",
+              "url": "./overlays/nisar/20261102_t140_f102_HV.png",
               "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
               },
-              "kind": "composite",
-              "honesty": "example"
+              "kind": "acquisition",
+              "honesty": "measured",
+              "product": "NISAR_L2_GCOV_V1",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "maturity": "validated",
+              "pol": "HV",
+              "mean_db": -15.45017148522371
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2026.png",
@@ -338,6 +380,37 @@
               },
               "kind": "composite",
               "honesty": "example"
+            },
+            "change": {
+              "url": "./overlays/nisar/change_20261021_20261102_HV.png",
+              "bounds": {
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
+              },
+              "kind": "acquisition",
+              "honesty": "derived",
+              "product": "GCOV_CHANGE",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "pol": "HV",
+              "mean_db": 0.6228802761237683
+            },
+            "rvi": {
+              "url": "./overlays/nisar/20261102_t140_f102_RVI.png",
+              "bounds": {
+                "west": -64.34984950391306,
+                "east": -64.15006394509614,
+                "south": -27.899991337037203,
+                "north": -27.700148955881325
+              },
+              "kind": "acquisition",
+              "honesty": "inferred",
+              "product": "RVI",
+              "granule": "NISAR_L2_PR_GCOV_034_140_D_102_2005_DHDH_A_20261102T222312_20261102T222347_P05036_N_F_J_001",
+              "acquired_at": "2026-11-02T22:23:12Z",
+              "formula": "4*HV/(HH+HV)"
             }
           }
         }
