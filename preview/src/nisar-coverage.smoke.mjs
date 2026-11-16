@@ -1,70 +1,64 @@
-// minimal smoke for nisar-coverage pure helpers (no wrangler)
+// smoke for nisar-coverage helpers (no wrangler, no network)
 import {
   parseBbox,
-  boxesIntersect,
-  aoiFromConfig,
-  framesFromDataset,
-  granulesToFrames,
+  parseNisarId,
+  granuleFromEntry,
+  footprintFromEntry,
+  maturityFor,
 } from "./nisar-coverage.js";
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-const sgo = parseBbox("-64.4,-28.0,-64.1,-27.6");
-assert(sgo && sgo.length === 4, "parse sgo bbox");
+const sgo = parseBbox("-65.5,-29,-62,-26");
+assert(sgo && sgo.length === 4, "parse regional bbox");
 assert(parseBbox("bad") === null, "reject bad bbox");
 assert(parseBbox("10,10,-5,20") === null, "reject inverted lon");
 
-const aoi = aoiFromConfig({
-  aoi: { name: "Santiago del Estero", west: -64.35, east: -64.15, south: -27.9, north: -27.7 },
-});
-assert(aoi && aoi.name.includes("Santiago"), "aoi from config");
-assert(boxesIntersect(sgo, aoi.bbox), "sgo intersects aoi");
-assert(!boxesIntersect(parseBbox("139.6,35.5,139.9,35.8"), aoi.bbox), "tokyo misses aoi");
+assert(maturityFor("NISAR_L2_GCOV_V1") === "validated", "validated collection");
+assert(maturityFor("NISAR_L2_GCOV_PROVISIONAL_V1") === "provisional", "provisional collection");
+assert(maturityFor("NISAR_L2_GCOV_BETA_V1") === "beta", "beta collection");
 
-const frames = framesFromDataset(
+const id = "NISAR_L2_PR_GCOV_034_140_D_101_2005_DHDH_A_20261102T222238_20261102T222313_P05036_N_F_J_001";
+const parsed = parseNisarId(id);
+assert(parsed.cycle === "34", "cycle");
+assert(parsed.track === "140", "track");
+assert(parsed.direction === "descending", "direction");
+assert(parsed.frame === "101", "frame");
+assert(parsed.pol === "HH+HV", "pol");
+assert(parsed.start === "2026-11-02T22:22:38Z", "start from name");
+
+const granule = granuleFromEntry(
   {
-    segments: [
+    title: id,
+    time_start: "2026-11-02T22:22:38.000Z",
+    time_end: "2026-11-02T22:23:13.999Z",
+    polygons: [["-27.9 -64.35 -27.7 -64.35 -27.7 -64.15 -27.9 -64.15 -27.9 -64.35"]],
+    links: [
       {
-        ticks: [
-          {
-            id: "y-2026",
-            label: "2026",
-            start: "2026-01-01",
-            end: "2026-12-31",
-            frames: {
-              radar: {
-                url: "./overlays/timeline/radar/2026.png",
-                bounds: aoi.bounds,
-                kind: "composite",
-              },
-            },
-          },
-        ],
+        rel: "http://esipfed.org/ns/fedsearch/1.1/data#",
+        href: `https://example.test/${id}.h5`,
       },
     ],
   },
-  aoi.bounds,
+  "NISAR_L2_GCOV_V1",
 );
-assert(frames.length === 1 && frames[0].url.includes("2026.png"), "dataset radar frame");
+assert(granule && granule.mode !== "demo", "granule is not a demo frame");
+assert(granule.maturity === "validated", "granule maturity");
+assert(granule.date === "2026-11-02T22:22:38.000Z", "date alias for the area card");
+assert(granule.h5_url.endsWith(".h5"), "h5 url");
+assert(granule.footprint.type === "Polygon", "footprint type");
+assert(granule.footprint.coordinates[0][0][0] === -64.35, "footprint lon");
+assert(granule.footprint.coordinates[0][0][1] === -27.9, "footprint lat");
 
-const cmr = granulesToFrames(
-  {
-    feed: {
-      entry: [
-        {
-          id: "G1",
-          title: "NISAR_L2_GCOV provisional",
-          time_start: "2026-01-15T00:00:00Z",
-          boxes: ["-28.0 -64.4 -27.6 -64.1"],
-          links: [{ rel: "http://esipfed.org/ns/fedsearch/1.1/data#", href: "https://example.test/g1.h5" }],
-        },
-      ],
-    },
-  },
-  "NISAR_L2_GCOV",
+const emptyFoot = footprintFromEntry({});
+assert(emptyFoot === null, "missing polygon is null");
+
+const gunw = parseNisarId(
+  "NISAR_L2_PR_GUNW_032_140_D_101_033_2000_SH_20261009T222238_20261009T222313_20261021T222238_20261021T222313_P05036_N_F_J_001",
 );
-assert(cmr.length === 1 && cmr[0].status === "provisional" && cmr[0].url, "cmr granule map");
+assert(gunw.track === "140" && gunw.frame === "101" && gunw.direction === "descending", "gunw name");
+assert(gunw.pol === "HH", "gunw pol");
 
 console.log("nisar-coverage smoke ok");
