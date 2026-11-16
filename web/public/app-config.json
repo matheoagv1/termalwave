@@ -416,6 +416,7 @@
         "product": "NISAR_L2_GCOV",
         "formula": "dB = 10*log10(gamma0)",
         "notes": "Always on. NISAR SAR / surface change.",
+        "tier": "raw",
         "range": [
           -30.0,
           -5.0
@@ -455,6 +456,7 @@
         "caveats_en": "Example illustration until a soil product is ingested.",
         "caveats_es": "Ilustración de ejemplo hasta que haya un producto de suelo.",
         "notes": "Not a lab measurement.",
+        "tier": "processed",
         "range": [
           0.0,
           1.0
@@ -477,6 +479,7 @@
         "caveats_es": "Imagen de ejemplo. No mide sustancias químicas.",
         "unit": "index",
         "notes": "Index, not concentration.",
+        "tier": "processed",
         "range": [
           0.0,
           1.0
@@ -499,6 +502,7 @@
         "caveats_es": "El cuadro pintado es un ejemplo, salvo que haya un registro de FIRMS.",
         "product": "FIRMS",
         "notes": "FIRMS thermal detections when the feed has them.",
+        "tier": "raw",
         "range": [
           0.0,
           1.0
@@ -567,6 +571,32 @@
         "enable": [
           "radar"
         ]
+      }
+    ],
+    "tiers": [
+      {
+        "id": "raw",
+        "label_en": "Raw",
+        "label_es": "Datos crudos",
+        "layers": [
+          "radar",
+          "incendios"
+        ]
+      },
+      {
+        "id": "processed",
+        "label_en": "Processed",
+        "label_es": "Datos procesados",
+        "layers": [
+          "suelo",
+          "contaminacion"
+        ]
+      },
+      {
+        "id": "prediction",
+        "label_en": "Prediction",
+        "label_es": "Predicciones",
+        "layers": []
       }
     ]
   }

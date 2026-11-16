@@ -50,6 +50,7 @@ from termalwave.process.nisar_raster import (
     db_stats,
     list_datasets,
     los_mm,
+    los_publishable,
     paint,
     read_window,
     resample_onto,
@@ -294,9 +295,22 @@ def write_gunw(path: Path, item: dict) -> None:
             grid, _ = read_window(str(path), suffix, AOI, to_db=False)
         except ValueError:
             continue
-        grid.values = los_mm(grid.values)
-        write_layer(f"gunw_{item['date']}_los_mm", grid, "change", "derived", item, product="NISAR_L2_GUNW_V1")
-        print("  LOS mm from unwrapped phase, lambda 0.24 m")
+        mm = los_mm(grid.values)
+        stem = f"gunw_{item['date']}_los_mm"
+        if not los_publishable(mm):
+            stats = db_stats(mm)
+            print(
+                f"  LOS not published: median {stats['median']} mm on an unknown phase zero. "
+                "A ±6 ramp would be saturated and would not be ground motion."
+            )
+            for ext in (".png", ".json"):
+                stale = OUT / f"{stem}{ext}"
+                if stale.is_file():
+                    stale.unlink()
+            break
+        grid.values = mm
+        write_layer(stem, grid, "los", "derived", item, product="NISAR_L2_GUNW_V1")
+        print("  LOS mm, zero near the scene, ramp -50 to 50")
         break
 
 

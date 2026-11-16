@@ -32,6 +32,7 @@ _LAYER_TEXT = (
     "product",
     "formula",
     "notes",
+    "tier",
 )
 
 

@@ -160,6 +160,9 @@ export const T = {
   state: {
     firmsEmpty: "No active fires detected in the last 24 h in this view",
     firmsCount: (n: number): string => (n === 1 ? "1 detection" : `${n} detections`),
+    firmsDisabled: "Active fires are not enabled in this environment yet.",
+    firmsDenied: "Sign in to see active fires.",
+    firmsFailed: "Active fires could not be checked. Try again in a few minutes.",
     unavailable: "Unavailable right now",
     loading: "Loading…",
     nodata: "no data",

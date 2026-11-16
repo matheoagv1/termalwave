@@ -16,11 +16,13 @@ import h5py
 import numpy as np
 from PIL import Image
 
+from termalwave.science.constants import NISAR_L_WAVELENGTH_M
 from termalwave.science.radar import power_to_db
 
 HV_DB = (-30.0, -5.0)
 HH_DB = (-25.0, 0.0)
 CHANGE_DB = (-6.0, 6.0)
+LOS_MM = (-50.0, 50.0)
 RVI_RANGE = (0.0, 1.0)
 COH_RANGE = (0.0, 1.0)
 RADAR_STOPS = (
@@ -97,11 +99,35 @@ def rvi_linear(hh: np.ndarray, hv: np.ndarray) -> np.ndarray:
     return out
 
 
-def los_mm(delta_phase_rad: np.ndarray, wavelength_m: float = 0.24) -> np.ndarray:
-    """Line-of-sight displacement in millimetres. d = -λ Δφ / 4π."""
+def los_mm(delta_phase_rad: np.ndarray, wavelength_m: float = NISAR_L_WAVELENGTH_M) -> np.ndarray:
+    """LOS in millimetres if delta_phase_rad is radians. d = -λ Δφ / 4π.
+
+    Matches F17: positive displacement is motion toward the satellite.
+    The unwrapped phase still has an arbitrary zero, so a large median
+    is not ground motion.
+    """
     phase = np.asarray(delta_phase_rad, dtype=np.float64)
-    out = -wavelength_m * phase / (4.0 * math.pi) * 1000.0
+    out = -float(wavelength_m) * phase / (4.0 * math.pi) * 1000.0
     return np.where(np.isfinite(phase), out, np.nan)
+
+
+def los_publishable(mm: np.ndarray) -> bool:
+    """Refuse a field whose level is metres and whose zero is unknown.
+
+    The GUNW pair of 9 to 21 Oct 2026 converted to about 1655 mm with
+    only ~160 mm of spread, then got painted on the ±6 dB change ramp.
+    That picture is saturated and is not a validated displacement.
+    """
+    stats = db_stats(mm)
+    median = stats["median"]
+    p10 = stats["p10"]
+    p90 = stats["p90"]
+    if not isinstance(median, float) or not isinstance(p10, float) or not isinstance(p90, float):
+        return False
+    spread = p90 - p10
+    if abs(median) > 50.0 and abs(median) > max(spread, 1.0) * 2.0:
+        return False
+    return True
 
 
 def colorize(values: np.ndarray, lo: float, hi: float, stops: tuple[tuple[float, tuple[int, int, int]], ...]) -> np.ndarray:
@@ -132,6 +158,8 @@ def paint(values: np.ndarray, kind: str) -> tuple[np.ndarray, tuple[float, float
         return colorize(values, *HH_DB, RADAR_STOPS), HH_DB
     if kind == "change":
         return colorize(values, *CHANGE_DB, DIVERGE_STOPS), CHANGE_DB
+    if kind == "los":
+        return colorize(values, *LOS_MM, DIVERGE_STOPS), LOS_MM
     if kind == "rvi":
         return colorize(values, *RVI_RANGE, RVI_STOPS), RVI_RANGE
     if kind == "coherence":
