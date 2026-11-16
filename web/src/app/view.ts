@@ -488,6 +488,7 @@ export function buildView(m: Model) {
           const before = +new Date(tk.end) < Date.UTC(2025, 7, 1);
           return {
             key: tk.id,
+            order: m.idx[tk.id] ?? 0,
             title,
             cur: isA,
             hot,

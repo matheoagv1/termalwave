@@ -4,7 +4,7 @@ import { edgeJson, json } from "../edge-cache.js";
 import santiago from "./data/santiago.json" with { type: "json" };
 
 const REGIONS = [santiago];
-const EDGE = "https://edge.termalwave/veg";
+const EDGE = "https://edge.termalwave/veg-v2";
 const BROWSER_S = 600;
 const STATIC_TTL_S = 86400;
 const WATER_TTL_S = 3 * 3600;
@@ -208,23 +208,32 @@ async function outlook(bbox) {
     if (!p?.time || !e?.time) return;
     const today = iso(Date.now());
     const t0 = e.time.indexOf(today) >= 0 ? e.time.indexOf(today) : 0;
-    const lead = e.time.length - t0;
+    const members = memberKeys(e);
+    let end = t0 - 1;
+    for (let day = t0; day < e.time.length; day++) {
+      const complete = members.filter(([pk, ek]) =>
+        Number.isFinite(sum(e[pk], t0, day)) && Number.isFinite(sum(e[ek], t0, day)));
+      if (complete.length < 5) break;
+      end = day;
+    }
+    const lead = end - t0 + 1;
+    if (lead < 1) return;
     // observed days fill the part of the window before today
     const pastEnd = p.time.indexOf(today) - 1;
     const keep = WINDOW_D - lead;
     if (pastEnd < keep - 1 || keep < 0) return;
     const observed = sum(p.precipitation_sum, pastEnd - keep + 1, pastEnd) - sum(p.et0_fao_evapotranspiration, pastEnd - keep + 1, pastEnd);
-    const members = memberKeys(e);
+    if (!Number.isFinite(observed)) return;
     const totals = [];
     for (const [pk, ek] of members) {
-      const rain = sum(e[pk], t0, e.time.length - 1);
-      const et0 = sum(e[ek], t0, e.time.length - 1);
+      const rain = sum(e[pk], t0, end);
+      const et0 = sum(e[ek], t0, end);
       if (Number.isFinite(rain) && Number.isFinite(et0)) totals.push(observed + rain - et0);
     }
     if (totals.length < 5) return;
     totals.sort((a, b) => a - b);
     const med = totals[Math.floor(totals.length / 2)];
-    const agree = totals.filter((v) => v < 0 === med < 0).length / totals.length;
+    const agree = totals.filter((v) => (v < 0) === (med < 0)).length / totals.length;
     features.push(
       cellFeature(cell.id, cell.bounds, {
         balance_mm: round1(med),
@@ -233,14 +242,18 @@ async function outlook(bbox) {
         deficit: med < 0,
         members: totals.length,
         confidence: Math.round(agree * 100) / 100,
-        window_end: e.time[e.time.length - 1],
+        window_end: e.time[end],
+        lead_days: lead,
+        requested_lead_days: LEAD_D,
       }),
     );
   });
   return {
     type: "FeatureCollection",
     features,
-    meta: { attribution: `${METEO_ATTR}; NOAA GFS ensemble`, count: features.length, window_days: WINDOW_D, lead_days: LEAD_D },
+    meta: { attribution: `${METEO_ATTR}; NOAA GFS ensemble`, count: features.length, window_days: WINDOW_D, requested_lead_days: LEAD_D,
+      lead_days: features.length ? Math.min(...features.map((f) => f.properties.lead_days)) : null,
+      note: features.length ? undefined : "insufficient complete forecast members", },
   };
 }
 

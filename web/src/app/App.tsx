@@ -465,16 +465,15 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   }
 
   derive(ds: Dataset): void {
-    this.flat = [];
+    this.flat = ds.segments.flatMap((seg) => seg.ticks.map((tick) => ({ seg, tick })))
+      .sort((a, b) => (Date.parse(a.tick.start) + Date.parse(a.tick.end))
+        - (Date.parse(b.tick.start) + Date.parse(b.tick.end)) || a.tick.id.localeCompare(b.tick.id));
     this.idx = {};
     this.segRange = {};
-    ds.segments.forEach((seg) => {
-      const start = this.flat.length;
-      seg.ticks.forEach((tick) => {
-        this.idx[tick.id] = this.flat.length;
-        this.flat.push({ seg, tick });
-      });
-      this.segRange[seg.id] = { start, end: this.flat.length - 1 };
+    this.flat.forEach(({ seg, tick }, i) => {
+      this.idx[tick.id] = i;
+      const range = this.segRange[seg.id];
+      this.segRange[seg.id] = { start: range?.start ?? i, end: i };
     });
   }
 
@@ -681,8 +680,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
         return;
       }
     } else {
-      const range = this.segRange[cur.seg.id];
-      if (range && i >= range.end) ni = range.start;
+      const next = this.flat.findIndex((f, j) => j > i && f.seg.id === cur.seg.id);
+      ni = next >= 0 ? next : this.segRange[cur.seg.id]?.start ?? i;
     }
     const nx = this.flat[ni];
     if (!nx) return;
