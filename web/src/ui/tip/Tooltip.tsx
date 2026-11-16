@@ -2,29 +2,11 @@ import React from "react";
 import { createPortal } from "react-dom";
 import "./tip.css";
 
-// Port of Tooltip and its Overlay primitive from @xplshn/anto-ui
-// (src/components.tsx, SPEC.md 4.16). The package is not a dependency of this
-// app, so the component lives here with the kit's API: `content`, `children`,
-// `position`. Differences from the kit, all additive: tokens are named --tip-*,
-// the box can wrap, `hint` adds a second line and `container` picks the portal
-// host (the theme tokens live on a div, not on the body).
+// The HUD tooltip: `Overlay` places a box next to an anchor, `TipBox` draws it,
+// `Tooltip` wraps one control. The look is in tip.css. No arrow: the edge that
+// faces the control is tinted instead.
 
 const VIEWPORT_PAD = 8;
-
-// the gap is a token, so it is resolved through the live stylesheet rather than
-// restated in px. one probe per token, cached for the session
-const gapCache: Record<string, number> = {};
-function pxOf(token: string): number {
-  const hit = gapCache[token];
-  if (hit !== undefined) return hit;
-  const probe = document.createElement("span");
-  probe.style.cssText = `position:absolute;visibility:hidden;width:${token}`;
-  document.body.appendChild(probe);
-  const n = probe.getBoundingClientRect().width;
-  probe.remove();
-  gapCache[token] = n;
-  return n;
-}
 
 export type TipPosition = "top" | "bottom" | "left" | "right";
 type OverlayAlign = "center" | "start" | "end";
@@ -82,14 +64,14 @@ interface OverlayProps {
   align?: OverlayAlign;
   /** id of the portalled box, so aria-describedby on the anchor resolves */
   id?: string;
-  /** token name for the gap between anchor and box, resolved through pxOf */
-  gap?: string;
-  /** portal host. the kit uses the body; here the theme tokens sit on a div */
+  /** px between anchor and box */
+  gap?: number;
+  /** portal host. the theme tokens sit on a div, not on the body */
   container?: HTMLElement | null;
   children: React.ReactNode | ((p: PlacementInfo) => React.ReactNode);
 }
 
-export const Overlay: React.FC<OverlayProps> = ({ open, anchor, position, align = "center", id, gap = "var(--tip-space-2)", container, children }) => {
+export const Overlay: React.FC<OverlayProps> = ({ open, anchor, position, align = "center", id, gap = 8, container, children }) => {
   const ref = React.useRef<HTMLSpanElement>(null);
   const [placed, setPlaced] = React.useState<Placement | null>(null);
   const live = open && anchor;
@@ -104,7 +86,7 @@ export const Overlay: React.FC<OverlayProps> = ({ open, anchor, position, align 
     const measure = (): void => {
       if (!ref.current) return;
       const r = ref.current.getBoundingClientRect();
-      const next = place(anchor.getBoundingClientRect(), { width: r.width, height: r.height }, position, align, pxOf(gap));
+      const next = place(anchor.getBoundingClientRect(), { width: r.width, height: r.height }, position, align, gap);
       setPlaced((p) => (p && p.top === next.top && p.left === next.left && p.position === next.position && p.caretAt === next.caretAt ? p : next));
     };
     measure();
@@ -134,7 +116,8 @@ export const Overlay: React.FC<OverlayProps> = ({ open, anchor, position, align 
         left: 0,
         width: "max-content",
         maxWidth: `calc(100vw - ${2 * VIEWPORT_PAD}px)`,
-        zIndex: "var(--tip-z-popover)" as unknown as number,
+        // above rails (24), the old tip layer (60) and dialogs
+        zIndex: 300,
         transform: placed ? `translate(${Math.round(placed.left)}px, ${Math.round(placed.top)}px)` : undefined,
         opacity: placed ? 1 : 0,
         boxSizing: "border-box",
@@ -146,85 +129,13 @@ export const Overlay: React.FC<OverlayProps> = ({ open, anchor, position, align 
   );
 };
 
-// a small square with the box's background and border, rotated 45deg and
-// half-tucked behind the box edge so only the outward corner shows
-const CARET_SIZE = "0.5rem";
-const CARET_EDGE = `calc(${CARET_SIZE} / -2 - var(--tip-border-width))`;
-const CARET_CENTER = `calc(${CARET_SIZE} / -2)`;
-
-function caretStyle(position: TipPosition, at: string): React.CSSProperties {
-  switch (position) {
-    case "top":
-      return { bottom: CARET_EDGE, left: at, marginLeft: CARET_CENTER };
-    case "bottom":
-      return { top: CARET_EDGE, left: at, marginLeft: CARET_CENTER };
-    case "left":
-      return { right: CARET_EDGE, top: at, marginTop: CARET_CENTER };
-    case "right":
-      return { left: CARET_EDGE, top: at, marginTop: CARET_CENTER };
-  }
-}
-
-// only the two outward edges carry the border, so the tucked half cannot draw a
-// line across wrapped text
-const CARET_SIDES: Record<TipPosition, React.CSSProperties> = {
-  top: { borderTopColor: "transparent", borderLeftColor: "transparent" },
-  bottom: { borderBottomColor: "transparent", borderRightColor: "transparent" },
-  left: { borderBottomColor: "transparent", borderLeftColor: "transparent" },
-  right: { borderTopColor: "transparent", borderRightColor: "transparent" },
-};
-
-function Caret({ p, background }: { p: PlacementInfo; background: string }): React.ReactElement {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        width: CARET_SIZE,
-        height: CARET_SIZE,
-        background,
-        border: "var(--tip-border-width) solid var(--tip-border)",
-        transform: "rotate(45deg)",
-        ...CARET_SIDES[p.position],
-        ...caretStyle(p.position, p.caretAt),
-      }}
-    />
-  );
-}
-
-/** The kit's tooltip box. `hint` is a second, dimmer line; `keys` a shortcut. */
+/** The tooltip box. `hint` is a second, dimmer line; `keys` a shortcut keycap. */
 export function TipBox({ p, content, hint, keys }: { p: PlacementInfo; content: string; hint?: string; keys?: string }): React.ReactElement {
   return (
-    <span
-      role="tooltip"
-      style={{
-        display: "block",
-        position: "relative",
-        background: "var(--tip-bg3)",
-        color: "var(--tip-text)",
-        border: "var(--tip-border-width) solid var(--tip-border)",
-        borderRadius: "var(--tip-radius-sm)",
-        boxShadow: "var(--tip-elevation-1)",
-        padding: "var(--tip-space-1) var(--tip-space-2)",
-        fontSize: "var(--tip-text-xs)",
-        lineHeight: 1.4,
-        fontFamily: "var(--tip-font-ui)",
-        // the kit keeps one line; these tips can be a sentence, so they wrap
-        maxWidth: "min(18rem, calc(100vw - 1rem))",
-        whiteSpace: "normal",
-        textAlign: "left",
-        pointerEvents: "none",
-      }}
-    >
+    <span role="tooltip" className="tw-tip" data-side={p.position}>
       {content}
-      {(hint || keys) && (
-        <span className="tw-tip-hint">
-          {hint}
-          {hint && keys ? " " : ""}
-          {keys && <span className="tw-tip-key">{keys}</span>}
-        </span>
-      )}
-      <Caret p={p} background="var(--tip-bg3)" />
+      {keys && <span className="tw-tip-key">{keys}</span>}
+      {hint && <span className="tw-tip-hint">{hint}</span>}
     </span>
   );
 }

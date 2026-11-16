@@ -14,7 +14,7 @@ const TIP_ID = "tw-tip";
 const KEY_RE = /\s*\(([A-Za-z?]|Space|Espacio|Esc|Enter|Intro|(?:Shift|Ctrl|Alt)\+\S{1,6})\)\s*$/;
 const POSITIONS: readonly string[] = ["top", "bottom", "left", "right"];
 
-// Thin wrapper over the anto-ui Tooltip port: every `title` or `data-tw-tip` in
+// Thin wrapper over ui/tip: every `title` or `data-tw-tip` in
 // the HUD becomes one shared tooltip, so call sites keep their plain attributes.
 // If the user keeps reading for 3 seconds, the wizard gets the long explanation.
 export function TipLayer({ onLong }: { onLong: (tip: string) => void }): React.ReactElement | null {

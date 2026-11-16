@@ -1,48 +1,58 @@
-/* Port of the @xplshn/anto-ui tokens the Tooltip reads (kit src/tokens.css),
-   renamed --tip-* so they cannot collide with theme.css. Scalars sit on :root
-   because the gap probe measures them from the body. */
-:root {
-  --tip-space-1: 0.25rem;
-  --tip-space-2: 0.5rem;
-  --tip-border-width: 0.0625rem;
-  --tip-radius: 0;
-  --tip-radius-sm: var(--tip-radius);
-  --tip-elevation-1: none;
-  /* the kit's --text-scale knob: 10px mono is too small over a moving globe */
-  --tip-text-scale: 1.2;
-  --tip-text-xs: calc(0.625rem * var(--tip-text-scale));
-  --tip-ease: linear;
-  --tip-transition-base: 100ms var(--tip-ease);
-  --tip-z-popover: 300;
+/* Tooltip: a quiet glass label in the HUD's own language. Square corners,
+   hairline border, IBM Plex, and a radar-cyan edge on the side that faces the
+   control. Colours come from app/theme.css, so both themes are covered. */
+.tw-tip-overlay {
+  pointer-events: none;
+  transition: opacity 100ms linear;
 }
 
-/* Colours and the font are aliases of the app theme, so they resolve where the
-   theme is in scope: on the box portalled inside [data-tw-theme]. */
-.tw-tip-overlay {
-  --tip-bg3: var(--panel-solid, #0e1522);
-  --tip-text: var(--fg, #f4f1e8);
-  --tip-text3: var(--fg3, #a8b0c4);
-  --tip-border: var(--line2, #3d4e6e);
-  --tip-font-ui: var(--mono, ui-monospace, monospace);
+.tw-tip {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 5px 9px;
+  border: 1px solid var(--line2, #3d4e6e);
+  border-radius: 0;
+  background: var(--panel-solid, #0e1522);
+  background: color-mix(in srgb, var(--panel-solid, #0e1522) 90%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--fg, #f4f1e8);
+  font: 500 12px/1.4 var(--sans, system-ui, sans-serif);
+  letter-spacing: 0.01em;
+  text-align: left;
+  text-wrap: pretty;
+  white-space: normal;
   pointer-events: none;
-  transition: opacity var(--tip-transition-base);
 }
+
+/* the accent sits on the edge nearest the anchor, in place of an arrow */
+.tw-tip[data-side="top"] { border-bottom-color: var(--tw-radar, #5eebff); }
+.tw-tip[data-side="bottom"] { border-top-color: var(--tw-radar, #5eebff); }
+.tw-tip[data-side="left"] { border-right-color: var(--tw-radar, #5eebff); }
+.tw-tip[data-side="right"] { border-left-color: var(--tw-radar, #5eebff); }
 
 .tw-tip-hint {
   display: block;
-  margin-top: var(--tip-space-1);
-  color: var(--tip-text3);
+  margin-top: 2px;
+  color: var(--fg3, #a8b0c4);
+  font-weight: 400;
 }
 
 .tw-tip-key {
   display: inline-block;
-  padding: 0 var(--tip-space-1);
-  border: var(--tip-border-width) solid var(--tip-border);
-  color: var(--tip-text);
+  margin-left: 8px;
+  padding: 0 4px;
+  border: 1px solid var(--line2, #3d4e6e);
+  color: var(--fg2, #d8dce8);
+  font: 500 10px/1.5 var(--mono, ui-monospace, monospace);
+  vertical-align: 1px;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
-    --tip-transition-base: 0ms;
+  .tw-tip-overlay {
+    transition: none;
   }
 }

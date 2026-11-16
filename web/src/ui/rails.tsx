@@ -165,7 +165,7 @@ function RailHead({ title, onClose, closeLabel }: { title: string; onClose: () =
   return (
     <div style={s("display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)")}>
       <span style={s("flex:1;font:12px var(--sans);color:var(--fg)")}>{title}</span>
-      <button type="button" className="tw-hov" aria-label={closeLabel} onClick={onClose} style={s("width:40px;height:40px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center")}>
+      <button type="button" className="tw-hov" aria-label={closeLabel} title={closeLabel} onClick={onClose} style={s("width:40px;height:40px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center")}>
         <Icon.close size={16} strokeWidth={2.25} aria-hidden />
       </button>
     </div>
