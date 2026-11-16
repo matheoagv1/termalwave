@@ -23,6 +23,109 @@ def _center(bounds: dict[str, float]) -> list[float]:
     ]
 
 
+# NISAR science data starts in 2025. Earlier radar frames cannot be measurements.
+NISAR_SCIENCE_YEAR = 2025
+BEFORE_NISAR_EN = "Before NISAR (launched 2025)"
+BEFORE_NISAR_ES = "Antes de NISAR (lanzado en 2025)"
+_KEPT_HONESTY = {"measured", "derived", "model", "inferred"}
+
+
+def _year_of(tick: dict[str, Any]) -> int:
+    label = str(tick.get("label") or "")
+    if label.isdigit():
+        return int(label)
+    start = str(tick.get("start") or "")
+    if len(start) >= 4 and start[:4].isdigit():
+        return int(start[:4])
+    return 0
+
+
+def _annotate_frame(layer_id: str, year: int, frame: dict[str, Any], synthetic: bool) -> dict[str, Any]:
+    out = dict(frame)
+    # a pre-launch year cannot be a NISAR measurement, even if a sidecar says otherwise
+    if layer_id == "radar" and year < NISAR_SCIENCE_YEAR:
+        out["honesty"] = "example"
+        out["note_en"] = BEFORE_NISAR_EN
+        out["note_es"] = BEFORE_NISAR_ES
+        return out
+    preset = str(out.get("honesty") or "")
+    if preset in _KEPT_HONESTY and (not synthetic or out.get("granule")):
+        return out
+    if synthetic or not out.get("granule"):
+        out["honesty"] = "example"
+        return out
+    out.setdefault("honesty", "measured" if layer_id == "radar" else "inferred")
+    return out
+
+
+def _roll_honesty(kinds: set[str]) -> str:
+    present = {k for k in kinds if k}
+    if not present or present == {"example"}:
+        return "example"
+    rest = present - {"example"}
+    if len(rest) == 1:
+        return next(iter(rest))
+    if "measured" in rest:
+        return "measured"
+    return next(iter(rest))
+
+
+def apply_honesty(dataset: dict[str, Any], *, synthetic: bool | None = None) -> dict[str, Any]:
+    """Honesty on each layer and each frame. isMock is not the only flag."""
+    if synthetic is None:
+        synthetic = bool(dataset.get("timelineSynthetic", True))
+    frames_by_layer: dict[str, list[dict[str, Any]]] = {}
+    for seg in dataset.get("segments") or []:
+        if not isinstance(seg, dict):
+            continue
+        for tick in seg.get("ticks") or []:
+            if not isinstance(tick, dict):
+                continue
+            year = _year_of(tick)
+            frames = tick.get("frames") or {}
+            if not isinstance(frames, dict):
+                continue
+            for lid, frame in list(frames.items()):
+                if not isinstance(frame, dict):
+                    continue
+                annotated = _annotate_frame(str(lid), year, frame, synthetic)
+                frames[lid] = annotated
+                frames_by_layer.setdefault(str(lid), []).append(annotated)
+    for layer in dataset.get("layers") or []:
+        if not isinstance(layer, dict):
+            continue
+        lid = str(layer.get("id") or "")
+        kinds = {str(f.get("honesty") or "") for f in frames_by_layer.get(lid, [])}
+        layer["honesty"] = _roll_honesty(kinds)
+        if lid == "radar" and any(f.get("note_en") == BEFORE_NISAR_EN for f in frames_by_layer.get(lid, [])):
+            layer["note_en"] = BEFORE_NISAR_EN
+            layer["note_es"] = BEFORE_NISAR_ES
+    dataset["isMock"] = False
+    dataset["timelineSynthetic"] = synthetic
+    return dataset
+
+
+def series_for_layer(dataset: dict[str, Any], layer_id: str) -> list[dict[str, Any]]:
+    """One point per tick. A number only when the frame carries a real mean."""
+    rows: list[dict[str, Any]] = []
+    for seg in dataset.get("segments") or []:
+        if not isinstance(seg, dict):
+            continue
+        for tick in seg.get("ticks") or []:
+            if not isinstance(tick, dict):
+                continue
+            frame = (tick.get("frames") or {}).get(layer_id)
+            value = None
+            if isinstance(frame, dict):
+                raw = frame.get("mean_db")
+                if raw is None:
+                    raw = frame.get("mean")
+                if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+                    value = float(raw)
+            rows.append({"tickId": tick["id"], "date": tick["start"], "value": value})
+    return rows
+
+
 def _sources(provenance: dict[str, Any] | None) -> list[dict[str, Any]]:
     if not provenance:
         return []
@@ -114,8 +217,8 @@ def build_dataset(
         for p in (tax.get("presets") or [])
         if p.get("trade")
     }
-    # pipeline fixture HDF5→PNG is not MockProvider; badge off for pitch trust
-    return {
+    # pipeline fixture HDF5 to PNG is not MockProvider; honesty is per layer and frame
+    dataset = {
         "area": {
             "name": str(aoi.get("name") or "Area de estudio"),
             "bounds": bounds,
@@ -146,6 +249,7 @@ def build_dataset(
         "timelineSynthetic": synthetic,
         "isMock": False,
     }
+    return apply_honesty(dataset, synthetic=synthetic)
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -158,7 +262,7 @@ def export_hotspots_and_series(
     dataset: dict[str, Any],
     ingest_dir: Path,
 ) -> None:
-    """Map fires ingest into web hotspots; series stay null until real stats exist."""
+    """Map fires ingest into web hotspots. Series copy mean_db when a frame has one."""
     public = repo_root / "web" / "public"
     dist = repo_root / "web" / "dist"
     fires_path = ingest_dir / "fires.json"
@@ -173,10 +277,7 @@ def export_hotspots_and_series(
 
     for layer in dataset.get("layers") or []:
         lid = str(layer["id"])
-        series = [
-            {"tickId": t["id"], "date": t["start"], "value": None}
-            for t in ticks
-        ]
+        series = series_for_layer(dataset, lid)
         for base in (public, dist):
             _write_json(base / "series" / f"{lid}.json", series)
 

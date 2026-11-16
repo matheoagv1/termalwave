@@ -67,7 +67,16 @@ planetary_computer_s2 = "https://planetarycomputer.microsoft.com/api/stac/v1/sea
 [radar]
 order = ["earthdata_nisar_gcov"]
 strategy = "prefer_validated"
-collection = "NISAR_L2_GCOV"
+# CMR has no short_name NISAR_L2_GCOV. Prefer validated, then provisional, then beta.
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+gcov_collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
+gunw_collections = ["NISAR_L2_GUNW_V1"]
+sme2_collections = ["NISAR_L3_SME2_PROVISIONAL_V1"]
 # Preview Worker: GET /api/nisar/coverage?bbox=w,s,e,n
 # Bbox intersects default AOI (app-config) → honest demo frames from web/dist overlays.
 # Else CMR granules when Worker secret EARTHDATA_TOKEN is set; otherwise status=empty (no fake Santiago).
@@ -79,7 +88,13 @@ earthdata_nisar_gcov = "https://cmr.earthdata.nasa.gov/search/granules.json"
 [radar.coverage]
 endpoint = "/api/nisar/coverage"
 upstream = "https://cmr.earthdata.nasa.gov/search/granules.json"
-collection = "NISAR_L2_GCOV"
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
 cache_ttl_s = 600
 attribution = "NASA Earthdata · NISAR L2 GCOV"
 
@@ -129,7 +144,7 @@ license = "ESA Sentinel / Microsoft PC"
 kind = "radar"
 module = "termalwave.providers.radar.earthdata_nisar_gcov"
 credential = "EARTHDATA_TOKEN"
-product = "NISAR_L2_GCOV"
+product = "NISAR_L2_GCOV_V1"
 license = "NASA Earthdata"
 
 # --- kinds pending full fetch (stubs return [] when credential present) ---
@@ -493,7 +508,13 @@ max_zoom = 6
 # Browser discovers the path; Worker implements it (see preview/src/nisar-coverage.js).
 [space.nisar_coverage]
 endpoint = "/api/nisar/coverage"
-collection = "NISAR_L2_GCOV"
+collection = "NISAR_L2_GCOV_V1"
+temporal_start = "2025-07-30T00:00:00Z"
+collections = [
+  "NISAR_L2_GCOV_V1",
+  "NISAR_L2_GCOV_PROVISIONAL_V1",
+  "NISAR_L2_GCOV_BETA_V1",
+]
 cache_ttl_s = 600
 
 # Live + archive wind (Open-Meteo; no key). Grid/point for particle overlay.

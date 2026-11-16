@@ -726,11 +726,14 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if (!clouds) this.setState({ clouds: { status: "idle", msg: "" } });
       else {
         this.setState({ clouds: { status: "loading", msg: "" } });
-        fetch("/api/clouds", { credentials: "same-origin" })
-          .then((r) => {
+        fetch("/api/clouds/manifest", { credentials: "same-origin" })
+          .then(async (r) => {
             if (cseq !== this.cloudsSeq) return;
             if (!r.ok) throw new Error(String(r.status));
-            this.setState({ clouds: { status: "ok", msg: "" } });
+            const body = (await r.json()) as { times?: unknown; latest?: unknown; degraded?: boolean; status?: string };
+            const times = Array.isArray(body.times) ? body.times : [];
+            const down = body.degraded === true || body.status === "unavailable" || times.length === 0 || !body.latest;
+            this.setState({ clouds: { status: down ? "unavailable" : "ok", msg: "" } });
           })
           .catch(() => {
             if (cseq !== this.cloudsSeq) return;

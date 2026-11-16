@@ -10,7 +10,9 @@ AI image generation was used only for early style/concept studies (chunky pixel 
 
 The shipping icon, wordmarks, favicon, PWA icons, social banners, and preview sheet were then built as original pixel art: a 64×64 (and 32×16) sprite grid, a limited palette, and an orthographic globe rendered from country polygons so Argentina — and the northern Argentina focus mark — stay geographically recognizable. Wordmark lettering is set in a vendored bitmap/pixel font, not generated as image-model text.
 
-Please declare this AI assistance in the hackathon presentation / project write-up, as required by the event guide. Favicons and app icons are too small to carry a caption; this file is the record for those assets. Showcase images in this kit do not carry an on-image “AI-generated” watermark.
+Please declare this AI assistance in the hackathon presentation / project write-up, as required by the event guide. Favicons and app icons are too small to carry a caption; this file is the record for those assets.
+
+The wizard (`monigote/monigote.png`) was generated with AI. Mateo confirmed that. `monigote/monigote-si.png` is the same picture with a small pixel "AI" in the lower right, in radar cyan and black, under a tenth of the width, off the face. The unmarked original stays in the repo. The app should use the marked file.
 
 This artwork does not use the NASA ident, meatball, worm, or the word “NASA”.
 

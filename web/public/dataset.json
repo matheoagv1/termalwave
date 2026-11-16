@@ -22,7 +22,10 @@
         1
       ],
       "ramp": [],
-      "note": ""
+      "note": "",
+      "honesty": "example",
+      "note_en": "Before NISAR (launched 2025)",
+      "note_es": "Antes de NISAR (lanzado en 2025)"
     },
     {
       "id": "suelo",
@@ -33,7 +36,8 @@
         1
       ],
       "ramp": [],
-      "note": ""
+      "note": "",
+      "honesty": "example"
     },
     {
       "id": "contaminacion",
@@ -44,7 +48,8 @@
         1
       ],
       "ramp": [],
-      "note": ""
+      "note": "",
+      "honesty": "example"
     },
     {
       "id": "incendios",
@@ -55,7 +60,8 @@
         1
       ],
       "ramp": [],
-      "note": ""
+      "note": "",
+      "honesty": "example"
     }
   ],
   "segments": [
@@ -81,7 +87,10 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example",
+              "note_en": "Before NISAR (launched 2025)",
+              "note_es": "Antes de NISAR (lanzado en 2025)"
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2018.png",
@@ -91,7 +100,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2018.png",
@@ -101,7 +111,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2018.png",
@@ -111,7 +122,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             }
           }
         },
@@ -129,7 +141,10 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example",
+              "note_en": "Before NISAR (launched 2025)",
+              "note_es": "Antes de NISAR (lanzado en 2025)"
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2020.png",
@@ -139,7 +154,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2020.png",
@@ -149,7 +165,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2020.png",
@@ -159,7 +176,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             }
           }
         },
@@ -177,7 +195,10 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example",
+              "note_en": "Before NISAR (launched 2025)",
+              "note_es": "Antes de NISAR (lanzado en 2025)"
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2022.png",
@@ -187,7 +208,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2022.png",
@@ -197,7 +219,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2022.png",
@@ -207,7 +230,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             }
           }
         },
@@ -225,7 +249,10 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example",
+              "note_en": "Before NISAR (launched 2025)",
+              "note_es": "Antes de NISAR (lanzado en 2025)"
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2024.png",
@@ -235,7 +262,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2024.png",
@@ -245,7 +273,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2024.png",
@@ -255,7 +284,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             }
           }
         },
@@ -273,7 +303,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "suelo": {
               "url": "./overlays/timeline/suelo/2026.png",
@@ -283,7 +314,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2026.png",
@@ -293,7 +325,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2026.png",
@@ -303,7 +336,8 @@
                 "south": -27.9,
                 "north": -27.7
               },
-              "kind": "composite"
+              "kind": "composite",
+              "honesty": "example"
             }
           }
         }
@@ -439,5 +473,6 @@
     }
   ],
   "sourcesAt": "2026-11-14T20:28:10.002602+00:00",
-  "isMock": true
+  "isMock": false,
+  "timelineSynthetic": true
 }

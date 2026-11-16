@@ -17,6 +17,7 @@ const MERCATOR_HALF = 20037508.342789244;
 const TILE_PX = 256;
 const META = 4;
 const MANIFEST_BROWSER_S = 60;
+const UA = "TermalWave/0.1 (+https://termalwave.space)";
 
 class NotListed extends Error {}
 
@@ -31,7 +32,14 @@ export async function handleClouds(url, env, ctx, cfg) {
   if (!cfg?.upstream || !cfg.layer) return json({ error: "clouds_disabled" }, 503);
   const rest = url.pathname.slice(cfg.endpoint.length);
   try {
-    if (rest === "/manifest") return json(await manifest(cfg, ctx, env), 200, MANIFEST_BROWSER_S);
+    if (rest === "/manifest") {
+      try {
+        return json(await manifest(cfg, ctx, env), 200, MANIFEST_BROWSER_S);
+      } catch (err) {
+        console.warn("clouds_manifest", err && err.message);
+        return json(degradedManifest(cfg, err), 200, 15);
+      }
+    }
     const world = /^\/([0-9TZ:-]{20})\/world\.png$/.exec(rest);
     if (world) return await worldTile(cfg, ctx, world[1], env);
     const m = TILE_PATH.exec(rest);
@@ -52,9 +60,11 @@ function manifest(cfg, ctx, env) {
   const layer = encodeURIComponent(cfg.layer);
   return edgeJson(`${EDGE}/l2/manifest/${layer}`, ttl, ctx, async () => {
     const caps = await edgeJson(`${EDGE}/l1/capabilities/${layer}`, ttl, ctx, async () => {
-      const res = await relayFetch(env, wmsUrl(cfg, { request: "GetCapabilities" }));
+      const res = await relayFetch(env, wmsUrl(cfg, { request: "GetCapabilities" }), { headers: wmsHeaders() });
       if (!res.ok) throw new Error(`capabilities ${res.status}`);
-      return { xml: await res.text() };
+      const xml = await res.text();
+      if (!xml.includes("<Name") && !xml.includes(":Name")) throw new Error("capabilities_not_xml");
+      return { xml };
     });
     return parseCapabilities(/** @type {{ xml: string }} */ (caps).xml, cfg.layer, Date.now());
   });
@@ -80,6 +90,7 @@ async function worldTile(cfg, ctx, time, env) {
         transparent: "true",
         time,
       }),
+      { headers: wmsHeaders() },
     );
     const type = res.headers.get("content-type") || "";
     if (!res.ok || !type.startsWith("image/png")) throw new Error(`getmap world ${res.status} ${type}`);
@@ -103,7 +114,7 @@ async function tile(cfg, ctx, time, z, x, y, spanTiles, env) {
     const { times } = await manifest(cfg, ctx, env);
     // wms answers unknown hours with the nearest one — never archive those under this key
     if (!times.includes(time)) throw new NotListed(time);
-    const res = await relayFetch(env, wmsUrl(cfg, getMapParams(cfg.layer, time, z, x, y, spanTiles)));
+    const res = await relayFetch(env, wmsUrl(cfg, getMapParams(cfg.layer, time, z, x, y, spanTiles)), { headers: wmsHeaders() });
     const type = res.headers.get("content-type") || "";
     if (!res.ok || !type.startsWith("image/png")) throw new Error(`getmap ${res.status} ${type}`);
     return { body: await res.arrayBuffer(), type: "image/png" };
@@ -130,10 +141,30 @@ function getMapParams(layer, time, z, x, y, spanTiles = 1) {
   };
 }
 
+function wmsHeaders() {
+  return {
+    Accept: "text/xml, application/xml, image/png, */*;q=0.8",
+    "User-Agent": UA,
+  };
+}
+
 function wmsUrl(cfg, params) {
   const u = new URL(cfg.upstream);
   u.search = new URLSearchParams({ service: "WMS", version: "1.3.0", ...params }).toString();
   return u.toString();
+}
+
+function degradedManifest(cfg, err) {
+  return {
+    status: "unavailable",
+    code: "clouds_upstream",
+    degraded: true,
+    layer: cfg?.layer || "",
+    latest: null,
+    times: [],
+    bounds: [-180, -85.0511, 180, 85.0511],
+    detail: err && err.message ? String(err.message) : "clouds_upstream",
+  };
 }
 
 /** @returns {string | null} utc second precision, the form our urls use */
@@ -143,36 +174,92 @@ function canonical(value) {
 }
 
 /**
- * reads the time dimension and extent of one leaf layer; never expands intervals
+ * reads the time dimension of one leaf layer
+ * accepts a comma list or a start/end/period interval, with or without a namespace
  * @param {string} xml
  * @param {string} layer
  * @param {number} nowMs
  */
 export function parseCapabilities(xml, layer, nowMs) {
-  const start = xml.indexOf(`<Name>${layer}</Name>`);
-  if (start < 0) throw new Error("layer_missing");
-  const next = xml.indexOf("<Layer", start);
-  const leaf = xml.slice(start, next < 0 ? undefined : next);
-  const dim = /<Dimension\b[^>]*\bname="time"[^>]*>([^<]*)<\/Dimension>/.exec(leaf);
-  if (!dim) throw new Error("time_dimension_missing");
-  const times = [
-    ...new Set(
-      dim[1]
-        .split(",")
-        .map((v) => v.trim())
-        .filter((v) => !v.includes("/"))
-        .map(canonical),
-    ),
-  ]
-    .filter((t) => t !== null && nowMs - Date.parse(t) <= WINDOW_MS && Date.parse(t) <= nowMs + FUTURE_SLACK_MS)
-    .sort();
+  const leaf = leafFor(xml, layer);
+  if (!leaf) throw new Error("layer_missing");
+  const dim = dimensionBody(leaf);
+  if (dim == null) throw new Error("time_dimension_missing");
+  const times = instantsInWindow(dim, nowMs);
   if (!times.length) throw new Error("no_recent_times");
-  const edge = (tag) => Number(new RegExp(`<${tag}>([^<]+)</${tag}>`).exec(leaf)?.[1]);
+  const edge = (tag) => {
+    const found = new RegExp(`<(?:[\\w.-]+:)?${tag}>([^<]+)</(?:[\\w.-]+:)?${tag}>`).exec(leaf);
+    return found ? Number(found[1]) : NaN;
+  };
   const bounds = ["westBoundLongitude", "southBoundLatitude", "eastBoundLongitude", "northBoundLatitude"].map(edge);
   return {
+    status: "ok",
+    code: "ok",
+    degraded: false,
     layer,
-    latest: /** @type {string} */ (times.at(-1)),
-    times: /** @type {string[]} */ (times),
+    latest: times[times.length - 1],
+    times,
     bounds: bounds.every(Number.isFinite) ? bounds : [-180, -85.0511, 180, 85.0511],
   };
+}
+
+function leafFor(xml, layer) {
+  const escaped = layer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const nameRe = new RegExp(`<(?:[\\w.-]+:)?Name>\\s*${escaped}\\s*</(?:[\\w.-]+:)?Name>`);
+  const found = nameRe.exec(xml);
+  if (!found) return "";
+  const rest = xml.slice(found.index + found[0].length);
+  const next = rest.search(/<(?:[\w.-]+:)?Layer[\s>]/);
+  return next < 0 ? xml.slice(found.index) : xml.slice(found.index, found.index + found[0].length + next);
+}
+
+function dimensionBody(leaf) {
+  const re = /<(?:[\w.-]+:)?Dimension\b([^>]*)>([^<]*)<\/(?:[\w.-]+:)?Dimension>/g;
+  let match;
+  while ((match = re.exec(leaf))) {
+    if (/\bname\s*=\s*["']time["']/i.test(match[1])) return match[2];
+  }
+  return null;
+}
+
+function instantsInWindow(body, nowMs) {
+  const all = [];
+  for (const part of body.split(",")) {
+    const token = part.trim();
+    if (!token) continue;
+    if (token.includes("/")) all.push(...expandInterval(token, nowMs));
+    else {
+      const stamp = canonical(token);
+      if (stamp) all.push(stamp);
+    }
+  }
+  return [...new Set(all)]
+    .filter((stamp) => nowMs - Date.parse(stamp) <= WINDOW_MS && Date.parse(stamp) <= nowMs + FUTURE_SLACK_MS)
+    .sort();
+}
+
+function expandInterval(token, nowMs) {
+  const bits = token.split("/");
+  if (bits.length < 2) return [];
+  const start = Date.parse(bits[0]);
+  const end = Date.parse(bits[1]);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return [];
+  const step = stepMs(bits[2] || "PT1H");
+  const lo = nowMs - WINDOW_MS;
+  const hi = nowMs + FUTURE_SLACK_MS;
+  let t = start;
+  if (t < lo) t += Math.ceil((lo - t) / step) * step;
+  const out = [];
+  for (; t <= end && t <= hi && out.length < 48; t += step) {
+    const stamp = canonical(new Date(t).toISOString());
+    if (stamp) out.push(stamp);
+  }
+  return out;
+}
+
+function stepMs(spec) {
+  const match = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i.exec(String(spec || "").trim());
+  if (!match) return 3600000;
+  const ms = (Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0)) * 1000;
+  return ms > 0 ? ms : 3600000;
 }

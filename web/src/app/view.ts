@@ -1,5 +1,5 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
-import { isExampleHonesty, isPlaceholderRange, isRadarLayer } from "../data/radar-scale";
+import { isExampleHonesty, isPlaceholderRange, isRadarLayer, RADAR_HH, RADAR_HV, radarPol } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
 import { copyOf, fmt, fmtOf, type Copy } from "./i18n";
 import type { NisarPass } from "../data/nisar-passes";
@@ -73,7 +73,14 @@ export function buildView(m: Model) {
   // la interfaz 2D es opcional: en modo inmersivo solo queda la escena y la cámara
   const chrome = hud && !S.immersive;
   const imm = S.immersive;
-  const layers: LayerDef[] = ds ? ds.layers : [];
+  const layers: LayerDef[] = ds
+    ? ds.layers.map((l) => {
+        const row = l as LayerDef & { label_en?: string; label_es?: string; what_en?: string; what_es?: string };
+        const label = S.lang === "es" ? row.label_es || l.label : row.label_en || l.label;
+        const note = S.lang === "es" ? row.what_es || l.note : row.what_en || l.note;
+        return label === l.label && note === l.note ? l : { ...l, label, note };
+      })
+    : [];
   const L = layers.find((l) => l.id === sc.layer) ?? null;
   const fa: Flat | null = (ds && m.flat[m.idx[sc.tickId] ?? -1]) || null;
   const nameOf = (f: Flat): string => T.tickName(f.seg.kind, f.tick.label);
@@ -371,6 +378,9 @@ export function buildView(m: Model) {
       if (fr.resolutionM != null) imgRows.push({ k: T.card.resolution, v: T.card.meters(fr.resolutionM) });
       if (fr.source) imgRows.push({ k: T.card.source, v: fr.source });
       if (fr.quality) imgRows.push({ k: T.card.quality, v: fr.quality === "ok" ? T.card.qualityOk : T.card.qualityPartial });
+      const frRow = fr as { note_en?: string; note_es?: string };
+      const frNote = S.lang === "es" ? frRow.note_es || frRow.note_en : frRow.note_en || frRow.note_es;
+      if (frNote) imgRows.push({ k: T.honesty.example, v: frNote });
       if (fr.bytes != null) imgRows.push({ k: T.card.size, v: F.bytes(fr.bytes) });
     } else imgRows = [{ k: T.card.image, v: T.map.gap(L.label) }];
   }
@@ -387,16 +397,21 @@ export function buildView(m: Model) {
       }))
     : [];
   const frameHonesty = (fr as { honesty?: string } | null)?.honesty;
-  const exampleLegend = !!L && isRadarLayer(L.id) && (
-    isExampleHonesty(frameHonesty) || isExampleHonesty(L.honesty) || (L.unit.trim().toLowerCase() === "db" && isPlaceholderRange(L.range))
-  );
+  const exampleLegend = !!L && isRadarLayer(L.id) && (isExampleHonesty(frameHonesty) || isExampleHonesty(L.honesty));
+  const radarRange = !L || !isRadarLayer(L.id) || exampleLegend
+    ? null
+    : isPlaceholderRange(L.range)
+      ? (radarPol(L.id, L.label, L.pol) === "HH" ? RADAR_HH : RADAR_HV)
+      : L.range;
+  const shownRange = radarRange ?? L?.range ?? [0, 1];
+  const shownUnit = radarRange ? "dB" : L?.unit ?? "";
   const leg = L
     ? {
         grad: grad(L),
-        min: exampleLegend ? "" : F.value(L.range[0], L.unit, dec) ?? "",
-        max: exampleLegend ? "" : F.value(L.range[1], L.unit, dec) ?? "",
+        min: exampleLegend ? "" : F.value(shownRange[0], shownUnit, dec) ?? "",
+        max: exampleLegend ? "" : F.value(shownRange[1], shownUnit, dec) ?? "",
         label: L.label,
-        unit: exampleLegend ? "" : L.unit,
+        unit: exampleLegend ? "" : shownUnit,
         note: L.note,
         example: exampleLegend,
         caption: exampleLegend ? T.legend.example : "",
@@ -828,6 +843,7 @@ export function buildView(m: Model) {
     cardOpen: !!S.railR,
     frameBottom: chrome ? `calc(${lay.tlB} + ${S.tlH}px + 10px)` : lay.entB,
     legendOn: chrome && !!S.railR && S.railR === "legend" && !!L,
+    legendStrip: chrome && !!L && !imm,
     noSeries,
     isTabArea: S.railR === "area",
     isTabRead: S.railR === "insight",

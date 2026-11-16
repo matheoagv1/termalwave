@@ -39,7 +39,7 @@ type LegacyConfig = {
   presets?: Record<string, string[]>;
   preset_labels?: Record<string, string>;
   layers_taxonomy?: {
-    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string; theme?: string }>;
+    layers?: Array<{ id: string; category?: string; core?: boolean; label?: string; theme?: string; [key: string]: unknown }>;
     themes?: LayerTheme[];
   };
   provenance?: { generated_at?: string };
@@ -94,13 +94,36 @@ function resolveThemes(cfg: LegacyConfig | null | undefined): LayerTheme[] {
 
 type TaxonomySource = Pick<LegacyConfig, "layers_taxonomy"> | null | undefined;
 
+const TAX_COPY = [
+  "label_en",
+  "label_es",
+  "what_en",
+  "what_es",
+  "decision_en",
+  "decision_es",
+  "nodata_en",
+  "nodata_es",
+  "caveats_en",
+  "caveats_es",
+  "product",
+  "formula",
+] as const;
+
 function mergeLayerTaxonomy(layers: LayerDef[], cfg: TaxonomySource): LayerDef[] {
   const taxRows = cfg?.layers_taxonomy?.layers ?? [];
   const taxById = Object.fromEntries(taxRows.map((r) => [r.id, r]));
   return layers.map((l) => {
-    const tax = taxById[l.id];
+    const tax = taxById[l.id] as (typeof taxRows)[number] & Record<string, unknown> | undefined;
+    const copy: Record<string, unknown> = {};
+    if (tax) {
+      for (const key of TAX_COPY) {
+        const value = tax[key];
+        if (typeof value === "string" && value) copy[key] = value;
+      }
+    }
     return {
       ...l,
+      ...copy,
       theme: l.theme ?? tax?.theme,
       category: l.category ?? (tax?.category as LayerDef["category"]),
       core: l.core ?? tax?.core,

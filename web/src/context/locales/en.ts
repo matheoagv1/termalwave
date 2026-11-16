@@ -58,6 +58,7 @@ export const T = {
     other: "None of these",
     ready: (n: string): string => `All set, ${n}. I'll tune the map and stay in the corner if you need me.`,
     guest: "visitor",
+    skip: "Continue as guest",
     namePh: "Your name",
     continue: "Continue",
     start: "Start",
