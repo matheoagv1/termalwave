@@ -1,5 +1,5 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
-import { isExampleHonesty, isPlaceholderRange, isRadarLayer } from "../data/radar-scale";
+import { isExampleHonesty, isPlaceholderRange, isRadarLayer, RADAR_HH, RADAR_HV, radarPol } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
 import { copyOf, fmt, fmtOf, type Copy } from "./i18n";
 import type { NisarPass } from "../data/nisar-passes";
@@ -387,16 +387,21 @@ export function buildView(m: Model) {
       }))
     : [];
   const frameHonesty = (fr as { honesty?: string } | null)?.honesty;
-  const exampleLegend = !!L && isRadarLayer(L.id) && (
-    isExampleHonesty(frameHonesty) || isExampleHonesty(L.honesty) || (L.unit.trim().toLowerCase() === "db" && isPlaceholderRange(L.range))
-  );
+  const exampleLegend = !!L && isRadarLayer(L.id) && (isExampleHonesty(frameHonesty) || isExampleHonesty(L.honesty));
+  const radarRange = !L || !isRadarLayer(L.id) || exampleLegend
+    ? null
+    : isPlaceholderRange(L.range)
+      ? (radarPol(L.id, L.label, L.pol) === "HH" ? RADAR_HH : RADAR_HV)
+      : L.range;
+  const shownRange = radarRange ?? L?.range ?? [0, 1];
+  const shownUnit = radarRange ? "dB" : L?.unit ?? "";
   const leg = L
     ? {
         grad: grad(L),
-        min: exampleLegend ? "" : F.value(L.range[0], L.unit, dec) ?? "",
-        max: exampleLegend ? "" : F.value(L.range[1], L.unit, dec) ?? "",
+        min: exampleLegend ? "" : F.value(shownRange[0], shownUnit, dec) ?? "",
+        max: exampleLegend ? "" : F.value(shownRange[1], shownUnit, dec) ?? "",
         label: L.label,
-        unit: exampleLegend ? "" : L.unit,
+        unit: exampleLegend ? "" : shownUnit,
         note: L.note,
         example: exampleLegend,
         caption: exampleLegend ? T.legend.example : "",
@@ -828,6 +833,7 @@ export function buildView(m: Model) {
     cardOpen: !!S.railR,
     frameBottom: chrome ? `calc(${lay.tlB} + ${S.tlH}px + 10px)` : lay.entB,
     legendOn: chrome && !!S.railR && S.railR === "legend" && !!L,
+    legendStrip: chrome && !!L && !imm,
     noSeries,
     isTabArea: S.railR === "area",
     isTabRead: S.railR === "insight",

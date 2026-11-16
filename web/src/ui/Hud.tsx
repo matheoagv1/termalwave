@@ -34,6 +34,18 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           {t.orbits.legend}
         </div>
       )}
+      {v.legendStrip && (v.leg.caption || v.leg.min) && (
+        <div
+          style={s(
+            `position:absolute;left:${lay.pad};bottom:calc(${v.frameBottom} + 22px);z-index:18;display:flex;flex-direction:column;gap:3px;width:min(260px,48vw);padding:6px 8px;pointer-events:none;background:var(--panel);border:1px solid var(--line);color:var(--fg)`,
+          )}
+        >
+          <span style={s("font:11px var(--mono)")}>
+            {v.leg.example ? v.leg.caption : `${v.leg.label} · ${v.leg.min} · ${v.leg.max}`}
+          </span>
+          <span style={s(`height:8px;background:${v.leg.grad}`)} />
+        </div>
+      )}
       {!v.isM && v.railsOn && <LeftRail v={v} a={a} />}
       {!v.isM && v.railsOn && <RightRail v={v} a={a} />}
       {v.isM && v.railsOn && <MobileBar v={v} a={a} />}
