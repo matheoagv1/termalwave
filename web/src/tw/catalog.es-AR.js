@@ -335,6 +335,7 @@ export const T = {
     crossing: (seg, gran) => `Ahora: ${seg}, ${gran}`,
     scaleNote: "Cada punto ocupa el mismo ancho. La franja de abajo muestra el tiempo real.",
     realTime: "Años",
+    yearsHint: "Años: la barra muestra todo el período con datos; el rombo marca dónde estás",
     kindComposite: "Compuesto",
     kindAcquisition: "Pasada",
     gapLegend: "Sin imagen",

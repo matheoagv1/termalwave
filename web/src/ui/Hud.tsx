@@ -234,7 +234,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
             );
           })}
           {v.dockOpen && v.overlayItems.length > 0 && (
-            <div role="group" aria-label="Superponer capas" style={s("border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-direction:column;gap:6px")}>
+            <div role="group" aria-label={t.layers.overlay} style={s("border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-direction:column;gap:6px")}>
               <span style={s("font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)")}>{t.layers.overlay}</span>
               <div style={s("display:flex;flex-wrap:wrap;gap:6px")}>
                 {v.overlayItems.map((o) => (

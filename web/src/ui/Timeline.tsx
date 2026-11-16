@@ -182,7 +182,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 ))}
               </div>
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
-                <span title="Años: la barra muestra todo el período con datos; el rombo marca dónde estás" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
+                <span title={t.timeline.yearsHint} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
                 <div style={s("position:relative;flex:1;height:28px;box-sizing:border-box;border-style:solid;border-width:0 32px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 32px 0 32px stretch")}>
                   <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>
@@ -289,7 +289,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                 ))}
               </div>
               <div style={s("display:flex;align-items:center;gap:8px;font:10px var(--mono);color:var(--fg3)")}>
-                <span title="Años: la barra muestra todo el período con datos; el rombo marca dónde estás" style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
+                <span title={t.timeline.yearsHint} style={s("white-space:nowrap;font:600 11px var(--mono);color:var(--fg)")}>{t.timeline.realTime}</span>
                 <span>{tl.y0}</span>
                 <div style={s("position:relative;flex:1;height:34px;box-sizing:border-box;border-style:solid;border-width:0 38px;border-image:url(./ui/rail.png) 0 150 0 150 fill / 0 38px 0 38px stretch")}>
                   <div style={s("position:absolute;left:0;right:0;bottom:-6px;height:4px;display:flex;gap:2px")}>

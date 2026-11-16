@@ -367,7 +367,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   // el mago explica con palabras simples el control que el usuario sigue leyendo
   showHelpText = (tip: string): void => {
     if (this.state.soundOn) Sfx.tip();
-    this.setState({ moniOpen: true, helpText: longHelp(tip) });
+    this.setState({ moniOpen: true, helpText: longHelp(tip, this.state.lang) });
   };
 
   toggleSound = (): void => {

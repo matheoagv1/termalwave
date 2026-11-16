@@ -346,6 +346,7 @@ export const T = {
     crossing: (seg: string, gran: string): string => `Now: ${seg}, ${gran}`,
     scaleNote: "Each point has the same width. The strip below shows real time.",
     realTime: "Years",
+    yearsHint: "Years: the bar shows the whole period that has data. The diamond marks where you are.",
     kindComposite: "Composite",
     kindAcquisition: "Pass",
     gapLegend: "No image",
