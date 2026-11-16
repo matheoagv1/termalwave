@@ -726,7 +726,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if (!clouds) this.setState({ clouds: { status: "idle", msg: "" } });
       else {
         this.setState({ clouds: { status: "loading", msg: "" } });
-        fetch("/api/clouds", { credentials: "same-origin" })
+        fetch("/api/clouds/manifest", { credentials: "same-origin" })
           .then((r) => {
             if (cseq !== this.cloudsSeq) return;
             if (!r.ok) throw new Error(String(r.status));
