@@ -24,6 +24,7 @@ from termalwave.process.nisar_raster import (
     crop_lonlat,
     db_stats,
     los_mm,
+    los_publishable,
     read_window,
     rvi_linear,
     utm_to_lonlat,
@@ -50,6 +51,13 @@ class RasterMathTests(unittest.TestCase):
         # positive phase is range increase, so displacement along LOS is negative
         mm = los_mm(np.array([math_pi()]))
         self.assertLess(float(mm[0]), 0)
+
+    def test_los_metre_offset_is_not_published(self) -> None:
+        # the 9-21 Oct GUNW pair: median ~1655 mm, spread ~160 mm, painted on ±6
+        field = np.array([1572.0, 1657.0, 1736.0])
+        self.assertFalse(los_publishable(field))
+        near_zero = np.array([-12.0, 0.0, 8.0])
+        self.assertTrue(los_publishable(near_zero))
 
     def test_crop_uses_the_grid_not_the_request_box(self) -> None:
         lon = np.array([-64.40, -64.30, -64.20, -64.10])

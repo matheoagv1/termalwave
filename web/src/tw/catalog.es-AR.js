@@ -153,6 +153,9 @@ export const T = {
   state: {
     firmsEmpty: "Sin focos activos en las últimas 24 h en esta vista. No es un error.",
     firmsCount: (n) => (n === 1 ? "1 detección" : `${n} detecciones`),
+    firmsDisabled: "Los focos de calor todavía no están habilitados en este entorno.",
+    firmsDenied: "Iniciá sesión para ver los focos de calor.",
+    firmsFailed: "No pudimos consultar los focos de calor. Probá de nuevo en unos minutos.",
     unavailable: "No disponible ahora",
     loading: "Cargando…",
     nodata: "sin dato",

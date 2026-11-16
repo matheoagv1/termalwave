@@ -30,6 +30,10 @@ class LayersBilingualTests(unittest.TestCase):
         self.assertIn("log10", radar["formula"])
         self.assertGreaterEqual(len(radar["ramp"]), 2)
         self.assertIn("Contaminación", by_id["contaminacion"]["label_es"])
+        self.assertEqual(by_id["radar"]["tier"], "raw")
+        self.assertEqual(by_id["incendios"]["tier"], "raw")
+        self.assertEqual(by_id["suelo"]["tier"], "processed")
+        self.assertEqual(by_id["contaminacion"]["tier"], "processed")
 
 
 if __name__ == "__main__":

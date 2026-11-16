@@ -1,6 +1,6 @@
 import React from "react";
 import type { App } from "../../app/App";
-import { fmtOf, type Lang } from "../../app/i18n";
+import { fmtOf, type Copy, type Lang } from "../../app/i18n";
 import type { View } from "../../app/view";
 import { isExampleHonesty, isPlaceholderRange } from "../../data/radar-scale";
 import type { LayerDef } from "../../tw/contract";
@@ -109,6 +109,13 @@ function normHonesty(value: unknown): Honesty | null {
   if (h === "inferred" || h === "inferido") return "inferred";
   if (h === "measured" || h === "medido") return "measured";
   return null;
+}
+
+function firmsReason(code: string, T: Copy): string {
+  if (code === "firmsDisabled") return T.state.firmsDisabled;
+  if (code === "firmsDenied") return T.state.firmsDenied;
+  if (code === "firmsFailed") return T.state.firmsFailed;
+  return T.state.unavailable;
 }
 
 function tierOf(id: string, meta: MetaRow, category?: string): Tier {
@@ -258,8 +265,7 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
         fm.status === "loading" ? T.state.loading
         : fm.status === "empty" ? T.state.firmsEmpty
         : fm.status === "ok" ? T.state.firmsCount(fm.count)
-        // App words this reason in Spanish only
-        : fm.status === "error" ? (lang === "es" && fm.msg ? fm.msg : T.state.unavailable)
+        : fm.status === "error" ? firmsReason(fm.msg, T)
         : "",
       tone: fm.status === "loading" ? "busy" : fm.status === "error" ? "warn" : fm.status === "empty" ? "muted" : "",
       date: C.last24,

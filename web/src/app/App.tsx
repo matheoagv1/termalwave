@@ -769,9 +769,9 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.setState({ firms: { status: "loading", count: 0, msg: "" } });
     fetch("/api/firms", { credentials: "same-origin" })
       .then(async (r) => {
-        if (r.status === 503) throw new Error("Los focos de calor todavía no están habilitados en este entorno.");
-        if (r.status === 401) throw new Error("Iniciá sesión para ver los focos de calor.");
-        if (!r.ok) throw new Error("No pudimos consultar los focos de calor. Probá de nuevo en unos minutos.");
+        if (r.status === 503) throw new Error("firmsDisabled");
+        if (r.status === 401) throw new Error("firmsDenied");
+        if (!r.ok) throw new Error("firmsFailed");
         return r.json() as Promise<{ features?: unknown[] }>;
       })
       .then((fc) => {
@@ -782,7 +782,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       })
       .catch((e: Error) => {
         if (seq !== this.firmsSeq) return;
-        this.setState({ firms: { status: "error", count: 0, msg: e.message || "No pudimos consultar los focos de calor." } });
+        const code = e.message === "firmsDisabled" || e.message === "firmsDenied" || e.message === "firmsFailed" ? e.message : "firmsFailed";
+        this.setState({ firms: { status: "error", count: 0, msg: code } });
       });
   }
 
