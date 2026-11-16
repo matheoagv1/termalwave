@@ -134,21 +134,24 @@ def pick_optical_near_nisar(
 
 
 def prefer_validated_granules(granules: list[GranuleRef]) -> list[GranuleRef]:
-    """Prefer validated over provisional for the same calendar day."""
-    by_day: dict[str, GranuleRef] = {}
-    rank = {"validated": 0, "provisional": 1, "unknown": 2}
+    """Keep one row per granule id, preferring validated over provisional or beta.
+
+    Several NISAR frames share a calendar day. They are different granules and all stay.
+    """
+    by_id: dict[str, GranuleRef] = {}
+    rank = {"validated": 0, "provisional": 1, "beta": 2, "unknown": 3}
     for granule in granules:
-        key = granule.acquired_at.date().isoformat()
-        current = by_day.get(key)
+        key = granule.granule_id or granule.acquired_at.date().isoformat()
+        current = by_id.get(key)
         if current is None:
-            by_day[key] = granule
+            by_id[key] = granule
             continue
         if rank.get(granule.status, 9) < rank.get(current.status, 9):
-            by_day[key] = granule
+            by_id[key] = granule
         elif rank.get(granule.status, 9) == rank.get(current.status, 9):
             if granule.quality_rank < current.quality_rank:
-                by_day[key] = granule
-    return [by_day[k] for k in sorted(by_day.keys())]
+                by_id[key] = granule
+    return [by_id[k] for k in sorted(by_id)]
 
 
 def merge_elevation_first_available(
