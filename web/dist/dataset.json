@@ -30,38 +30,41 @@
     {
       "id": "suelo",
       "label": "Estado del suelo",
-      "unit": "",
+      "unit": "m³/m³",
       "range": [
-        0,
-        1
+        0.05,
+        0.4
       ],
       "ramp": [],
-      "note": "",
-      "honesty": "example"
+      "note": "Open-Meteo (ERA5/ICON)",
+      "honesty": "model",
+      "decimals": 2
     },
     {
       "id": "contaminacion",
       "label": "Contaminacion",
-      "unit": "",
+      "unit": "µg/m³",
       "range": [
-        0,
-        1
+        0.0,
+        40.0
       ],
       "ramp": [],
-      "note": "",
-      "honesty": "example"
+      "note": "Open-Meteo Air Quality (CAMS)",
+      "honesty": "model",
+      "decimals": 0
     },
     {
       "id": "incendios",
       "label": "Incendios",
-      "unit": "",
+      "unit": "detecciones",
       "range": [
         0,
-        1
+        203
       ],
       "ramp": [],
-      "note": "",
-      "honesty": "example"
+      "note": "NASA FIRMS (VIIRS SNPP)",
+      "honesty": "measured",
+      "decimals": 0
     },
     {
       "id": "change",
@@ -107,19 +110,7 @@
           "end": "2018-12-31",
           "label": "2018",
           "frames": {
-            "radar": {
-              "url": "./overlays/timeline/radar/2018.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example",
-              "note_en": "Before NISAR (launched 2025)",
-              "note_es": "Antes de NISAR (lanzado en 2025)"
-            },
+            "radar": null,
             "suelo": {
               "url": "./overlays/timeline/suelo/2018.png",
               "bounds": {
@@ -129,19 +120,11 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.21745326967592593
             },
-            "contaminacion": {
-              "url": "./overlays/timeline/contaminacion/2018.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example"
-            },
+            "contaminacion": null,
             "incendios": {
               "url": "./overlays/timeline/incendios/2018.png",
               "bounds": {
@@ -151,7 +134,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 99
             },
             "change": null,
             "rvi": null
@@ -163,19 +148,7 @@
           "end": "2020-12-31",
           "label": "2020",
           "frames": {
-            "radar": {
-              "url": "./overlays/timeline/radar/2020.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example",
-              "note_en": "Before NISAR (launched 2025)",
-              "note_es": "Antes de NISAR (lanzado en 2025)"
-            },
+            "radar": null,
             "suelo": {
               "url": "./overlays/timeline/suelo/2020.png",
               "bounds": {
@@ -185,19 +158,11 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.17796006944444445
             },
-            "contaminacion": {
-              "url": "./overlays/timeline/contaminacion/2020.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example"
-            },
+            "contaminacion": null,
             "incendios": {
               "url": "./overlays/timeline/incendios/2020.png",
               "bounds": {
@@ -207,7 +172,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 203
             },
             "change": null,
             "rvi": null
@@ -219,19 +186,7 @@
           "end": "2022-12-31",
           "label": "2022",
           "frames": {
-            "radar": {
-              "url": "./overlays/timeline/radar/2022.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example",
-              "note_en": "Before NISAR (launched 2025)",
-              "note_es": "Antes de NISAR (lanzado en 2025)"
-            },
+            "radar": null,
             "suelo": {
               "url": "./overlays/timeline/suelo/2022.png",
               "bounds": {
@@ -241,7 +196,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.16807978877314814
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2022.png",
@@ -252,7 +209,10 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 5.9596875,
+              "quality": "partial"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2022.png",
@@ -263,7 +223,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 114
             },
             "change": null,
             "rvi": null
@@ -275,19 +237,7 @@
           "end": "2024-12-31",
           "label": "2024",
           "frames": {
-            "radar": {
-              "url": "./overlays/timeline/radar/2024.png",
-              "bounds": {
-                "west": -64.35,
-                "east": -64.15,
-                "south": -27.9,
-                "north": -27.7
-              },
-              "kind": "composite",
-              "honesty": "example",
-              "note_en": "Before NISAR (launched 2025)",
-              "note_es": "Antes de NISAR (lanzado en 2025)"
-            },
+            "radar": null,
             "suelo": {
               "url": "./overlays/timeline/suelo/2024.png",
               "bounds": {
@@ -297,7 +247,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.1863410734953704
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2024.png",
@@ -308,7 +260,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 6.158072916666666
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2024.png",
@@ -319,7 +273,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 155
             },
             "change": null,
             "rvi": null
@@ -357,7 +313,10 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo (ERA5/ICON)",
+              "mean": 0.18576085069444445,
+              "quality": "partial"
             },
             "contaminacion": {
               "url": "./overlays/timeline/contaminacion/2026.png",
@@ -368,7 +327,10 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "model",
+              "source": "Open-Meteo Air Quality (CAMS)",
+              "mean": 5.766377314814815,
+              "quality": "partial"
             },
             "incendios": {
               "url": "./overlays/timeline/incendios/2026.png",
@@ -379,7 +341,9 @@
                 "north": -27.7
               },
               "kind": "composite",
-              "honesty": "example"
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 48
             },
             "change": {
               "url": "./overlays/nisar/change_20261021_20261102_HV.png",
@@ -546,6 +510,5 @@
     }
   ],
   "sourcesAt": "2026-11-14T20:28:10.002602+00:00",
-  "isMock": false,
-  "timelineSynthetic": true
+  "isMock": false
 }
