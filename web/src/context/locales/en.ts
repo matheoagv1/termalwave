@@ -376,6 +376,10 @@ export const T = {
     loading: "Loading timeline",
     missing: (list: string): string => `No image: ${list}`,
     keysHint: "Arrows: one step. Page Up and Page Down: stretch. Home and End: ends.",
+    beforeNisar: "Before NISAR (≤ Jul 2025)",
+  },
+  orbits: {
+    legend: "SAR satellite passes (orbits)",
   },
 
   compare: {
