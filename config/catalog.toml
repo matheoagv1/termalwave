@@ -1,6 +1,7 @@
 # Label rules (owner, 2026-11-15). Every [[catalog]] entry in every catalog*.toml follows them.
-# - label_en / label_es: two or three plain words that say what the layer shows or does:
-#   "Active fires", "Rain now", "Soil moisture", "Ground motion", "Fire danger, 3 days".
+# - label_en / label_es: two or three plain words that say what the layer shows:
+#   "Active fires", "Rain", "Soil moisture", "Ground motion", "Satellite imagery".
+#   No "yesterday", "now" or a calendar date in the label. The date stays on the timeline.
 # - No product codes, acronyms, agency names or jargon in labels (no "FIRMS", "NDVI", "GCOV", "SMAP").
 #   Those go in `product`, `attribution` and `inputs`.
 # - English by default, Spanish (es-AR, with accents) in label_es. Never Spanish-only words in label_en.
@@ -187,8 +188,8 @@ ramp = [["#000000", 0.0], ["#215c7b", 0.2], ["#3d905c", 0.4], ["#89aa55", 0.6], 
 honesty = "measured"
 label_en = "Forest biomass"
 label_es = "Biomasa forestal"
-what_en = "Above-ground biomass of trees and shrubs, in tonnes per hectare, from the GEDI laser on the space station, April 2019 to March 2023."
-what_es = "Biomasa aérea de árboles y arbustos, en toneladas por hectárea, del láser GEDI en la estación espacial, de abril de 2019 a marzo de 2023."
+what_en = "Above-ground biomass of trees and shrubs, in tonnes per hectare."
+what_es = "Biomasa aérea de árboles y arbustos, en toneladas por hectárea."
 decision_en = "Know how much forest stands in the area before reading a radar loss as clearing or degradation."
 decision_es = "Sabé cuánto bosque hay en la zona antes de leer una pérdida en el radar como desmonte o degradación."
 nodata_en = "Transparent means GEDI took too few samples there, or the area lies outside 52 degrees north and south."
@@ -216,8 +217,8 @@ ramp = [["#e1e1e1", 0.0], ["#a0c030", 0.2], ["#56a100", 0.4], ["#2e8000", 0.6], 
 honesty = "measured"
 label_en = "Canopy height"
 label_es = "Altura del dosel"
-what_en = "Mean height of the top of the canopy, from the GEDI laser on the space station, April 2019 to March 2023."
-what_es = "Altura media de la copa de los árboles, del láser GEDI en la estación espacial, de abril de 2019 a marzo de 2023."
+what_en = "Mean height of the top of the canopy."
+what_es = "Altura media de la copa de los árboles."
 decision_en = "Tell tall forest from scrub and crops, which scatter L-band radar in different ways."
 decision_es = "Distinguí bosque alto de matorral y cultivos, que dispersan el radar de banda L de distinta manera."
 nodata_en = "Transparent means too few laser shots there, or outside 52 degrees north and south."
@@ -414,10 +415,10 @@ min_zoom = 5
 opacity = 0.9
 ramp = [["#000000", 0.0], ["#ffffff", 1.0]]
 honesty = "measured"
-label_en = "Second radar"
-label_es = "Segundo radar"
-what_en = "Radar brightness from Sentinel-1 (C-band, shorter wave than NISAR), corrected for terrain (OPERA RTC-S1)."
-what_es = "Brillo de radar de Sentinel-1 (banda C, onda más corta que NISAR), corregido por relieve (OPERA RTC-S1)."
+label_en = "Surface radar"
+label_es = "Radar de superficie"
+what_en = "Radar brightness of the surface, corrected for terrain."
+what_es = "Brillo de radar de la superficie, corregido por el relieve."
 decision_en = "Compare with NISAR: a change both radars see is more likely real; C-band reacts more to leaves, L-band to trunks and soil."
 decision_es = "Comparalo con NISAR: un cambio que ven ambos radares es más probable que sea real; la banda C reacciona más a las hojas, la L a troncos y suelo."
 nodata_en = "Transparent means no Sentinel-1 scene on the latest day published."
@@ -441,10 +442,10 @@ max_zoom = 9
 opacity = 0.95
 ramp = [["#1d3b5a", 0.0], ["#6f8f4e", 0.5], ["#f4f1e8", 1.0]]
 honesty = "measured"
-label_en = "Yesterday from space"
-label_es = "Ayer desde el espacio"
-what_en = "The Earth as the eye would see it yesterday, one daily mosaic from VIIRS on NOAA-20."
-what_es = "La Tierra como la vería el ojo ayer, un mosaico diario de VIIRS en NOAA-20."
+label_en = "Satellite imagery"
+label_es = "Imagen satelital"
+what_en = "Daily true-color image of the land surface."
+what_es = "Imagen diaria en color real de la superficie."
 decision_en = "Look at clouds, smoke, floods and fields in plain colour next to the radar."
 decision_es = "Mirá nubes, humo, inundaciones y campos en color natural junto al radar."
 nodata_en = "Black wedges are gaps between orbits."
@@ -472,8 +473,8 @@ ramp = [["#000000", 0.0], ["#5a4a2a", 0.4], ["#ffe9a8", 1.0]]
 honesty = "measured"
 label_en = "Night lights"
 label_es = "Luces nocturnas"
-what_en = "City and road lights at night in 2016, the Black Marble composite from VIIRS."
-what_es = "Luces de ciudades y rutas de noche en 2016, el compuesto Black Marble de VIIRS."
+what_en = "Artificial lights at night over cities and roads."
+what_es = "Luces artificiales de noche sobre ciudades y rutas."
 decision_en = "Tell towns, mines and roads apart from wild land when a radar change appears."
 decision_es = "Distinguí pueblos, minas y rutas del monte cuando aparece un cambio del radar."
 nodata_en = "Dark means no artificial light was recorded."
