@@ -198,8 +198,8 @@ export const T = {
     surface: (km: string): string => `${km} km²`,
   },
   globals: {
-    clouds: "Clouds now",
-    wind: "Wind now",
+    clouds: "Clouds",
+    wind: "Wind",
     firms: "Active fires",
     cloudsNote: "Near real-time infrared mosaic on the globe.",
     windNote: "Wind at 10 m (Open-Meteo). The streaks show direction and relative strength.",

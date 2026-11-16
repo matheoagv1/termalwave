@@ -20,12 +20,12 @@ const en = {
     fuego: {
       title: "FIRES",
       sub: "Hot spots seen by satellite and the wind that carries the smoke.",
-      on: "Active fires, Wind now, Smoke and haze, Fire weather",
+      on: "Active fires, Wind, Smoke and haze, Fire weather",
     },
     clima: {
       title: "WEATHER",
       sub: "Clouds, wind and rain around a radar pass. Context, not a forecast.",
-      on: "Clouds now, Wind now, Rain",
+      on: "Clouds, Wind, Rain",
     },
     vegetacion: {
       title: "VEGETATION",
@@ -35,7 +35,7 @@ const en = {
     agua: {
       title: "WATER",
       sub: "Wet soil, surface water and rain.",
-      on: "Soil moisture, Flood water, Flood chance, 3 days",
+      on: "Soil moisture, Flood water, Flood risk",
     },
     movimiento: {
       title: "GROUND MOTION",
@@ -102,12 +102,12 @@ const es: typeof en = {
     fuego: {
       title: "INCENDIOS",
       sub: "Focos de calor vistos por satélite y el viento que lleva el humo.",
-      on: "Incendios activos, Viento ahora, Humo y bruma, Clima de fuego",
+      on: "Incendios activos, Viento, Humo y bruma, Clima de fuego",
     },
     clima: {
       title: "TIEMPO",
       sub: "Nubes, viento y lluvia cerca de una pasada del radar. Es contexto, no un pronóstico.",
-      on: "Nubes ahora, Viento ahora, Lluvia",
+      on: "Nubes, Viento, Lluvia",
     },
     vegetacion: {
       title: "VEGETACIÓN",
@@ -117,7 +117,7 @@ const es: typeof en = {
     agua: {
       title: "AGUA",
       sub: "Suelo húmedo, agua en superficie y lluvia.",
-      on: "Humedad del suelo, Agua de inundación, Chance de inundación, 3 días",
+      on: "Humedad del suelo, Agua de inundación, Riesgo de inundación",
     },
     movimiento: {
       title: "MOVIMIENTO DEL SUELO",

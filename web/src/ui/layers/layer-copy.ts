@@ -241,8 +241,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   },
   contaminacion: {
     tier: "processed",
-    label_en: "Pollution signs",
-    label_es: "Señales de contaminación",
+    label_en: "Contamination",
+    label_es: "Contaminación",
     what_en: "Shows a relative pollution index, not a measured concentration.",
     what_es: "Muestra un índice relativo de contaminación, no una concentración medida.",
     decision_en: "Helps spot areas that deserve a closer look or an on-site measurement.",
@@ -287,8 +287,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   clouds: {
     tier: "raw",
     honesty: "measured",
-    label_en: "Clouds now",
-    label_es: "Nubes ahora",
+    label_en: "Clouds",
+    label_es: "Nubes",
     product: "NOAA nowCOAST, NESDIS global infrared mosaic",
     decision_en: "Helps judge whether optical images of an area are likely to be blocked. Radar sees through clouds.",
     decision_es: "Ayuda a estimar si las imágenes ópticas de un área pueden estar tapadas. El radar atraviesa las nubes.",
@@ -300,8 +300,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   wind: {
     tier: "raw",
     honesty: "model",
-    label_en: "Wind now",
-    label_es: "Viento ahora",
+    label_en: "Wind",
+    label_es: "Viento",
     decision_en: "Helps anticipate where smoke or a fire front may move.",
     decision_es: "Ayuda a anticipar hacia dónde puede moverse el humo o un frente de fuego.",
     nodata_en: "An area without streaks has no wind value loaded yet.",
