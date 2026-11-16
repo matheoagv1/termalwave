@@ -8,6 +8,7 @@
 //   l2/<group>/day/<yyyy-mm-dd>  normalized answer for an archived day, archive ttl
 // caches.default is per colo and may evict, so the archive is best effort
 import { edgeJson, json } from "./edge-cache.js";
+import { relayFetch } from "./relay.js";
 
 const ARCHIVE_TTL_S = 365 * 86400;
 const BROWSER_TTL_S = 600;
@@ -43,7 +44,7 @@ class NotArchived extends Error {}
  * @param {{upstream: string, groups: string[], cache_ttl_s: number} | undefined} cfg space.satellites of app-config.json
  * @returns {Promise<Response>}
  */
-export async function handleSatellites(url, _env, ctx, cfg) {
+export async function handleSatellites(url, env, ctx, cfg) {
   if (!cfg?.groups?.length) return json({ error: "satellites_disabled" }, 503);
   const group = url.searchParams.get("group") || "";
   if (!cfg.groups.includes(group)) return json({ error: "unknown_group" }, 400);
@@ -65,8 +66,16 @@ export async function handleSatellites(url, _env, ctx, cfg) {
     }
     const ttl = cfg.cache_ttl_s || 0;
     const out = await edgeJson(key("l2", "latest"), ttl, ctx, async () => {
-      const raw = await latestRaw(cfg.upstream, group, ttl, ctx, key, archived, today);
-      return normalize(group, today, raw);
+      try {
+        const raw = await latestRaw(env, cfg.upstream, group, ttl, ctx, key, archived, today);
+        return normalize(group, today, raw);
+      } catch (err) {
+        // upstream and archive both failed: the snapshot shipped with the site beats a 502
+        const snap = await env.ASSETS.fetch(new Request(new URL(`/satellites/gp-${group}.json`, url)));
+        if (!snap.ok) throw err;
+        console.warn("satellites: served snapshot", err && err.message);
+        return { ...(await snap.json()), stale: true };
+      }
     });
     return json(out, 200, Math.min(BROWSER_TTL_S, ttl));
   } catch (err) {
@@ -78,9 +87,9 @@ export async function handleSatellites(url, _env, ctx, cfg) {
 
 // latest celestrak copy; also files it under today's archive key, and falls back
 // to the newest archived day when celestrak is down or throttling us
-async function latestRaw(upstream, group, ttl, ctx, key, archived, today) {
+async function latestRaw(env, upstream, group, ttl, ctx, key, archived, today) {
   try {
-    const raw = await edgeJson(key("l1", "latest"), ttl, ctx, () => fetchGroup(upstream, group));
+    const raw = await edgeJson(key("l1", "latest"), ttl, ctx, () => fetchGroup(env, upstream, group));
     await edgeJson(key("l1", `day/${today}`), ARCHIVE_TTL_S, ctx, async () => raw);
     return raw;
   } catch (err) {
@@ -95,11 +104,11 @@ async function latestRaw(upstream, group, ttl, ctx, key, archived, today) {
   }
 }
 
-async function fetchGroup(upstream, group) {
+async function fetchGroup(env, upstream, group) {
   const u = new URL(upstream);
   u.searchParams.set("GROUP", group);
   u.searchParams.set("FORMAT", "json");
-  const r = await fetch(u, { headers: { accept: "application/json" } });
+  const r = await relayFetch(env, u, { headers: { accept: "application/json" } });
   if (!r.ok) throw new Error(`celestrak ${r.status}`);
   // celestrak answers throttled or unknown groups with plain text and 200
   const text = await r.text();
