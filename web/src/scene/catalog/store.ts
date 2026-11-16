@@ -1,4 +1,5 @@
 import React from "react";
+import { readPrefs, writePrefs } from "../../app/prefs";
 import { bundledEntries, mergeRows, type CatalogEntry } from "./entries";
 
 export type CatalogState = "idle" | "loading" | "ok" | "empty" | "error";
@@ -14,11 +15,11 @@ export type CatalogStatus = {
   date: string;
 };
 
-const PREFS = "tw.catalog.on";
+const LEGACY = "tw.catalog.on";
 const IDLE: CatalogStatus = { state: "idle", reason: "", count: 0, confidence: null, date: "" };
 
 let entries: CatalogEntry[] = bundledEntries();
-let on = new Set<string>(readPrefs());
+let on = new Set<string>(readCatalogOn());
 let timelineDate: string | null = null;
 // date picked on an acquisition tick; daily layers follow it, null means their default lag
 let dailyDate: string | null = null;
@@ -27,13 +28,19 @@ const subs = new Set<() => void>();
 let version = 0;
 let remoteAsked = false;
 
-function readPrefs(): string[] {
+function readCatalogOn(): string[] {
+  const saved = readPrefs()?.catalog;
+  if (saved) return saved;
   try {
-    const raw = JSON.parse(localStorage.getItem(PREFS) ?? "[]") as unknown;
+    const raw = JSON.parse(localStorage.getItem(LEGACY) ?? "[]") as unknown;
     return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : [];
   } catch {
     return [];
   }
+}
+
+function persistCatalog(): void {
+  writePrefs({ catalog: [...on] });
 }
 
 function emit(): void {
@@ -71,19 +78,15 @@ export const catalog = {
   toggle(id: string): void {
     catalog.set(id, !on.has(id));
   },
-  // presets and deep links switch layers through this
-  set(id: string, want: boolean): void {
+  // presets and deep links switch layers through this. persist is false while a preset is only being staged
+  set(id: string, want: boolean, persist = true): void {
     if (on.has(id) === want) return;
     const next = new Set(on);
     if (want) next.add(id);
     else next.delete(id);
     on = next;
     if (!want) status.delete(id);
-    try {
-      localStorage.setItem(PREFS, JSON.stringify([...on]));
-    } catch {
-      /* private mode: the choice lasts for this visit */
-    }
+    if (persist) persistCatalog();
     emit();
   },
   status(id: string): CatalogStatus {

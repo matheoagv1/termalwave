@@ -1,4 +1,5 @@
 import type { Lang } from "../../app/i18n";
+import { readPrefs, writePrefs } from "../../app/prefs";
 import type { BasemapOption } from "../../tw/contract";
 
 // Imagery first, then a street map. Daily GIBS true-colour is one date with
@@ -12,7 +13,7 @@ export const BASEMAPS: readonly Base[] = [
   { id: "osm_standard", en: "Streets", es: "Calles", swatch: "linear-gradient(90deg,transparent 0 46%,#f2c27a 46% 54%,transparent 54%),linear-gradient(0deg,transparent 0 46%,#ffffff 46% 54%,transparent 54%),#e6e1d6" },
 ];
 
-const KEY = "tw-basemap";
+const LEGACY = "tw-basemap";
 
 // Allowlist order, default first; the App takes [0] as the start basemap.
 export function pickBasemaps(list: BasemapOption[]): BasemapOption[] {
@@ -30,21 +31,22 @@ export function basemapMeta(id: string, lang: Lang): { label: string; swatch: st
   return { label: b ? (lang === "es" ? b.es : b.en) : id, swatch: b?.swatch ?? "var(--line2)" };
 }
 
+function offered(list: BasemapOption[] | undefined, id: string | undefined): string {
+  return id && list?.some((o) => o.id === id) ? id : "";
+}
+
 // A saved id that is no longer offered falls back to the default.
 export function savedBasemap(list: BasemapOption[] | undefined): string {
   const first = list?.[0]?.id ?? "";
+  const fromPrefs = offered(list, readPrefs()?.basemap);
+  if (fromPrefs) return fromPrefs;
   try {
-    const id = localStorage.getItem(KEY);
-    return id && list?.some((o) => o.id === id) ? id : first;
+    return offered(list, localStorage.getItem(LEGACY) ?? undefined) || first;
   } catch {
     return first;
   }
 }
 
 export function saveBasemap(id: string): void {
-  try {
-    localStorage.setItem(KEY, id);
-  } catch {
-    // private mode: the choice lasts for this visit only
-  }
+  writePrefs({ basemap: id });
 }

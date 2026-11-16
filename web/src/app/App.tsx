@@ -7,6 +7,7 @@ import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, t
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
 import { longHelp } from "../ui/tip-help";
 import { saveBasemap, savedBasemap } from "../ui/basemap/basemaps";
+import { savedExtras, writePrefs } from "./prefs";
 import type {
   BasemapOption,
   Dataset,
@@ -74,8 +75,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     soundOn: intro0.sound,
     moniOpen: false,
     helpText: "",
-    // nubes + focos encendidos al abrir: el globo no arranca vacio en el AOI
-    extras: ["clouds", "firms"],
+    // saved layer switches win over the opening preset; otherwise clouds and fires start on
+    extras: savedExtras() ?? ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
     nisar: { status: "idle", count: 0, msg: "", passes: [] },
     clouds: { status: "idle", msg: "" },
@@ -151,14 +152,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       }
       if (this.scenario() !== this.scnKey) void this.boot();
       if (S.pick !== ps.pick) this.trackPos();
-      if ((S.trade !== ps.trade || S.ds !== ps.ds) && S.ds) {
-        const entry = S.ds.context[S.trade];
-        const presetId = entry?.id ?? entry?.trade ?? "";
-        const known = new Set([...GLOBAL_IDS, ...S.ds.layers.map((l) => l.id)]);
-        const catalogIds = new Set(catalog.entries().map((e) => e.id));
-        const ids = presetLayers(presetId, S.ds.presets ?? PRESETS, (id) => known.has(id) || catalogIds.has(id));
-        for (const id of ids) if (catalogIds.has(id)) catalog.set(id, true);
-        if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
+      if (S.ds && !this.explicitTrade && (S.trade !== ps.trade || S.ds !== ps.ds)) {
+        if (this.pendingPreset || savedExtras() === null) this.applyPreset(this.pendingPreset);
       }
       const eff = this.effectiveExtras();
       if (eff.join() !== this.extKey) {
@@ -201,8 +196,24 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   }
 
   set = (patch: Partial<AppState>): void => {
+    if (typeof patch.trade === "number" && patch.trade !== this.state.trade) this.pendingPreset = true;
     this.setState(patch as AppState);
   };
+
+  // explicit: the user picked this preset, so it replaces the saved layers and is stored again
+  private applyPreset(explicit: boolean): void {
+    this.pendingPreset = false;
+    const ds = this.state.ds;
+    if (!ds) return;
+    const entry = ds.context[this.state.trade];
+    const presetId = entry?.id ?? entry?.trade ?? "";
+    const known = new Set([...GLOBAL_IDS, ...ds.layers.map((l) => l.id)]);
+    const catalogIds = new Set(catalog.entries().map((e) => e.id));
+    const ids = presetLayers(presetId, ds.presets ?? PRESETS, (id) => known.has(id) || catalogIds.has(id));
+    for (const e of catalog.entries()) catalog.set(e.id, ids.includes(e.id), false);
+    if (ids.join() !== this.state.extras.join()) this.setState({ extras: ids });
+    if (explicit) writePrefs({ extras: ids, catalog: catalog.onIds() });
+  }
 
   measure(): void {
     const r = this.rootRef.current;
@@ -350,20 +361,31 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     if (!ds || !this.state.userTrade) return;
     const ut = this.state.userTrade;
     const i = ds.context.findIndex((c) => c.id === ut || c.trade === ut || c.label === ut);
+    if (this.explicitTrade) {
+      this.explicitTrade = false;
+      this.pendingPreset = true;
+    }
     if (i >= 0 && i !== this.state.trade) this.setState({ trade: i });
+    else if (this.pendingPreset) this.applyPreset(true);
   }
 
   finishIntro = (name: string, trade: string, setup?: import("../ui/setup/missions").SetupResult): void => {
     writeIntroPrefs({ done: true, name, trade, sound: this.state.soundOn });
-    this.setState({
+    const ds = this.state.ds;
+    const i = ds ? ds.context.findIndex((c) => c.id === trade || c.trade === trade || c.label === trade) : -1;
+    this.pendingPreset = true;
+    if (i < 0) this.explicitTrade = true;
+    const next: Pick<AppState, "introOpen" | "introDone" | "userName" | "userTrade" | "moniOpen" | "extras" | "trade"> = {
       introOpen: false,
       introDone: true,
       userName: name,
       userTrade: trade,
       moniOpen: true,
       extras: setup?.extras ?? this.state.extras,
-    });
-    this.applyUserTrade();
+      trade: i >= 0 ? i : this.state.trade,
+    };
+    this.setState(next);
+    if (i < 0) this.applyUserTrade();
     if (setup?.place) this.goSetupPlace(setup.place, 0);
   };
 
@@ -743,6 +765,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   };
 
   private extKey = "";
+  // a trade chip or the setup screen asked for its preset; boot must not set this
+  private pendingPreset = false;
+  // setup finished before the dataset, so the preset waits for that trade index
+  private explicitTrade = false;
 
   // el nucleo (core) nunca se apaga; el resto lo suman el usuario o el rubro
   effectiveExtras(): string[] {
@@ -865,7 +891,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       return;
     }
     const cur = this.state.extras;
-    this.setState({ extras: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
+    const extras = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    this.setState({ extras }, () => writePrefs({ extras }));
   };
 
   setLayer = (id: string): void => {
