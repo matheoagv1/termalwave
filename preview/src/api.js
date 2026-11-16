@@ -71,7 +71,9 @@ async function search(url, request, env, ctx) {
   const cfg = (await loadAppConfig(request, env)).search;
   if (!cfg?.proxy?.length) return json({ error: "search_disabled" }, 503);
 
-  const bias = parseBias(url.searchParams.get("near"));
+  // no near= still biases on the Santiago del Estero study center
+  const bias = parseBias(url.searchParams.get("near")) || [-64.26, -27.8];
+  const cfgOrdered = { ...cfg, proxy: searchOrder(cfg.proxy) };
   const ttl = cfg.cache_ttl_s || 0;
   // l2 caches our merged answer, l1 each upstream answer
   const keyFor = (layer) => {
@@ -84,7 +86,7 @@ async function search(url, request, env, ctx) {
   const perProvider = (name, produce) => edgeJson(keyFor(`l1/${name}`), ttl, ctx, produce);
   try {
     const out = await edgeJson(keyFor("l2"), ttl, ctx, async () => {
-      const r = await searchChain(cfg, { q, bias, env }, perProvider);
+      const r = await searchChain(cfgOrdered, { q, bias, env }, perProvider);
       if (!r.tried.some((t) => t.ok)) throw new Error("all providers failed");
       return { results: r.results, source: r.source };
     });
@@ -93,6 +95,16 @@ async function search(url, request, env, ctx) {
     console.warn("search", err && err.message);
     return json({ error: "upstream_unavailable" }, 502);
   }
+}
+
+// keyed providers stay first; photon (no key) is the fallback before open-meteo
+function searchOrder(proxy) {
+  const names = Array.isArray(proxy) ? proxy.map(String) : [];
+  const head = names.filter((name) => name !== "photon" && name !== "open_meteo_geocode");
+  const tail = [];
+  if (names.includes("photon")) tail.push("photon");
+  if (names.includes("open_meteo_geocode")) tail.push("open_meteo_geocode");
+  return [...head, ...tail];
 }
 
 /** @returns {[number, number] | null} lon, lat */
