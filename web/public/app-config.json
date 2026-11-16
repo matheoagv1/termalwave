@@ -100,8 +100,8 @@
         "time_dimension": true,
         "date_lag_days": 4,
         "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS",
-        "resolved_date": "2026-11-11",
-        "resolved_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-11-11/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+        "resolved_date": "2026-11-12",
+        "resolved_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-11-12/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
         "cache_policy": "archive",
         "proxy_template": "/tiles/gibs_modis_truecolor/{date}/{z}/{x}/{y}",
         "tile_cache": {
@@ -129,8 +129,8 @@
         "time_dimension": true,
         "date_lag_days": 14,
         "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS",
-        "resolved_date": "2026-11-01",
-        "resolved_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/2026-11-01/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+        "resolved_date": "2026-11-02",
+        "resolved_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/2026-11-02/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
         "cache_policy": "archive",
         "proxy_template": "/tiles/gibs_viirs_truecolor/{date}/{z}/{x}/{y}",
         "tile_cache": {
@@ -147,44 +147,34 @@
         }
       },
       {
-        "id": "carto_voyager",
-        "label": "Calles (CARTO Voyager)",
+        "id": "osm_standard",
+        "label": "Calles (OpenStreetMap)",
         "kind": "raster",
-        "url_template": "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "attribution": "© OpenStreetMap contributors · © CARTO",
-        "license": "ODbL / CARTO",
-        "max_zoom": 20,
+        "url_template": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "attribution": "© OpenStreetMap contributors",
+        "license": "ODbL",
+        "max_zoom": 19,
+        "tile_size": 256,
         "time_dimension": false,
-        "docs_url": "https://carto.com/basemaps/",
+        "docs_url": "https://operations.osmfoundation.org/policies/tiles/",
         "purpose": "streets",
-        "cache_policy": "volatile",
-        "proxy_template": "/tiles/carto_voyager/-/{z}/{x}/{y}",
-        "tile_cache": {
-          "policy": "volatile",
-          "edge_ttl_s": 604800,
-          "browser_ttl_s": 86400,
-          "immutable": false
-        }
+        "do_not_store_tiles": true,
+        "cache_policy": "direct"
       },
       {
-        "id": "carto_dark_matter",
-        "label": "Calles oscuras (CARTO)",
+        "id": "esri_world_imagery",
+        "label": "Imagen Esri",
         "kind": "raster",
-        "url_template": "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "attribution": "© OpenStreetMap contributors · © CARTO",
-        "license": "ODbL / CARTO",
-        "max_zoom": 20,
+        "url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        "attribution": "Tiles © Esri, Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        "license": "Esri",
+        "max_zoom": 19,
+        "tile_size": 256,
         "time_dimension": false,
-        "docs_url": "https://carto.com/basemaps/",
-        "purpose": "streets",
-        "cache_policy": "volatile",
-        "proxy_template": "/tiles/carto_dark_matter/-/{z}/{x}/{y}",
-        "tile_cache": {
-          "policy": "volatile",
-          "edge_ttl_s": 604800,
-          "browser_ttl_s": 86400,
-          "immutable": false
-        }
+        "docs_url": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        "purpose": "imagery",
+        "do_not_store_tiles": true,
+        "cache_policy": "direct"
       },
       {
         "id": "openfreemap_liberty",
@@ -257,10 +247,16 @@
         "docs_url": "https://wiki.earthdata.nasa.gov/display/GIBS"
       },
       {
-        "id": "carto_voyager",
-        "attribution": "© OpenStreetMap contributors · © CARTO",
-        "license": "ODbL / CARTO",
-        "docs_url": "https://carto.com/basemaps/"
+        "id": "osm_standard",
+        "attribution": "© OpenStreetMap contributors",
+        "license": "ODbL",
+        "docs_url": "https://operations.osmfoundation.org/policies/tiles/"
+      },
+      {
+        "id": "esri_world_imagery",
+        "attribution": "Tiles © Esri, Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        "license": "Esri",
+        "docs_url": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
       },
       {
         "id": "openfreemap_liberty",
