@@ -1,0 +1,51 @@
+[data-tw-theme] .twc-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+[data-tw-theme] .twc-fig {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  font-size: 12px;
+  color: var(--fg2);
+}
+
+[data-tw-theme] .twc-fig img,
+[data-tw-theme] .twc-blank {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+[data-tw-theme] .twc-blank {
+  min-height: 120px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--fg3);
+  background: var(--panel-solid);
+}
+
+[data-tw-theme] .twc-fig figcaption {
+  display: grid;
+  gap: 2px;
+}
+
+[data-tw-theme] .twc-date {
+  font-family: var(--mono);
+  color: var(--fg3);
+}
+
+@media (max-width: 480px) {
+  [data-tw-theme] .twc-pair {
+    grid-template-columns: 1fr;
+  }
+}

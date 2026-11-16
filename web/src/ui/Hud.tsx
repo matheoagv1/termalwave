@@ -9,6 +9,8 @@ import { MonigoteBuddy } from "./MonigoteBuddy";
 import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
 import { hudCopy } from "./hud/copy";
+import { AboutMore } from "./about/AboutMore";
+import { ProvenanceCard } from "./layers/Provenance";
 import "./hud/hud.css";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
@@ -80,20 +82,6 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
         </section>
       )}
 
-      {(v.showEntry || v.showExplore) && !v.noDs && (
-        <button
-          type="button"
-          className="tw-hov tw-pixbtn"
-          onClick={a.enter}
-          onPointerDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          style={s(
-            `position:absolute;left:50%;transform:translateX(-50%);bottom:${v.frameBottom};max-width:calc(100% - 24px);pointer-events:auto;z-index:21;height:${lay.hit};padding:0 18px;touch-action:manipulation;${PRIMARY}`,
-          )}
-        >
-          {t.entry.backToArea}
-        </button>
-      )}
       {v.introOpen && (
         <IntroOverlay sound={v.soundOn} reduced={a.rm()} onDone={a.finishIntro} app={a} />
       )}
@@ -382,6 +370,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           <div style={s("font:11px var(--mono);color:var(--fg2)")}>
             {t.detail.at}: {v.dc.moment}
           </div>
+          <ProvenanceCard id={a.state.scene.layer} lang={a.state.lang} />
           {v.dc.spotSerOn && (
             <div style={s("margin-top:4px")}>
               <div style={s("font:10px var(--mono);color:var(--fg3);margin-bottom:2px")}>{t.explore.series}</div>
@@ -539,7 +528,7 @@ function StatusStrip({ v, a }: { v: View; a: App }): React.ReactElement | null {
           {v.mapLabel}
         </span>
       )}
-      {v.momentName && v.railsOn && (
+      {v.momentName && v.railsOn && !(v.tlOn && v.tlReady) && (
         <span>
           <span className="tw-strip-k">{c.date}</span>
           {v.momentName}
@@ -631,6 +620,7 @@ function About({ v, a }: { v: View; a: App }): React.ReactElement {
             </dl>
           </section>
         )}
+        <AboutMore lang={a.state.lang} />
         <p style={s("padding-top:10px;border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg2)")}>{c.entry}</p>
       </div>
     </div>
@@ -715,7 +705,10 @@ function ExploreTools({ v, a }: { v: View; a: App }): React.ReactElement {
 
 function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
   const { t, lay } = v;
-  const btn = `height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;font:600 15px var(--mono)`;
+  const btn = `height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono)`;
+  const tilted = v.tiltValue > 5;
+  const sc = a.scene;
+  // same set and order as the reference dock: zoom, tilt, north, whole Earth, locate
   return (
     <div
       role="group"
@@ -724,13 +717,29 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         `position:absolute;left:${lay.camL};right:${lay.camR};top:${lay.camT};bottom:${lay.camB};width:${lay.camW};transform:${lay.camTf};pointer-events:auto;display:flex;flex-direction:${lay.camDir};${PANEL}`,
       )}
     >
+      <button className="tw-hov" onClick={() => sc?.zoomBy?.(1)} aria-label={t.camera.zoomIn} title={`${t.camera.zoomIn} (+)`} style={s(btn)}>
+        <Icon.zoomIn size={16} strokeWidth={2.25} aria-hidden />
+      </button>
+      <button className="tw-hov" onClick={() => sc?.zoomBy?.(-1)} aria-label={t.camera.zoomOut} title={`${t.camera.zoomOut} (-)`} style={s(btn)}>
+        <Icon.zoomOut size={16} strokeWidth={2.25} aria-hidden />
+      </button>
       <button
         className="tw-hov"
-        onClick={() => a.scene?.set({ northUp: !v.northUp })}
-        aria-pressed={v.northOn}
-        aria-label={v.northLabel}
-        title={v.northLabel}
-        style={s(`height:${lay.hit};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
+        onClick={() => sc?.toggleTilt?.()}
+        disabled={v.tiltOff}
+        aria-pressed={tilted}
+        aria-label={tilted ? t.camera.tiltFlat : t.camera.tiltToggle}
+        title={v.tiltOff ? t.camera.tiltOff : tilted ? t.camera.tiltFlat : t.camera.tiltToggle}
+        style={s(btn)}
+      >
+        <span aria-hidden="true">3D</span>
+      </button>
+      <button
+        className="tw-hov"
+        onClick={() => sc?.resetNorth?.()}
+        aria-label={t.camera.northUp}
+        title={t.camera.northUp}
+        style={s(`height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
       >
         <span
           style={s(
@@ -738,40 +747,11 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
           )}
         />
       </button>
-      <button
-        className="tw-hov"
-        onClick={() => a.scene?.set({ tilt: Math.min(60, v.tiltValue + 10) })}
-        disabled={v.tiltOff}
-        aria-label={t.camera.tiltUp}
-        title={t.camera.tiltUp}
-        style={s(btn)}
-      >
-        <span aria-hidden="true">▲</span>
-      </button>
-      <div
-        title={v.tiltTitle}
-        style={s(`min-width:34px;min-height:22px;box-shadow:${lay.sepSh};display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--fg2)`)}
-      >
-        {v.tiltText}
-      </div>
-      <button
-        className="tw-hov"
-        onClick={() => a.scene?.set({ tilt: Math.max(0, v.tiltValue - 10) })}
-        disabled={v.tiltOff}
-        aria-label={t.camera.tiltDown}
-        title={t.camera.tiltDown}
-        style={s(btn)}
-      >
-        <span aria-hidden="true">▼</span>
-      </button>
-      <button
-        className="tw-hov"
-        onClick={a.toOrbit}
-        aria-label={t.camera.reset}
-        title={`${t.camera.reset} (O)`}
-        style={s(`height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
-      >
+      <button className="tw-hov" onClick={a.toOrbit} aria-label={t.camera.reset} title={`${t.camera.reset} (O)`} style={s(btn)}>
         <Icon.earth size={16} strokeWidth={2.25} aria-hidden />
+      </button>
+      <button className="tw-hov" onClick={a.locateMe} aria-label={t.camera.locate} title={t.camera.locate} style={s(btn)}>
+        <Icon.inspect size={16} strokeWidth={2.25} aria-hidden />
       </button>
     </div>
   );
@@ -866,14 +846,6 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                       </div>
                     )}
                     {v.passesPending ? <div style={s("font:12px var(--sans);color:var(--fg2)")}>{t.nisar.pending}</div> : null}
-                    <button
-                      type="button"
-                      className="tw-hov"
-                      onClick={a.enter}
-                      style={s(`height:${lay.hit};padding:0 12px;${SECONDARY};font:12px var(--sans);color:var(--fg)`)}
-                    >
-                      {t.entry.backToArea}
-                    </button>
                     <div>
                       {v.noSeries ? (
                         <div style={s("font:12px var(--sans);color:var(--fg2);margin-top:4px;text-wrap:pretty")}>{t.card.noSeries}</div>

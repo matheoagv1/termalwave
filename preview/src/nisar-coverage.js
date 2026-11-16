@@ -167,6 +167,7 @@ export function granuleFromEntry(entry, shortName) {
     maturity: maturityFor(shortName),
     footprint: footprintFromEntry(entry),
     h5_url: h5Href(entry),
+    browse_url: browseHref(entry),
     product: shortName,
   };
 }
@@ -304,4 +305,13 @@ function ringFromLatLon(text) {
   const last = ring[ring.length - 1];
   if (first[0] !== last[0] || first[1] !== last[1]) ring.push([first[0], first[1]]);
   return ring;
+}
+
+// quick-look PNG already in lat/lon (ASF names it *_LATLON.png); https only
+function browseHref(entry) {
+  for (const link of entry.links || []) {
+    const href = String(link?.href || "");
+    if (String(link?.rel || "").includes("browse") && href.startsWith("https://") && href.endsWith("_LATLON.png")) return href;
+  }
+  return null;
 }

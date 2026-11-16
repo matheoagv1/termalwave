@@ -35,16 +35,16 @@ const DECODED_TILES = 64;
 const DECODED_METAS = 24;
 const FIT_SAMPLES = 256;
 
-// infrared key ported from god's eye view (mit), src/layers/weather/infraredAlpha.js:
-// smoothstep over the linearized brightest channel, so warm ground drops out and cold tops stay
-const IR_T0 = 0.4;
-const IR_T1 = 0.7;
+// infrared tiles are greyscale with cold cloud tops bright: brightness above the warm-ground
+// level becomes opacity, with a power curve so thin cirrus stays faint and deep tops go opaque
+const IR_GROUND = 0.32;
+const IR_FULL = 0.78;
 const IR_KEY = new Float32Array(256).map((_, v) => {
-  const t = Math.min(1, Math.max(0, (Math.pow(v / 255, 2.2) - IR_T0) / (IR_T1 - IR_T0)));
-  return t * t * (3 - 2 * t);
+  const t = Math.min(1, Math.max(0, (v / 255 - IR_GROUND) / (IR_FULL - IR_GROUND)));
+  return Math.pow(t, 1.6);
 });
 
-// same shell height god's eye view draws its cloud layer at
+// typical mid-level cloud top, used to lift the cloud shell and offset its shadow
 const CLOUD_HEIGHT_KM = 5.5;
 const SHADOW_MAX_PX = 8;
 const SHADOW_BLUR_PX = 2;

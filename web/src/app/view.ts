@@ -1,6 +1,7 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
 import { isExampleHonesty, isPlaceholderRange, isRadarLayer, RADAR_HH, RADAR_HV, radarPol } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
+import { topicCopy } from "../ui/setup/missions";
 import { copyOf, fmt, fmtOf, type Copy } from "./i18n";
 import type { NisarPass } from "../data/nisar-passes";
 import type { LayerDef, LayerTheme, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
@@ -142,7 +143,7 @@ export function buildView(m: Model) {
   const results = S.results.map((r) => ({ label: r.label, go: () => m.goResult(r) }));
   const st = S.status;
 
-  // capas — headings por tema (GEV); badge de categoría como secundario
+  // capas — headings por tema; badge de categoría como secundario
   const CAT_ORDER = ["data", "prediction", "inference"];
   const CAT_LABEL: Record<string, string> = {
     data: T.layers.catData,
@@ -217,7 +218,7 @@ export function buildView(m: Model) {
       go: () => m.setLayer(l.id),
     };
   });
-  // capas globales (GEV): un interruptor cada una, dentro de su tema
+  // capas globales: un interruptor cada una, dentro de su tema
   const GLOBALS = [
     { id: "clouds", theme: "clima", bucket: "models" as const, label: T.globals.clouds, note: T.globals.cloudsNote },
     { id: "wind", theme: "clima", bucket: "models" as const, label: T.globals.wind, note: T.globals.windNote },
@@ -389,7 +390,7 @@ export function buildView(m: Model) {
   const trades = ds
     ? ds.context.map((c, i) => ({
         id: c.id ?? String(i),
-        trade: c.label ?? c.trade,
+        trade: topicCopy(c.id, S.lang)?.label ?? c.label ?? c.trade,
         on: i === S.trade,
         line: i === S.trade ? "var(--acc-fg)" : "var(--line2)",
         bg: i === S.trade ? "var(--sel)" : "transparent",
@@ -492,6 +493,11 @@ export function buildView(m: Model) {
             hot,
             before,
             example: isExampleHonesty((f0 as { honesty?: string } | null)?.honesty),
+            name: T.tickName(seg.kind, tk.label),
+            milestone: seg.kind === "composite",
+            short: tk.label,
+            gap,
+            honesty: (f0 as { honesty?: string } | null)?.honesty ?? "",
             h: hot ? 28 : 26,
             ring: hot ? `inset 0 0 0 2px ${isA ? "var(--acc-fg)" : "var(--accB)"}` : "none",
             bg: layersBg.length ? layersBg.join(",") + "," + base : base,
@@ -872,7 +878,7 @@ export function buildView(m: Model) {
     ser,
     imgRows,
     trades,
-    tradeText: ds && ds.context[S.trade] ? ds.context[S.trade]?.text ?? "" : "",
+    tradeText: ds && ds.context[S.trade] ? topicCopy(ds.context[S.trade]?.id, S.lang)?.text ?? ds.context[S.trade]?.text ?? "" : "",
     sample: mock && !!(ds && ds.context.length),
     noTrades: !!ds && ds.context.length === 0, leg,
     dc, toast: S.toast,

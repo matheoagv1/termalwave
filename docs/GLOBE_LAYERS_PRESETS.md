@@ -1,6 +1,6 @@
 # Globo global + capas + presets de rubro
 
-Investigación 2026-11-14. Referencia: `references/gods-eye-view` (pull actualizado).
+Investigación 2026-11-14. Referencia: `references/` (pull actualizado).
 
 ## Qué vemos hoy en TermalWave
 
@@ -9,13 +9,13 @@ Investigación 2026-11-14. Referencia: `references/gods-eye-view` (pull actualiz
 - Cámara / Urbano-Campo encuadran ese rectángulo.
 - Rubros (`trades.json`) solo cambian el **texto** de Lectura. No prenden ni apagan capas. Por eso “Gestión de emergencias” no activa incendios ni nada.
 
-## Cómo lo hace God's Eye View
+## Cómo lo hace la referencia
 
 - Cesium: capas drapeadas al **globo entero** (`Rectangle.MAX_VALUE` / tiling worldwide).
 - FIRMS: heatmap full-globe + detalle por viewport.
 - Weather/wind: rasters tiles globales.
 - Catálogo de capas con enable/disable independiente (`LayerPanel` + manager).
-- “Presets” de GEV = estilos visuales (CRT/NVG/FLIR) y modos (Contacts / Global Context), **no** rubros de oficio.
+- “Presets” = estilos visuales (CRT/NVG/FLIR) y modos (Contacts / Global Context), **no** rubros de oficio.
 - Búsqueda: presets de ciudad bundled → Photon → Nominatim.
 
 ## Modelo que queremos (producto)
@@ -36,7 +36,7 @@ Tres **categorías** de capas (separadas en UI y en config):
 ## Camino técnico
 
 1. Dejar el AOI como **caso/focus**, no como único footprint de capa.
-2. Capas globales = tiles WMTS/XYZ o heatmap full-globe (patrón GEV FIRMS/weather), no un PNG único del AOI.
+2. Capas globales = tiles WMTS/XYZ o heatmap full-globe (patrón FIRMS/weather), no un PNG único del AOI.
 3. PNG AOI queda para radar local / caso Santiago.
 4. Contrato JSON: `layers[].category = data|prediction|inference` + `presets[]` con `layerIds`.
 5. UI Capas agrupada por las 3 categorías; panel Rubros aplica preset sin bloquear toggles.

@@ -1,10 +1,12 @@
 import React from "react";
 import { PRESETS } from "../data/layer-defaults";
+import { presetLayers } from "../ui/setup/missions";
 import { parsePasses, passFootprints } from "../data/nisar-passes";
 import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
 import { longHelp } from "../ui/tip-help";
+import { saveBasemap, savedBasemap } from "../ui/basemap/basemaps";
 import type {
   BasemapOption,
   Dataset,
@@ -19,6 +21,7 @@ import type {
 } from "../tw/contract";
 import { hashParams } from "./hash";
 import { cityBounds } from "../scene/maplibre-scene";
+import { catalog, syncCatalogTimeline } from "../scene/catalog";
 import { Hud } from "../ui/Hud";
 import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
 import { Sfx } from "../ui/sfx";
@@ -61,7 +64,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     explore: false,
     status: { online: true, terrain: true, basemap: true },
     dockOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
-    basemap: this.props.basemaps?.[0]?.id ?? "",
+    basemap: savedBasemap(this.props.basemaps),
     tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     immersive: false,
     introOpen: !intro0.done,
@@ -151,7 +154,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if ((S.trade !== ps.trade || S.ds !== ps.ds) && S.ds) {
         const entry = S.ds.context[S.trade];
         const presetId = entry?.id ?? entry?.trade ?? "";
-        const ids = (S.ds.presets ?? PRESETS)[presetId] ?? [];
+        const known = new Set([...GLOBAL_IDS, ...S.ds.layers.map((l) => l.id)]);
+        const catalogIds = new Set(catalog.entries().map((e) => e.id));
+        const ids = presetLayers(presetId, S.ds.presets ?? PRESETS, (id) => known.has(id) || catalogIds.has(id));
+        for (const id of ids) if (catalogIds.has(id)) catalog.set(id, true);
         if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
       }
       const eff = this.effectiveExtras();
@@ -162,6 +168,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       }
     }
     this.syncNisar();
+    this.syncAcq();
+    syncCatalogTimeline(S.ds, S.scene.tickId);
     const el = this.tlRef.current;
     if (el && this.tlEl !== el) {
       this.tlEl = el;
@@ -391,6 +399,70 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.setState({ soundOn });
     if (soundOn) Sfx.blip();
   };
+
+  // finer ticks from real acquisition dates: NISAR passes plus the last 30 days of any active
+  // daily catalog layer. Yearly composites stay as milestones; each acquisition tick borrows
+  // the frames of the nearest composite so a radar frame is always shown.
+  private baseDs: Dataset | null = null;
+  private acqSig = "";
+
+  syncAcq(): void {
+    const cur = this.state.ds;
+    if (!cur || !this.scene) return;
+    const base = this.baseDs && cur.segments.some((s) => s.id === "acq") ? this.baseDs : cur;
+    const comps = base.segments.filter((s) => s.kind === "composite").flatMap((s) => s.ticks);
+    if (!comps.length) return;
+    const dates = new Set<string>();
+    for (const p of this.state.nisar.passes) {
+      const d = p.date.slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) dates.add(d);
+    }
+    const daily = catalog.entries().some((e) => e.time === "daily" && catalog.isOn(e.id));
+    if (daily) {
+      const t0 = Date.now();
+      for (let i = 1; i <= 30; i++) dates.add(new Date(t0 - i * 864e5).toISOString().slice(0, 10));
+    }
+    const list = [...dates].sort();
+    const sig = list.join();
+    if (sig === this.acqSig) return;
+    this.acqSig = sig;
+    if (!this.baseDs || !cur.segments.some((s) => s.id === "acq")) this.baseDs = cur;
+    const nearest = (d: string): (typeof comps)[number] => {
+      const x = +new Date(d);
+      let best = comps[0] as (typeof comps)[number];
+      let bd = Infinity;
+      for (const c of comps) {
+        const dist = Math.abs((+new Date(c.start) + +new Date(c.end)) / 2 - x);
+        if (dist < bd) {
+          bd = dist;
+          best = c;
+        }
+      }
+      return best;
+    };
+    const segments = base.segments.filter((s) => s.id !== "acq");
+    if (list.length) {
+      segments.push({
+        id: "acq",
+        label: this.state.lang === "es" ? "Pasadas" : "Passes",
+        from: list[0] as string,
+        to: list[list.length - 1] as string,
+        granularity: "day",
+        kind: "acquisition",
+        ticks: list.map((d) => ({ id: `a-${d}`, start: d, end: d, label: d, frames: nearest(d).frames })),
+      });
+    }
+    const ds2: Dataset = { ...base, segments };
+    this.baseDs = base;
+    this.derive(ds2);
+    const sel = this.state.scene.tickId;
+    if (sel && this.idx[sel] == null) {
+      const last = comps[comps.length - 1];
+      if (last) this.scene.set({ tickId: last.id });
+    }
+    this.setState({ ds: ds2 });
+    this.scene.setDataset(ds2);
+  }
 
   derive(ds: Dataset): void {
     this.flat = [];
@@ -709,6 +781,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
         if (seq !== this.nisarSeq) return;
         const passes = parsePasses(j);
         this.scene?.setEntities?.("nisar", passFootprints(passes));
+        this.scene?.showNisarBrowse?.(passes);
         const n = typeof j.count === "number" ? j.count : passes.length;
         this.setState({ nisar: { status: n ? "ok" : "empty", count: n, msg: "", passes } });
       })
@@ -811,7 +884,16 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const o = this.basemaps.find((x) => x.id === id);
     if (!o) return;
     this.setState({ basemap: id });
+    saveBasemap(id);
     this.scene?.setBasemap?.(o);
+  };
+
+  locateMe = (): void => {
+    const sc = this.scene;
+    if (!sc?.locate) return;
+    void sc.locate().then((ok) => {
+      if (!ok) this.showToast(this.copy.camera.locateFail);
+    });
   };
 
   toOrbit = (): void => {
@@ -944,6 +1026,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     else if (k === " " && tag !== "BUTTON") go(this.togglePlay);
     else if (k === "c" || k === "C") go(this.toggleCompare);
     else if (k === "o" || k === "O") go(this.toOrbit);
+    else if (k === "+" || k === "=") go(() => this.scene?.zoomBy?.(1));
+    else if (k === "-" || k === "_") go(() => this.scene?.zoomBy?.(-1));
     else if (k === "p" || k === "P") go(this.cycleHotspot);
     else if (k === "1") go(() => this.setViewScale("campo"));
     else if (k === "2") go(() => this.setViewScale("urbano"));

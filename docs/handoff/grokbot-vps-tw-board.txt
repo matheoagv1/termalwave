@@ -63,11 +63,11 @@ Hub operator (admin, rare):
 vps: idle, 0 open tw tasks
 cricri open/in_progress: t11, t13, t18, t30 (all context/copy)
 Inbox that triggered this handoff: n388/n389 human → GrokBot board visibility
-Also pending product ask: n387 cricri → prioritize big NISAR+GEV plan with subagents
+Also pending product ask: n387 cricri → prioritize big NISAR plan with subagents
   (cricri reviews science constraints + copy)
 
 Recently shipped (on master + Worker):
-  study-zone GEV UX (activePlace ≠ Santiago, distance fly, mago tip, tile cache, cloud fade)
+  study-zone UX (activePlace ≠ Santiago, distance fly, mago tip, tile cache, cloud fade)
   t32/f73 UI (Años / Estás en / leyenda) via cherry-pick 9d58048
   science F01–F17 library + tests; f72 agua topic
   Open-Meteo wind: GET /api/wind + particle layer (Clima → Viento)

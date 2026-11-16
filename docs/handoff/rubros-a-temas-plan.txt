@@ -1,12 +1,12 @@
-PLAN: Rubros → temas de datos (estilo GEV)
+PLAN: Rubros → temas de datos
 ==========================================
 Pedido: rearmar rubros; capas/presets por clasificación de datos,
-no por oficio. Ref. docs/GLOBE_LAYERS_PRESETS.md + GEV LayerPanel
+no por oficio. Ref. docs/GLOBE_LAYERS_PRESETS.md
 (PANEL_GROUPS: Movement / Events / Weather — no oficios).
 
 Dos ejes (no mezclar)
 ---------------------
-A) Panel Capas — headings por fenómeno (como GEV DATA LAYERS):
+A) Panel Capas — headings por fenómeno:
    1. Radar y cambio de superficie     → radar (core, always-on)
    2. Suelo y ambiente del territorio  → suelo, contaminacion
    3. Fuego y focos térmicos           → incendios, firms*
@@ -30,7 +30,7 @@ Notas de alineación
 - “Urbano” / “contaminación” del pedido humano → en panel van bajo
   Suelo y ambiente; no hace falta heading Urbano aparte en v1.
 - incendios (AOI/timeline) + firms (globo/API) = un tema Fuego,
-  dos footprints (como GEV Events / Active Fires).
+  dos footprints (como Events / Active Fires).
 - Oficios (trades.json) dejan de ser keys de preset.
 
 Ownership

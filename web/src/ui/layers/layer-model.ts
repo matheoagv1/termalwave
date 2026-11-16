@@ -5,6 +5,8 @@ import type { View } from "../../app/view";
 import { isExampleHonesty, isPlaceholderRange } from "../../data/radar-scale";
 import type { LayerDef } from "../../tw/contract";
 import { BUNDLED_META, layerCopy, type LayerCopy, type MetaRow } from "./layer-copy";
+import { catalog, rampGradient, text as catText, useCatalogVersion } from "../../scene/catalog";
+import { dateText, statusText } from "../../scene/catalog/copy";
 
 export type Tier = "raw" | "processed" | "prediction";
 export const TIERS: Tier[] = ["raw", "processed", "prediction"];
@@ -98,6 +100,8 @@ export function useRemoteMeta(): Record<string, MetaRow> {
       live = false;
     };
   }, []);
+  // catalog toggles and statuses live outside React; this re-renders the panel on change
+  useCatalogVersion();
   return meta;
 }
 
@@ -332,6 +336,59 @@ export function buildTiers(v: View, a: App, remoteMeta: Record<string, MetaRow>)
         grad: "",
         min: "",
         max: "",
+        relative: false,
+        list: [],
+        listNote: "",
+      },
+    });
+  }
+
+  // config/catalog*.toml entries, each in its own tier, after the built-in layers
+  for (const e of catalog.entries()) {
+    const on = catalog.isOn(e.id);
+    const st = catalog.status(e.id);
+    const label = catText(e, "label", lang) || e.id;
+    const tone: RowTone = !on ? "" : st.state === "loading" ? "busy" : st.state === "error" ? "warn" : st.state === "empty" ? "muted" : "";
+    const grad = rampGradient(e);
+    const [lo, hi] = e.range ?? [NaN, NaN];
+    const hasRange = Number.isFinite(lo) && Number.isFinite(hi);
+    const num = (n: number): string => `${+n.toFixed(3)}${e.unit ? ` ${e.unit}` : ""}`;
+    rows.push({
+      key: `c-${e.id}`,
+      id: e.id,
+      tier: e.tier,
+      label,
+      swatch: grad,
+      on,
+      toggle: () => catalog.toggle(e.id),
+      toggleText: !on ? C.off : tone === "busy" ? C.loading : tone === "warn" ? C.error : st.state === "empty" ? C.empty : C.on,
+      toggleTitle: on ? C.turnOff(label) : C.turnOn(label),
+      locked: "",
+      statusOnly: false,
+      read: null,
+      reading: false,
+      count: on && st.count ? String(st.count) : "",
+      status: on ? statusText(st, lang) : "",
+      tone,
+      honesty: e.honesty,
+      honestyLabel: T.honesty[e.honesty],
+      // a fixed method confidence wins; otherwise the mean over the features in view
+      confidence: e.confidence ?? (on ? st.confidence : null),
+      detail: {
+        what: catText(e, "what", lang),
+        decision: catText(e, "decision", lang),
+        nodata: catText(e, "nodata", lang),
+        caveats: catText(e, "caveats", lang),
+        product: [e.product, e.attribution].filter(Boolean).join(" · "),
+        unit: e.unit ?? "",
+        range: hasRange ? `${num(lo)} – ${num(hi)}` : "",
+        rampNote: "",
+        formula: e.formula ?? "",
+        date: dateText(on ? st.date : "", e.time, lang),
+        note: "",
+        grad,
+        min: hasRange ? num(lo) : "",
+        max: hasRange ? num(hi) : "",
         relative: false,
         list: [],
         listNote: "",

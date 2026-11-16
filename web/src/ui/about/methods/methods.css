@@ -1,0 +1,68 @@
+/* Data and methods list inside the About dialog. */
+.twm-sum {
+  cursor: pointer;
+  font: 10px/1.6 var(--pixel);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--tw-radar);
+}
+
+.twm-sum:focus-visible {
+  outline: 1px solid var(--tw-radar);
+  outline-offset: 2px;
+}
+
+.twm-tier {
+  margin-top: 10px;
+}
+
+.twm-tier-h {
+  margin: 0;
+  font: 9px/1.4 var(--mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.twm-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.twm-row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--line2);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--fg2);
+}
+
+.twm-name {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--fg);
+}
+
+.twm-k {
+  color: var(--fg3);
+  font: 9px/1.8 var(--mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.twm-code {
+  display: block;
+  margin-top: 2px;
+  font: 11px/1.4 var(--mono);
+  color: var(--fg);
+  white-space: pre-wrap;
+}

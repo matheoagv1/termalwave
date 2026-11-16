@@ -61,3 +61,8 @@ comms.worktree-bak-*/
 
 # New hub daemon state (per worktree)
 .twd/
+.land/
+.npm-cache/
+data/raw/
+.tmp-dist-*/
+.tw-index

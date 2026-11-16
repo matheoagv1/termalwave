@@ -1,6 +1,7 @@
 import React from "react";
 import type { LayerCopy } from "./layer-copy";
 import type { LayerRowModel } from "./layer-model";
+import { Provenance } from "./Provenance";
 
 type P = { id: string; row: LayerRowModel; c: LayerCopy };
 
@@ -49,6 +50,7 @@ export function LayerDetail({ id, row, c }: P): React.ReactElement {
           </Field>
         ) : null}
       </dl>
+      <Provenance c={c} facts={{ id: row.id, tier: row.tier, honesty: row.honesty, honestyLabel: row.honestyLabel, confidence: row.confidence, date: d.date, unit: d.unit, range: d.range, relative: d.relative }} />
     </div>
   );
 }

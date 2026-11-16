@@ -7,7 +7,12 @@ export type NisarPass = {
   pol: string;
   maturity: string;
   footprint?: PassFootprint;
+  // ASF quick-look PNG in lat/lon, with its corners; both optional in the payload
+  browseUrl?: string;
+  bounds?: Bounds;
 };
+
+export type Bounds = { west: number; south: number; east: number; north: number };
 
 export type PassFootprint =
   | { type: "Polygon"; coordinates: number[][][] }
@@ -18,6 +23,27 @@ function footprintOf(v: unknown): PassFootprint | undefined {
   const g = v as { type?: unknown; coordinates?: unknown };
   if ((g.type !== "Polygon" && g.type !== "MultiPolygon") || !Array.isArray(g.coordinates) || !g.coordinates.length) return undefined;
   return g as PassFootprint;
+}
+
+function boundsOf(v: unknown): Bounds | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const b = v as Record<string, unknown>;
+  const [w, s, e, n] = [b.west, b.south, b.east, b.north];
+  if ([w, s, e, n].every((x) => typeof x === "number" && Number.isFinite(x))) {
+    return { west: w as number, south: s as number, east: e as number, north: n as number };
+  }
+  return undefined;
+}
+
+// the bbox of a footprint, for passes that come without explicit bounds
+function boundsOfFootprint(f: PassFootprint | undefined): Bounds | undefined {
+  if (!f) return undefined;
+  const rings = f.type === "Polygon" ? f.coordinates : f.coordinates.flat();
+  const pts = rings.flat();
+  if (!pts.length) return undefined;
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  return { west: Math.min(...xs), south: Math.min(...ys), east: Math.max(...xs), north: Math.max(...ys) };
 }
 
 function str(v: unknown): string {
@@ -46,6 +72,7 @@ export function parsePasses(raw: Record<string, unknown>): NisarPass[] {
     const direction = str(o.direction ?? o.flightDirection ?? o.flight_direction ?? o.orbitDirection).toUpperCase();
     const maturityRaw = str(o.maturity ?? o.status ?? o.processingLevel ?? o.processing_level).toLowerCase();
     const maturity = maturityRaw.includes("valid") ? "validated" : maturityRaw.includes("prov") ? "provisional" : maturityRaw;
+    const footprint = footprintOf(o.footprint ?? o.geometry);
     return {
       id: str(o.id ?? o.sceneId ?? o.granule) || `pass-${i}`,
       date,
@@ -54,7 +81,9 @@ export function parsePasses(raw: Record<string, unknown>): NisarPass[] {
       frame: str(o.frame ?? o.frameNumber ?? o.frame_number),
       pol: str(o.pol ?? o.polarization ?? o.polarizations),
       maturity,
-      footprint: footprintOf(o.footprint ?? o.geometry),
+      footprint,
+      browseUrl: str(o.browse_url ?? o.browseUrl) || undefined,
+      bounds: boundsOf(o.bounds) ?? boundsOfFootprint(footprint),
     };
   });
 }

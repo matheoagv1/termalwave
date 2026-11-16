@@ -97,7 +97,7 @@ Official FAQs use **Super Intelligence (SI)** for tools formerly called AI (LLMs
 
 ## 6. Product gaps that block “fully meets” the spirit of the brief
 
-1. **Global surface-change feel:** basemap wraps Earth; SAR still one AOI rectangle (GEV-style full drape open — T038/T039).  
+1. **Global surface-change feel:** basemap wraps Earth; SAR still one AOI rectangle (full drape open — T038/T039).  
 2. **Rubros as presets:** still text-only; must enable optional layers without turning off NISAR (T040 + `core=true`).  
 3. **Three layer categories** (data / prediction / inference) not yet in UI contract emission.  
 4. **Submission pack:** demo, English project fields, References, SI disclosure, shareable code link.  
@@ -123,7 +123,7 @@ Official FAQs use **Super Intelligence (SI)** for tools formerly called AI (LLMs
 - OpenStreetMap / Photon / Nominatim / CARTO — geocode & street basemaps (ODbL / CARTO terms)  
 - Cesium ion — optional terrain token (if used in final)  
 - Microsoft Planetary Computer — Sentinel-2 (ancillary)  
-- Reference code studied: God’s Eye View (bilawalsidhu/gods-eye-view), SgoLinea (local transit map patterns)  
+- Reference code studied: SgoLinea (local transit map patterns)  
 - Vendored Python wheels / local frontend deps (no required CDN)
 
 Add every other third-party asset you ship (fonts, sprites, music).

@@ -1,6 +1,6 @@
 import type maplibregl from "maplibre-gl";
 import { eciToGeodetic, gstime, json2satrec, propagate, type OMMJsonObject, type SatRec } from "satellite.js";
-import { lonLatToEcef, occludedByEarth, type SpaceView } from "./camera";
+import { EARTH_RADIUS_KM, lonLatToEcef, occludedByEarth, type SpaceView } from "./camera";
 import {
   findPass,
   footprintAngle,
@@ -92,20 +92,22 @@ const DEG = Math.PI / 180;
 const SRC = { track: "tw-sat-track", swath: "tw-sat-swath", footprint: "tw-sat-footprint" } as const;
 const LAYERS = ["tw-sat-swath", "tw-sat-footprint-fill", "tw-sat-footprint-line", "tw-sat-track"] as const;
 
-const ORBIT_CYAN = "#5eebff";
+// class palette: every earth observer (radar, optical, weather) is one imaging
+// cyan, comms violet, crewed stations warm white; nisar stands apart by size,
+// outline and label, not by a colour of its own
+const IMAGING = "#4fd8ff";
+const SELECTED = "#ffff00";
 
 function kindColor(k: SensorKind): string {
   switch (k) {
     case "sar":
-      return ORBIT_CYAN;
     case "optical":
-      return "#6fd3ff";
     case "weather":
-      return "#8fe388";
+      return IMAGING;
     case "comm":
-      return "#c3a3ff";
+      return "#c89bff";
     case "crew":
-      return "#ff7b6b";
+      return "#fff6e5";
     default: {
       const never: never = k;
       return never;
@@ -113,27 +115,21 @@ function kindColor(k: SensorKind): string {
   }
 }
 
-// nisar shares the thin cyan of the other sar orbits so it is not read as heat
-const NISAR_COLOR = ORBIT_CYAN;
-const NISAR_PULSE_MS = 1500;
-
 function isNisar(name: string): boolean {
   return name === "NISAR";
 }
 
-function satColor(name: string, kind: SensorKind): string {
-  return isNisar(name) ? NISAR_COLOR : kindColor(kind);
+function satColor(_name: string, kind: SensorKind): string {
+  return kindColor(kind);
 }
 
-function reducedMotionOn(): boolean {
-  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-/** 0.55..1 over ~1.5s; static 1 when reduced motion */
-function nisarPulse(tMs: number, reduced: boolean): number {
-  if (reduced) return 1;
-  const p = (Math.sin((tMs / NISAR_PULSE_MS) * Math.PI * 2) + 1) / 2;
-  return 0.55 + 0.45 * p;
+// dot scale by camera distance: x1.5 at 1,000 km, x0.6 at 20,000 km, linear between
+const NEAR_KM = 1000;
+const FAR_KM = 20000;
+function distanceScale(view: SpaceView): number {
+  const km = (Math.hypot(view.eye[0], view.eye[1], view.eye[2]) - 1) * EARTH_RADIUS_KM;
+  const k = Math.min(1, Math.max(0, (km - NEAR_KM) / (FAR_KM - NEAR_KM)));
+  return 1.5 + (0.6 - 1.5) * k;
 }
 
 function utcDay(ms: number): string {
@@ -496,31 +492,25 @@ export class SatellitesLayer implements SpaceLayer {
     ctx.clearRect(0, 0, view.width, view.height);
     if (this.opts.tracks) this.drawRings(view, t);
     if (this.opts.swath) this.drawBeams(view);
-    this.drawPoints(view, t);
-    this.pulseGroundTrack(t);
+    this.drawPoints(view);
   }
 
+  // orbit paths: class colour at 0.6 in front of the earth, 0.35 behind it, 2 px
+  // (2.5 for nisar); the selected one turns yellow
   private drawRings(view: SpaceView, t: number): void {
     const ctx = this.ctx;
     const xy = this.xy;
     const gmst = gstime(new Date(t));
-    const reduced = reducedMotionOn();
-    const lowZ = this.host.map.getZoom() < 6;
-    const pulse = nisarPulse(t, reduced);
     for (const [i, ring] of this.rings) {
       // the ring was frozen at ring.gmst; turn it with the earth since then
       const rot = ring.gmst - gmst;
       const c = Math.cos(rot);
       const s = Math.sin(rot);
       const sat = this.sats[i];
-      const nisar = isNisar(sat.name);
-      ctx.strokeStyle = satColor(sat.name, sat.kind);
-      // NISAR late en orbita/poco zoom; el resto de highlights queda mas quieto
-      const baseW = nisar ? (lowZ ? 1.4 + 0.8 * pulse : 1.5) : i === this.selected ? 1.35 : 0.9;
-      ctx.lineWidth = baseW;
+      ctx.strokeStyle = i === this.selected ? SELECTED : satColor(sat.name, sat.kind);
+      ctx.lineWidth = isNisar(sat.name) ? 2.5 : 2;
       for (const pass of [true, false]) {
-        const bright = nisar ? (lowZ ? 0.55 + 0.4 * pulse : 0.85) : 0.45;
-        ctx.globalAlpha = pass ? bright : bright * 0.18;
+        ctx.globalAlpha = pass ? 0.6 : 0.35;
         ctx.beginPath();
         let open = false;
         for (let k = 0; k <= RING_SAMPLES; k++) {
@@ -567,13 +557,14 @@ export class SatellitesLayer implements SpaceLayer {
     ctx.globalAlpha = 1;
   }
 
-  private drawPoints(view: SpaceView, t: number): void {
+  // dot sizes in px before distance scaling: nisar 12 with a faint white ring,
+  // other highlighted craft 8, the rest 3; the selected one 14, yellow, white 2 px ring
+  private drawPoints(view: SpaceView): void {
     const ctx = this.ctx;
     const scr = this.screen;
     const labels: number[] = [];
-    const reduced = reducedMotionOn();
-    const lowZ = this.host.map.getZoom() < 6;
-    const pulse = nisarPulse(t, reduced);
+    const k = distanceScale(view);
+    const dot = 3 * k;
     let color = "";
     for (let i = 0; i < this.sats.length; i++) {
       const o = i * 3;
@@ -584,32 +575,30 @@ export class SatellitesLayer implements SpaceLayer {
       if (Number.isNaN(x) || !this.project(view, x, y, z, scr, o) || this.hidden(view, x, y, z)) continue;
       scr[o + 2] = 1;
       const s = this.sats[i];
-      const big = this.featured(i);
+      if (!this.featured(i)) {
+        const c = satColor(s.name, s.kind);
+        if (c !== color) ctx.fillStyle = color = c;
+        ctx.fillRect(scr[o] - dot / 2, scr[o + 1] - dot / 2, dot, dot);
+        continue;
+      }
+      labels.push(i);
+    }
+    // featured dots last, so they sit over the crowd
+    for (const i of labels) {
+      const o = i * 3;
+      const s = this.sats[i];
+      const sel = i === this.selected;
       const nisar = isNisar(s.name);
-      const c = satColor(s.name, s.kind);
-      if (c !== color) ctx.fillStyle = color = c;
-      if (big) {
-        const r = nisar
-          ? (lowZ ? 3.2 + 1.6 * pulse : 4)
-          : i === this.selected
-            ? 3.8
-            : 2.8;
-        if (nisar && lowZ && !reduced) {
-          ctx.globalAlpha = 0.25 + 0.35 * pulse;
-          ctx.beginPath();
-          ctx.arc(scr[o], scr[o + 1], r + 3.5 * pulse, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = color;
-        }
-        ctx.beginPath();
-        ctx.arc(scr[o], scr[o + 1], r, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = nisar ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)";
-        ctx.lineWidth = nisar ? 1.4 : 1;
+      const r = ((sel ? 14 : nisar ? 12 : 8) * k) / 2;
+      ctx.fillStyle = color = sel ? SELECTED : satColor(s.name, s.kind);
+      ctx.beginPath();
+      ctx.arc(scr[o], scr[o + 1], r, 0, 2 * Math.PI);
+      ctx.fill();
+      if (sel || nisar) {
+        ctx.strokeStyle = sel ? "#ffffff" : "rgba(255,255,255,0.3)";
+        ctx.lineWidth = 2;
         ctx.stroke();
-        labels.push(i);
-      } else ctx.fillRect(scr[o] - 1.25, scr[o + 1] - 1.25, 2.5, 2.5);
+      }
     }
     ctx.globalAlpha = 1;
     if (!this.opts.labels) return;
@@ -666,7 +655,7 @@ export class SatellitesLayer implements SpaceLayer {
       layout: { visibility: vis, "line-join": "round" },
       paint: {
         "line-color": ["get", "color"],
-        "line-width": ["case", ["get", "nisar"], 1, ["case", ["get", "next"], 1, 0.75]],
+        "line-width": ["case", ["get", "nisar"], 1.5, ["case", ["get", "next"], 1.2, 0.85]],
         "line-opacity": ["case", ["get", "nisar"], 0.92, ["case", ["get", "next"], 0.55, 0.22]],
       },
     });
@@ -739,28 +728,5 @@ export class SatellitesLayer implements SpaceLayer {
       properties: { color: satColor(s.name, s.kind) },
       geometry: { type: "Polygon", coordinates: [ring] },
     });
-  }
-
-  /** pulso de ancho/opacidad del ground track NISAR en orbita / poco zoom */
-  private pulseGroundTrack(t: number): void {
-    const map = this.host.map;
-    if (!map.getLayer("tw-sat-track")) return;
-    const reduced = reducedMotionOn();
-    const lowZ = map.getZoom() < 6;
-    const pulse = nisarPulse(t, reduced);
-    const nisarW = lowZ && !reduced ? 0.8 + 0.4 * pulse : 1;
-    const nisarA = lowZ && !reduced ? 0.5 + 0.45 * pulse : 0.92;
-    map.setPaintProperty("tw-sat-track", "line-width", [
-      "case",
-      ["get", "nisar"],
-      nisarW,
-      ["case", ["get", "next"], 1.35, 0.85],
-    ]);
-    map.setPaintProperty("tw-sat-track", "line-opacity", [
-      "case",
-      ["get", "nisar"],
-      nisarA,
-      ["case", ["get", "next"], 0.55, 0.22],
-    ]);
   }
 }

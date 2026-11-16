@@ -1,0 +1,544 @@
+# Label rules (owner, 2026-11-15). Every [[catalog]] entry in every catalog*.toml follows them.
+# - label_en / label_es: two or three plain words that say what the layer shows or does:
+#   "Active fires", "Rain now", "Soil moisture", "Ground motion", "Fire danger, 3 days".
+# - No product codes, acronyms, agency names or jargon in labels (no "FIRMS", "NDVI", "GCOV", "SMAP").
+#   Those go in `product`, `attribution` and `inputs`.
+# - English by default, Spanish (es-AR, with accents) in label_es. Never Spanish-only words in label_en.
+# - Processed and prediction entries also carry, for the "How this is made" panel:
+#   inputs = [{ name = "...", agency = "...", product = "...", url = "https://..." }, ...]  (one per source used)
+#   method_en / method_es = 3 to 5 plain sentences: from the inputs to the value, and what the number means.
+# - Set `theme` to the closest preset id: cambio, fuego, clima, vegetacion, agua, movimiento.
+
+
+# Raw catalog layers: measured products drawn on the globe as the source serves them.
+# Owned by agent "catalog". Contract: see the [[catalog]] fields in docs and
+# web/src/scene/catalog/entries.ts. Every config/catalog*.toml is read, sorted by
+# file name; on a duplicate id the first one wins.
+#
+# The web bundle reads these files with a small TOML reader. Keep to: comments,
+# [[catalog]] tables, key = value, "basic" or 'literal' strings (triple quotes
+# allowed), numbers, booleans, arrays (multi-line allowed) and inline tables.
+#
+# GIBS urls use the REST form .../{Layer}/default/{date}/{TileMatrixSet}/{z}/{y}/{x}.png
+# with identifiers and tile matrix sets taken from the GIBS WMTS GetCapabilities.
+# Ramps and ranges follow the GIBS colormap of each product; where the colormap is
+# a set of classes, the range is left out rather than invented.
+
+# ---------- Weather ----------
+
+[[catalog]]
+id = "rain_now"
+tier = "raw"
+kind = "raster_tiles"
+theme = "clima"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/{date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 2
+max_zoom = 6
+opacity = 0.7
+unit = "mm/h"
+range = [0.1, 53]
+ramp = [["#00764e", 0.0], ["#17b000", 0.2], ["#e6ec00", 0.4], ["#ff532a", 0.6], ["#bb0000", 0.8], ["#330000", 1.0]]
+honesty = "measured"
+label_en = "Rain"
+label_es = "Lluvia"
+what_en = "Rain rate estimated from the GPM satellite constellation, one daily image."
+what_es = "Intensidad de lluvia estimada por la constelación de satélites GPM, una imagen por día."
+decision_en = "Check if recent rain explains wetter soil or a change in the radar signal."
+decision_es = "Verificá si la lluvia reciente explica un suelo más húmedo o un cambio en la señal del radar."
+nodata_en = "Transparent means less than 0.1 mm/h or no estimate for that cell."
+nodata_es = "Transparente significa menos de 0,1 mm/h o sin estimación para esa celda."
+caveats_en = "About 10 km cells. Satellite estimate, not a rain gauge. The colour scale is logarithmic. The image is two days behind today."
+caveats_es = "Celdas de unos 10 km. Es una estimación satelital, no un pluviómetro. La escala de color es logarítmica. La imagen va dos días atrás de hoy."
+product = "GPM IMERG precipitation rate (GIBS: IMERG_Precipitation_Rate)"
+attribution = "NASA GIBS / GPM IMERG"
+source_url = "https://gpm.nasa.gov/data/imerg"
+inputs = [{ name = "Precipitation rate", agency = "NASA / JAXA", product = "GPM IMERG", url = "https://gpm.nasa.gov/data/imerg" }]
+
+[[catalog]]
+id = "ground_heat_day"
+tier = "raw"
+kind = "raster_tiles"
+theme = "clima"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_Land_Surface_Temp_Daily_Day/default/{date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 2
+max_zoom = 7
+opacity = 0.75
+unit = "K"
+range = [200, 350]
+ramp = [["#c900ff", 0.0], ["#0100ff", 0.2], ["#04fff7", 0.4], ["#bdff00", 0.6], ["#ff9d00", 0.8], ["#ff0100", 1.0]]
+honesty = "measured"
+label_en = "Ground heat"
+label_es = "Calor del suelo"
+what_en = "Temperature of the land surface in the late morning, seen from orbit by MODIS on Terra."
+what_es = "Temperatura de la superficie del terreno a media mañana, vista desde órbita por MODIS en Terra."
+decision_en = "Spot hot, dry ground or burn scars, and compare with radar change after a drought or a fire."
+decision_es = "Ubicá suelo caliente y seco o áreas quemadas, y comparalo con el cambio del radar después de una sequía o un incendio."
+nodata_en = "Transparent means clouds hid the ground or the satellite did not pass that day."
+nodata_es = "Transparente significa que las nubes taparon el suelo o que el satélite no pasó ese día."
+caveats_en = "Ground skin temperature, not air temperature. About 1 km cells. Units are kelvin: 273 K is 0 °C."
+caveats_es = "Es la temperatura de la piel del suelo, no del aire. Celdas de alrededor de 1 km. Las unidades son kelvin: 273 K equivalen a 0 °C."
+product = "MODIS Terra land surface temperature, daily, day (GIBS: MODIS_Terra_L3_Land_Surface_Temp_Daily_Day)"
+attribution = "NASA GIBS / MODIS Terra LST"
+source_url = "https://lpdaac.usgs.gov/products/mod11a1v061/"
+inputs = [{ name = "Land surface temperature", agency = "NASA", product = "MODIS Terra MOD11A1", url = "https://lpdaac.usgs.gov/products/mod11a1v061/" }]
+
+[[catalog]]
+id = "haze_smoke"
+tier = "raw"
+kind = "raster_tiles"
+theme = "fuego"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Combined_Value_Added_AOD/default/{date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 2
+max_zoom = 6
+opacity = 0.7
+ramp = [["#fffdcd", 0.0], ["#ffd960", 0.2], ["#ff9729", 0.4], ["#ff4514", 0.6], ["#d5080b", 0.8], ["#7d000e", 1.0]]
+honesty = "measured"
+label_en = "Smoke and haze"
+label_es = "Humo y bruma"
+what_en = "How much smoke, dust and haze the air holds, as aerosol optical depth from MODIS on Terra and Aqua."
+what_es = "Cuánto humo, polvo y bruma tiene el aire, como profundidad óptica de aerosoles de MODIS en Terra y Aqua."
+decision_en = "See where smoke from fires travels and where it may hide the ground from optical satellites."
+decision_es = "Mirá hacia dónde viaja el humo de los incendios y dónde puede tapar el suelo a los satélites ópticos."
+nodata_en = "Transparent means clouds, bright ground or no pass that day."
+nodata_es = "Transparente significa nubes, suelo muy claro o que no hubo pasada ese día."
+caveats_en = "No unit: optical depth is a ratio. Darker red means more aerosol. The radar sees through smoke; this layer does not."
+caveats_es = "Sin unidad: la profundidad óptica es una proporción. Rojo más oscuro significa más aerosol. El radar atraviesa el humo; esta capa no."
+product = "MODIS combined value-added aerosol optical depth (GIBS: MODIS_Combined_Value_Added_AOD)"
+attribution = "NASA GIBS / MODIS AOD"
+source_url = "https://ladsweb.modaps.eosdis.nasa.gov/"
+inputs = [{ name = "Aerosol optical depth", agency = "NASA", product = "MODIS Terra and Aqua AOD", url = "https://ladsweb.modaps.eosdis.nasa.gov/" }]
+
+# ---------- Vegetation and biomass ----------
+
+[[catalog]]
+id = "green_vegetation"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_16Day/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 9
+opacity = 0.75
+unit = "NDVI"
+range = [0, 1]
+ramp = [["#f1ecec", 0.0], ["#cdba9f", 0.14], ["#9d7c5f", 0.28], ["#64a601", 0.47], ["#1d7501", 0.71], ["#001801", 1.0]]
+honesty = "measured"
+label_en = "Green vegetation"
+label_es = "Vegetación verde"
+what_en = "How green and dense the plants are, as the vegetation index NDVI over the latest 16 days from MODIS on Terra."
+what_es = "Qué tan verdes y densas están las plantas, con el índice de vegetación NDVI de los últimos 16 días de MODIS en Terra."
+decision_en = "Tell crops, forest and bare ground apart, and check if a radar change matches a loss of green."
+decision_es = "Distinguí cultivos, bosque y suelo desnudo, y verificá si un cambio del radar coincide con una pérdida de verde."
+nodata_en = "Transparent means water, persistent cloud or no valid pixel in the 16 days."
+nodata_es = "Transparente significa agua, nubes persistentes o ningún píxel válido en los 16 días."
+caveats_en = "Shows the latest 16-day period the source has published, not the timeline date. 250 m to 1 km cells."
+caveats_es = "Muestra el último período de 16 días que publicó la fuente, no la fecha de la línea de tiempo. Celdas de 250 m a 1 km."
+product = "MODIS Terra NDVI, 16-day (GIBS: MODIS_Terra_L3_NDVI_16Day)"
+attribution = "NASA GIBS / MODIS Terra NDVI"
+source_url = "https://lpdaac.usgs.gov/products/mod13q1v061/"
+inputs = [{ name = "Vegetation index", agency = "NASA", product = "MODIS Terra MOD13", url = "https://lpdaac.usgs.gov/products/mod13q1v061/" }]
+
+[[catalog]]
+id = "leaf_cover"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Combined_L4_LAI_8Day/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 8
+opacity = 0.75
+unit = "m²/m²"
+range = [0, 6.1]
+ramp = [["#fff961", 0.0], ["#00a212", 0.2], ["#004b2b", 0.4], ["#4f3200", 0.6], ["#b32000", 0.8], ["#ff0000", 1.0]]
+honesty = "measured"
+label_en = "Leaf cover"
+label_es = "Cobertura de hojas"
+what_en = "Leaf area index: square metres of leaves over each square metre of ground, from MODIS on Terra and Aqua."
+what_es = "Índice de área foliar: metros cuadrados de hojas sobre cada metro cuadrado de suelo, de MODIS en Terra y Aqua."
+decision_en = "Gauge how much canopy the L-band radar has to pass through, and where foliage changed."
+decision_es = "Estimá cuánto follaje tiene que atravesar el radar de banda L y dónde cambió la cobertura de hojas."
+nodata_en = "Transparent means water, cloud or no valid retrieval in the period."
+nodata_es = "Transparente significa agua, nubes o ninguna medición válida en el período."
+caveats_en = "Latest 8-day composite the source has published. 500 m cells. Saturates in dense rainforest."
+caveats_es = "Último compuesto de 8 días que publicó la fuente. Celdas de 500 m. Se satura en selva densa."
+product = "MODIS combined leaf area index, 8-day (GIBS: MODIS_Combined_L4_LAI_8Day)"
+attribution = "NASA GIBS / MODIS LAI"
+source_url = "https://lpdaac.usgs.gov/products/mcd15a2hv061/"
+inputs = [{ name = "Leaf area index", agency = "NASA", product = "MODIS MCD15A2H", url = "https://lpdaac.usgs.gov/products/mcd15a2hv061/" }]
+
+[[catalog]]
+id = "forest_biomass"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GEDI_ISS_L4B_Aboveground_Biomass_Density_Mean_201904-202303/default/{date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png"
+time = "static"
+date = "2019-04-18"
+max_zoom = 7
+opacity = 0.8
+unit = "Mg/ha"
+range = [0, 250]
+ramp = [["#000000", 0.0], ["#215c7b", 0.2], ["#3d905c", 0.4], ["#89aa55", 0.6], ["#c0a366", 0.8], ["#f8efee", 1.0]]
+honesty = "measured"
+label_en = "Forest biomass"
+label_es = "Biomasa forestal"
+what_en = "Above-ground biomass of trees and shrubs, in tonnes per hectare, from the GEDI laser on the space station, April 2019 to March 2023."
+what_es = "Biomasa aérea de árboles y arbustos, en toneladas por hectárea, del láser GEDI en la estación espacial, de abril de 2019 a marzo de 2023."
+decision_en = "Know how much forest stands in the area before reading a radar loss as clearing or degradation."
+decision_es = "Sabé cuánto bosque hay en la zona antes de leer una pérdida en el radar como desmonte o degradación."
+nodata_en = "Transparent means GEDI took too few samples there, or the area lies outside 52 degrees north and south."
+nodata_es = "Transparente significa que GEDI tomó muy pocas muestras ahí, o que la zona está fuera de los 52 grados norte y sur."
+caveats_en = "1 km cells averaged over four years: it does not show recent change. 1 Mg is one tonne."
+caveats_es = "Celdas de 1 km promediadas en cuatro años: no muestra cambios recientes. 1 Mg es una tonelada."
+product = "GEDI L4B gridded above-ground biomass density, mean (GIBS: GEDI_ISS_L4B_Aboveground_Biomass_Density_Mean_201904-202303)"
+attribution = "NASA GIBS / GEDI L4B"
+source_url = "https://daac.ornl.gov/GEDI/guides/GEDI_L4B_Gridded_Biomass_V2_1.html"
+inputs = [{ name = "Above-ground biomass density", agency = "NASA / University of Maryland", product = "GEDI L4B", url = "https://daac.ornl.gov/GEDI/guides/GEDI_L4B_Gridded_Biomass_V2_1.html" }]
+
+[[catalog]]
+id = "canopy_height"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GEDI_ISS_L3_Canopy_Height_Mean_RH100_201904-202303/default/{date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png"
+time = "static"
+date = "2019-04-18"
+max_zoom = 7
+opacity = 0.8
+unit = "m"
+range = [0, 45]
+ramp = [["#e1e1e1", 0.0], ["#a0c030", 0.2], ["#56a100", 0.4], ["#2e8000", 0.6], ["#006400", 0.8], ["#001000", 1.0]]
+honesty = "measured"
+label_en = "Canopy height"
+label_es = "Altura del dosel"
+what_en = "Mean height of the top of the canopy, from the GEDI laser on the space station, April 2019 to March 2023."
+what_es = "Altura media de la copa de los árboles, del láser GEDI en la estación espacial, de abril de 2019 a marzo de 2023."
+decision_en = "Tell tall forest from scrub and crops, which scatter L-band radar in different ways."
+decision_es = "Distinguí bosque alto de matorral y cultivos, que dispersan el radar de banda L de distinta manera."
+nodata_en = "Transparent means too few laser shots there, or outside 52 degrees north and south."
+nodata_es = "Transparente significa muy pocos disparos de láser ahí, o fuera de los 52 grados norte y sur."
+caveats_en = "1 km cells averaged over four years. Height of the tallest return (RH100), not of every tree."
+caveats_es = "Celdas de 1 km promediadas en cuatro años. Es la altura del retorno más alto (RH100), no de cada árbol."
+product = "GEDI L3 gridded canopy height, mean RH100 (GIBS: GEDI_ISS_L3_Canopy_Height_Mean_RH100_201904-202303)"
+attribution = "NASA GIBS / GEDI L3"
+source_url = "https://daac.ornl.gov/GEDI/guides/GEDI_L3_LandSurface_Metrics_V2.html"
+inputs = [{ name = "Canopy height", agency = "NASA / University of Maryland", product = "GEDI L3", url = "https://daac.ornl.gov/GEDI/guides/GEDI_L3_LandSurface_Metrics_V2.html" }]
+
+[[catalog]]
+id = "vegetation_loss"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OPERA_L3_DIST-ALERT-HLS_Color_Index/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 12
+min_zoom = 5
+opacity = 0.85
+ramp = [["#dee043", 0.0], ["#e01b07", 1.0]]
+honesty = "measured"
+label_en = "Vegetation loss alerts"
+label_es = "Alertas de pérdida de vegetación"
+what_en = "Places where plant cover dropped compared with the recent past, from Landsat and Sentinel-2 images (OPERA DIST-ALERT)."
+what_es = "Lugares donde la cobertura vegetal bajó respecto del pasado reciente, a partir de imágenes Landsat y Sentinel-2 (OPERA DIST-ALERT)."
+decision_en = "Confirm with optical data that a radar change is clearing, fire or crop harvest."
+decision_es = "Confirmá con datos ópticos que un cambio del radar es desmonte, incendio o cosecha."
+nodata_en = "Transparent means no alert, or no image on the latest day the source published."
+nodata_es = "Transparente significa que no hay alerta, o que no hubo imagen el último día que publicó la fuente."
+caveats_en = "Only the scenes of the latest published day appear, so most of the map is empty. Zoom in to 5 or more. 30 m pixels."
+caveats_es = "Solo aparecen las escenas del último día publicado, así que casi todo el mapa queda vacío. Acercate a nivel 5 o más. Píxeles de 30 m."
+product = "OPERA L3 DIST-ALERT from HLS (GIBS: OPERA_L3_DIST-ALERT-HLS_Color_Index)"
+attribution = "NASA GIBS / OPERA DIST-ALERT"
+source_url = "https://www.jpl.nasa.gov/go/opera/products/dist-product/"
+inputs = [{ name = "Vegetation disturbance alert", agency = "NASA JPL", product = "OPERA DIST-ALERT-HLS", url = "https://www.jpl.nasa.gov/go/opera/products/dist-product/" }]
+
+[[catalog]]
+id = "land_cover"
+tier = "raw"
+kind = "raster_tiles"
+theme = "vegetacion"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 8
+opacity = 0.7
+ramp = [["#05450a", 0.0], ["#dcd159", 0.35], ["#c24f44", 0.7], ["#1c0dff", 1.0]]
+honesty = "measured"
+label_en = "Land cover type"
+label_es = "Tipo de cobertura"
+what_en = "Forest, grassland, cropland, city, water and other classes for the latest year, from MODIS (IGBP scheme)."
+what_es = "Bosque, pastizal, cultivo, ciudad, agua y otras clases del último año, de MODIS (esquema IGBP)."
+decision_en = "Know what covers the ground before reading a radar change: crops change every season, forest should not."
+decision_es = "Sabé qué cubre el suelo antes de leer un cambio del radar: los cultivos cambian cada temporada, el bosque no debería."
+nodata_en = "Transparent means unclassified."
+nodata_es = "Transparente significa sin clasificar."
+caveats_en = "Classes, not a scale: the colour strip only hints at the palette. 500 m cells, one map per year."
+caveats_es = "Son clases, no una escala: la franja de color solo sugiere la paleta. Celdas de 500 m, un mapa por año."
+product = "MODIS combined land cover type, IGBP, annual (GIBS: MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual)"
+attribution = "NASA GIBS / MODIS MCD12Q1"
+source_url = "https://lpdaac.usgs.gov/products/mcd12q1v061/"
+inputs = [{ name = "Land cover type", agency = "NASA", product = "MODIS MCD12Q1", url = "https://lpdaac.usgs.gov/products/mcd12q1v061/" }]
+
+# ---------- Water and soil ----------
+
+[[catalog]]
+id = "soil_moisture"
+tier = "raw"
+kind = "raster_tiles"
+theme = "agua"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L3_Passive_Enhanced_Day_Soil_Moisture/default/{date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 3
+max_zoom = 6
+opacity = 0.75
+unit = "cm³/cm³"
+range = [0, 0.6]
+ramp = [["#ffa200", 0.0], ["#d0e700", 0.2], ["#00b164", 0.4], ["#0071ff", 0.6], ["#00008c", 0.8], ["#505050", 1.0]]
+honesty = "measured"
+label_en = "Soil moisture"
+label_es = "Humedad del suelo"
+what_en = "Water in the top 5 cm of soil, from the SMAP L-band radiometer, morning pass."
+what_es = "Agua en los primeros 5 cm del suelo, del radiómetro de banda L de SMAP, pasada de la mañana."
+decision_en = "Wet soil brightens L-band radar: check this before reading a radar change as a change on the ground."
+decision_es = "El suelo húmedo aclara el radar de banda L: revisalo antes de leer un cambio del radar como un cambio en el terreno."
+nodata_en = "Transparent means a gap between orbits that day, frozen ground, dense forest or open water."
+nodata_es = "Transparente significa un hueco entre órbitas ese día, suelo congelado, bosque denso o agua abierta."
+caveats_en = "About 9 km cells, coarser than the radar. Daily swaths leave gaps. Three days behind today."
+caveats_es = "Celdas de unos 9 km, más gruesas que el radar. Las franjas diarias dejan huecos. Va tres días atrás de hoy."
+product = "SMAP L3 enhanced passive soil moisture, day (GIBS: SMAP_L3_Passive_Enhanced_Day_Soil_Moisture)"
+attribution = "NASA GIBS / SMAP"
+source_url = "https://nsidc.org/data/spl3smp_e"
+inputs = [{ name = "Surface soil moisture", agency = "NASA", product = "SMAP SPL3SMP_E", url = "https://nsidc.org/data/spl3smp_e" }]
+
+[[catalog]]
+id = "flood_water"
+tier = "raw"
+kind = "raster_tiles"
+theme = "agua"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Combined_Flood_2-Day/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 1
+max_zoom = 9
+opacity = 0.85
+ramp = [["#32d2f5", 0.0], ["#ffff00", 0.33], ["#fa1e24", 0.66], ["#afafaf", 1.0]]
+honesty = "measured"
+label_en = "Flood water"
+label_es = "Agua de inundación"
+what_en = "Water seen by MODIS over two days, with flood water outside normal rivers and lakes marked apart."
+what_es = "Agua vista por MODIS en dos días, con el agua de inundación fuera de ríos y lagos normales marcada aparte."
+decision_en = "Check if a radar change near a river is flooding, then follow it day by day."
+decision_es = "Verificá si un cambio del radar cerca de un río es una inundación, y seguilo día a día."
+nodata_en = "Transparent means dry land or no clear view in the two days."
+nodata_es = "Transparente significa tierra seca o ninguna vista despejada en los dos días."
+caveats_en = "Classes, not a scale. Clouds hide floods from MODIS; the radar sees through them. About 250 m cells."
+caveats_es = "Son clases, no una escala. Las nubes ocultan las inundaciones a MODIS; el radar las atraviesa. Celdas de unos 250 m."
+product = "MODIS combined flood product, 2-day (GIBS: MODIS_Combined_Flood_2-Day)"
+attribution = "NASA GIBS / MODIS NRT Flood"
+source_url = "https://www.earthdata.nasa.gov/data/instruments/modis/near-real-time-data/flood"
+inputs = [{ name = "Flood water", agency = "NASA LANCE", product = "MODIS NRT Global Flood", url = "https://www.earthdata.nasa.gov/data/instruments/modis/near-real-time-data/flood" }]
+
+[[catalog]]
+id = "surface_water_radar"
+tier = "raw"
+kind = "raster_tiles"
+theme = "agua"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OPERA_L3_Dynamic_Surface_Water_Extent-Sentinel-1/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 12
+min_zoom = 5
+opacity = 0.85
+ramp = [["#0000ff", 0.0], ["#00ff00", 0.5], ["#c8c8c8", 1.0]]
+honesty = "measured"
+label_en = "Water from radar"
+label_es = "Agua por radar"
+what_en = "Open water and flooded vegetation mapped from Sentinel-1 radar images (OPERA DSWx-S1), 30 m pixels."
+what_es = "Agua abierta y vegetación inundada mapeadas con imágenes de radar Sentinel-1 (OPERA DSWx-S1), píxeles de 30 m."
+decision_en = "Compare water seen by another radar with the NISAR change, even under clouds."
+decision_es = "Compará el agua que ve otro radar con el cambio de NISAR, incluso bajo nubes."
+nodata_en = "Transparent means not water, or no Sentinel-1 scene on the latest day published."
+nodata_es = "Transparente significa que no es agua, o que no hubo escena de Sentinel-1 el último día publicado."
+caveats_en = "Only the scenes of the latest published day appear, so most of the map is empty. Zoom in to 5 or more."
+caveats_es = "Solo aparecen las escenas del último día publicado, así que casi todo el mapa queda vacío. Acercate a nivel 5 o más."
+product = "OPERA L3 dynamic surface water extent from Sentinel-1 (GIBS: OPERA_L3_Dynamic_Surface_Water_Extent-Sentinel-1)"
+attribution = "NASA GIBS / OPERA DSWx-S1 (contains Copernicus Sentinel-1 data)"
+source_url = "https://www.jpl.nasa.gov/go/opera/products/dswx-product/"
+inputs = [{ name = "Surface water extent", agency = "NASA JPL", product = "OPERA DSWx-S1", url = "https://www.jpl.nasa.gov/go/opera/products/dswx-product/" }]
+
+[[catalog]]
+id = "snow_cover"
+tier = "raw"
+kind = "raster_tiles"
+theme = "agua"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDSI_Snow_Cover/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png"
+time = "daily"
+date_lag_days = 1
+max_zoom = 8
+opacity = 0.8
+unit = "%"
+range = [0, 100]
+ramp = [["#f0f080", 0.0], ["#f0d293", 0.4], ["#f09693", 0.8], ["#ff0000", 1.0]]
+honesty = "measured"
+label_en = "Snow cover"
+label_es = "Cobertura de nieve"
+what_en = "Share of each cell covered by snow, from the MODIS snow index on Terra."
+what_es = "Porcentaje de cada celda cubierto por nieve, según el índice de nieve de MODIS en Terra."
+decision_en = "Snow and melt change the radar signal in mountains: check this before reading it as ground motion."
+decision_es = "La nieve y el deshielo cambian la señal del radar en la montaña: revisalo antes de leerlo como movimiento del terreno."
+nodata_en = "Transparent means no snow, cloud, or night."
+nodata_es = "Transparente significa sin nieve, nubes o noche."
+caveats_en = "Clouds can look like snow at the edges. About 500 m cells. One day behind today."
+caveats_es = "En los bordes, las nubes pueden parecer nieve. Celdas de unos 500 m. Va un día atrás de hoy."
+product = "MODIS Terra NDSI snow cover (GIBS: MODIS_Terra_NDSI_Snow_Cover)"
+attribution = "NASA GIBS / MODIS Snow Cover"
+source_url = "https://nsidc.org/data/mod10a1"
+inputs = [{ name = "Snow cover", agency = "NASA", product = "MODIS Terra MOD10", url = "https://nsidc.org/data/mod10a1" }]
+
+# ---------- Radar and imagery ----------
+
+[[catalog]]
+id = "radar_sentinel1"
+tier = "raw"
+kind = "raster_tiles"
+theme = "cambio"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OPERA_L2_Radiometric_Terrain_Corrected_SAR_Sentinel-1/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png"
+time = "static"
+date = "default"
+max_zoom = 12
+min_zoom = 5
+opacity = 0.9
+ramp = [["#000000", 0.0], ["#ffffff", 1.0]]
+honesty = "measured"
+label_en = "Second radar"
+label_es = "Segundo radar"
+what_en = "Radar brightness from Sentinel-1 (C-band, shorter wave than NISAR), corrected for terrain (OPERA RTC-S1)."
+what_es = "Brillo de radar de Sentinel-1 (banda C, onda más corta que NISAR), corregido por relieve (OPERA RTC-S1)."
+decision_en = "Compare with NISAR: a change both radars see is more likely real; C-band reacts more to leaves, L-band to trunks and soil."
+decision_es = "Comparalo con NISAR: un cambio que ven ambos radares es más probable que sea real; la banda C reacciona más a las hojas, la L a troncos y suelo."
+nodata_en = "Transparent means no Sentinel-1 scene on the latest day published."
+nodata_es = "Transparente significa que no hubo escena de Sentinel-1 el último día publicado."
+caveats_en = "Only the latest published day appears, so most of the map is empty. Zoom in to 5 or more. Brightness is relative here, no dB scale."
+caveats_es = "Solo aparece el último día publicado, así que casi todo el mapa queda vacío. Acercate a nivel 5 o más. El brillo es relativo, sin escala en dB."
+product = "OPERA L2 radiometric terrain corrected SAR from Sentinel-1 (GIBS: OPERA_L2_Radiometric_Terrain_Corrected_SAR_Sentinel-1)"
+attribution = "NASA GIBS / OPERA RTC-S1 (contains Copernicus Sentinel-1 data)"
+source_url = "https://www.jpl.nasa.gov/go/opera/products/rtc-product/"
+inputs = [{ name = "Radar backscatter", agency = "NASA JPL / ESA", product = "OPERA RTC-S1", url = "https://www.jpl.nasa.gov/go/opera/products/rtc-product/" }]
+
+[[catalog]]
+id = "true_color_day"
+tier = "raw"
+kind = "raster_tiles"
+theme = "cambio"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
+time = "daily"
+date_lag_days = 1
+max_zoom = 9
+opacity = 0.95
+ramp = [["#1d3b5a", 0.0], ["#6f8f4e", 0.5], ["#f4f1e8", 1.0]]
+honesty = "measured"
+label_en = "Yesterday from space"
+label_es = "Ayer desde el espacio"
+what_en = "The Earth as the eye would see it yesterday, one daily mosaic from VIIRS on NOAA-20."
+what_es = "La Tierra como la vería el ojo ayer, un mosaico diario de VIIRS en NOAA-20."
+decision_en = "Look at clouds, smoke, floods and fields in plain colour next to the radar."
+decision_es = "Mirá nubes, humo, inundaciones y campos en color natural junto al radar."
+nodata_en = "Black wedges are gaps between orbits."
+nodata_es = "Las cuñas negras son huecos entre órbitas."
+caveats_en = "Clouds hide the ground; the radar does not have that problem. About 250 m pixels."
+caveats_es = "Las nubes tapan el suelo; el radar no tiene ese problema. Píxeles de unos 250 m."
+product = "VIIRS NOAA-20 corrected reflectance, true colour (GIBS: VIIRS_NOAA20_CorrectedReflectance_TrueColor)"
+attribution = "NASA GIBS / VIIRS NOAA-20"
+source_url = "https://www.earthdata.nasa.gov/data/instruments/viirs"
+inputs = [{ name = "Corrected reflectance", agency = "NASA / NOAA", product = "VIIRS NOAA-20", url = "https://www.earthdata.nasa.gov/data/instruments/viirs" }]
+
+# ---------- Human activity ----------
+
+[[catalog]]
+id = "night_lights"
+tier = "raw"
+kind = "raster_tiles"
+theme = "cambio"
+url = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png"
+time = "static"
+date = "2016-01-01"
+max_zoom = 8
+opacity = 0.85
+ramp = [["#000000", 0.0], ["#5a4a2a", 0.4], ["#ffe9a8", 1.0]]
+honesty = "measured"
+label_en = "Night lights"
+label_es = "Luces nocturnas"
+what_en = "City and road lights at night in 2016, the Black Marble composite from VIIRS."
+what_es = "Luces de ciudades y rutas de noche en 2016, el compuesto Black Marble de VIIRS."
+decision_en = "Tell towns, mines and roads apart from wild land when a radar change appears."
+decision_es = "Distinguí pueblos, minas y rutas del monte cuando aparece un cambio del radar."
+nodata_en = "Dark means no artificial light was recorded."
+nodata_es = "Oscuro significa que no se registró luz artificial."
+caveats_en = "A 2016 picture: newer towns and mines are missing. Brightness is relative, no unit."
+caveats_es = "Es una imagen de 2016: faltan pueblos y minas más nuevos. El brillo es relativo, sin unidad."
+product = "VIIRS Black Marble, 2016 (GIBS: VIIRS_Black_Marble)"
+attribution = "NASA GIBS / VIIRS Black Marble"
+source_url = "https://blackmarble.gsfc.nasa.gov/"
+inputs = [{ name = "Night lights", agency = "NASA", product = "VIIRS Black Marble", url = "https://blackmarble.gsfc.nasa.gov/" }]
+
+# ---------- Events ----------
+
+[[catalog]]
+id = "earthquakes"
+tier = "raw"
+kind = "geojson_points"
+theme = "movimiento"
+url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson"
+query = false
+time = "static"
+date = "past 7 days"
+value_prop = "mag"
+unit = "M"
+range = [2.5, 7.5]
+ramp = [["#ffd36b", 0.0], ["#ff7a1a", 0.5], ["#e01b07", 1.0]]
+honesty = "measured"
+label_en = "Earthquakes"
+label_es = "Sismos"
+what_en = "Earthquakes of magnitude 2.5 or more in the past 7 days, from the USGS. Size and colour follow magnitude."
+what_es = "Sismos de magnitud 2,5 o más en los últimos 7 días, del USGS. El tamaño y el color siguen la magnitud."
+decision_en = "Check if ground motion in the radar lines up with a recent quake."
+decision_es = "Verificá si el movimiento del terreno en el radar coincide con un sismo reciente."
+nodata_en = "No point means no quake of 2.5 or more was reported there this week."
+nodata_es = "Sin punto significa que esta semana no se informó ningún sismo de 2,5 o más ahí."
+caveats_en = "Coverage outside the United States misses many small quakes. Locations are the epicentre, not the area that moved."
+caveats_es = "Fuera de Estados Unidos faltan muchos sismos chicos. La ubicación es el epicentro, no el área que se movió."
+product = "USGS earthquake feed, M2.5+ past week (GeoJSON summary)"
+attribution = "USGS Earthquake Hazards Program"
+source_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php"
+inputs = [{ name = "Earthquake catalogue", agency = "USGS", product = "ComCat summary feed", url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php" }]
+
+[[catalog]]
+id = "natural_events"
+tier = "raw"
+kind = "geojson_points"
+theme = "cambio"
+url = "/api/catalog/eonet"
+time = "static"
+date = "open events"
+color_prop = "category"
+colors = [["wildfires", "#ff6b35"], ["severeStorms", "#5eebff"], ["volcanoes", "#e01b07"], ["floods", "#3d7bff"], ["landslides", "#c0a366"], ["drought", "#dcd159"], ["dustHaze", "#cdba9f"], ["seaLakeIce", "#e1e1e1"], ["snow", "#f4f1e8"], ["earthquakes", "#ffd36b"], ["tempExtremes", "#ff9d00"], ["waterColor", "#00b164"], ["manmade", "#b38bff"]]
+ramp = [["#ff6b35", 0.0], ["#5eebff", 0.5], ["#e01b07", 1.0]]
+honesty = "measured"
+label_en = "Natural events"
+label_es = "Eventos naturales"
+what_en = "Open fires, storms, volcanoes, floods and other events tracked by NASA EONET. Colour follows the kind of event."
+what_es = "Incendios, tormentas, volcanes, inundaciones y otros eventos abiertos que sigue NASA EONET. El color sigue el tipo de evento."
+decision_en = "Find out if a known event explains a change you see in the radar."
+decision_es = "Averiguá si un evento conocido explica un cambio que ves en el radar."
+nodata_en = "No point means no open event is listed in this view."
+nodata_es = "Sin punto significa que no hay eventos abiertos en esta vista."
+caveats_en = "A curated list, not a measurement of every event. A point marks the latest reported position."
+caveats_es = "Es una lista curada, no una medición de todos los eventos. El punto marca la última posición informada."
+product = "NASA EONET v3 open events (GeoJSON)"
+attribution = "NASA EONET"
+source_url = "https://eonet.gsfc.nasa.gov/"
+inputs = [{ name = "Natural event list", agency = "NASA", product = "EONET v3", url = "https://eonet.gsfc.nasa.gov/" }]

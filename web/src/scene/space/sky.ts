@@ -18,7 +18,7 @@ export interface SkyOptions {
 }
 
 const DEFAULTS: SkyOptions = { milkyWay: true, stars: true, constellations: true, labels: true };
-const MILKY_WAY_INTENSITY = 0.45;
+const MILKY_WAY_INTENSITY = 0.4;
 const LINE_RGBA = [0.32, 0.45, 0.7, 0.55] as const;
 const LABEL_FONT = "11px system-ui, sans-serif";
 const LABEL_COLOR = "rgba(150, 175, 220, 0.8)";

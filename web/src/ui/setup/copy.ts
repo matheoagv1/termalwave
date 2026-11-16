@@ -14,23 +14,38 @@ const en = {
   missions: {
     cambio: {
       title: "SURFACE CHANGE",
-      sub: "NISAR L-band radar on the timeline. Compare two dates to see where the ground changed.",
-      on: "NISAR radar",
+      sub: "Compare two radar dates to see where the ground changed.",
+      on: "Ground change radar",
     },
     fuego: {
       title: "FIRES",
-      sub: "NASA FIRMS fire detections on the whole globe. The demo area also has a fire layer.",
-      on: "FIRMS hotspots, Fires",
+      sub: "Hot spots seen by satellite and the wind that carries the smoke.",
+      on: "Active fires, Wind now, Smoke and haze, Fire weather",
     },
     clima: {
-      title: "CLOUDS AND WIND",
-      sub: "Cloud cover and wind over the globe, to read the sky around a radar pass. Not a forecast.",
-      on: "Clouds, Wind",
+      title: "WEATHER",
+      sub: "Clouds, wind and rain around a radar pass. Context, not a forecast.",
+      on: "Clouds now, Wind now, Rain",
     },
-    ambiente: {
-      title: "SOIL AND ENVIRONMENT",
-      sub: "Soil condition and pollution layers. They are examples derived from radar, not measurements.",
-      on: "Soil condition, Pollution",
+    vegetacion: {
+      title: "VEGETATION",
+      sub: "How green and dense the plant cover is, and where it changed.",
+      on: "Green vegetation, Greenness vs normal, Vegetation loss alerts",
+    },
+    agua: {
+      title: "WATER",
+      sub: "Wet soil, surface water and rain.",
+      on: "Soil moisture, Flood water, Flood chance, 3 days",
+    },
+    movimiento: {
+      title: "GROUND MOTION",
+      sub: "Where the ground rose, sank or slid between two radar passes.",
+      on: "Earthquakes, Landslide risk",
+    },
+    todo: {
+      title: "EVERYTHING",
+      sub: "Every layer of this build at once. Turn off what you do not need.",
+      on: "All layers",
     },
     explore: {
       title: "EXPLORE MANUALLY",
@@ -38,7 +53,7 @@ const en = {
       on: "",
     },
   },
-  tags: { measured: "MEASURED", model: "MODEL", example: "EXAMPLE" },
+  tags: { measured: "MEASURED", derived: "DERIVED", model: "MODEL", example: "EXAMPLE" },
   radarAlways: "NISAR radar stays on in every view.",
   h2: "Pick a place",
   lead2: (view: string): string => `First view: ${view}. Now choose where the camera goes.`,
@@ -52,7 +67,7 @@ const en = {
   places: {
     ibera: { label: "Iberá wetlands, Argentina", sub: "Wetland where large fires burned in 2022." },
     rondonia: { label: "Rondônia, Brazil", sub: "Amazon forest edge with heavy clearing." },
-    reykjanes: { label: "Reykjanes, Iceland", sub: "Ground that lifts and cracks before eruptions." },
+    reykjanes: { label: "Reykjanes, Iceland", sub: "Ground that rises and cracks before eruptions." },
   },
   search: "Search any place",
   searchPh: "City, region or lat, lon",
@@ -81,23 +96,38 @@ const es: typeof en = {
   missions: {
     cambio: {
       title: "CAMBIO DE SUPERFICIE",
-      sub: "Radar NISAR de banda L en la línea de tiempo. Compará dos fechas para ver dónde cambió el suelo.",
-      on: "Radar NISAR",
+      sub: "Compará dos fechas del radar para ver dónde cambió el suelo.",
+      on: "Radar de cambio del suelo",
     },
     fuego: {
-      title: "FUEGO",
-      sub: "Detecciones de fuego de NASA FIRMS en todo el globo. El área de demostración suma una capa de incendios.",
-      on: "Focos FIRMS, Incendios",
+      title: "INCENDIOS",
+      sub: "Focos de calor vistos por satélite y el viento que lleva el humo.",
+      on: "Incendios activos, Viento ahora, Humo y bruma, Clima de fuego",
     },
     clima: {
-      title: "NUBES Y VIENTO",
-      sub: "Nubosidad y viento sobre el globo, para leer el cielo cerca de una pasada de radar. No es un pronóstico.",
-      on: "Nubes, Viento",
+      title: "TIEMPO",
+      sub: "Nubes, viento y lluvia cerca de una pasada del radar. Es contexto, no un pronóstico.",
+      on: "Nubes ahora, Viento ahora, Lluvia",
     },
-    ambiente: {
-      title: "SUELO Y AMBIENTE",
-      sub: "Capas de estado del suelo y contaminación. Son ejemplos derivados del radar, no mediciones.",
-      on: "Estado del suelo, Contaminación",
+    vegetacion: {
+      title: "VEGETACIÓN",
+      sub: "Qué tan verde y densa está la cobertura vegetal, y dónde cambió.",
+      on: "Vegetación verde, Verdor vs normal, Alertas de pérdida de vegetación",
+    },
+    agua: {
+      title: "AGUA",
+      sub: "Suelo húmedo, agua en superficie y lluvia.",
+      on: "Humedad del suelo, Agua de inundación, Chance de inundación, 3 días",
+    },
+    movimiento: {
+      title: "MOVIMIENTO DEL SUELO",
+      sub: "Dónde el suelo subió, bajó o se deslizó entre dos pasadas del radar.",
+      on: "Sismos, Riesgo de deslizamiento",
+    },
+    todo: {
+      title: "TODO",
+      sub: "Todas las capas de esta versión a la vez. Apagá lo que no uses.",
+      on: "Todas las capas",
     },
     explore: {
       title: "EXPLORAR A MANO",
@@ -105,7 +135,7 @@ const es: typeof en = {
       on: "",
     },
   },
-  tags: { measured: "MEDIDO", model: "MODELO", example: "EJEMPLO" },
+  tags: { measured: "MEDIDO", derived: "DERIVADO", model: "MODELO", example: "EJEMPLO" },
   radarAlways: "El radar NISAR queda activo en todas las vistas.",
   h2: "Elegí un lugar",
   lead2: (view: string): string => `Primera vista: ${view}. Ahora elegí adónde va la cámara.`,

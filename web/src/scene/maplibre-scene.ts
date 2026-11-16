@@ -18,6 +18,7 @@ import type {
   SceneState,
   TimeTick,
 } from "../tw/contract";
+import { attachCatalog } from "./catalog";
 import { Layers3D } from "./layers3d";
 import { BodiesLayer } from "./space/bodies";
 import { CloudsLayer } from "./space/clouds";
@@ -26,6 +27,7 @@ import { SatellitesLayer } from "./space/satellites";
 import { SkyLayer } from "./space/sky";
 import { WindLayer } from "./space/wind";
 import type { Bounds } from "./space/satellites-geometry";
+import type { NisarPass } from "../data/nisar-passes";
 import { installTileCache, tileCacheTransformRequest } from "./tile-cache";
 
 export type { BasemapTiles } from "../tw/contract";
@@ -51,16 +53,17 @@ const ZERO: Padding = { top: 0, right: 0, bottom: 0, left: 0 };
 const URBAN_ZOOM = 1.85;
 const URBAN_DETAIL = 1.35;
 const URBAN_PITCH = 6;
-// busqueda de lugar desde orbita; duracion y zoom tipo gev
+// busqueda de lugar desde orbita; duracion y zoom cortos
 const PLACE_FLY_MS = 3000;
-const PLACE_FLY_MS_MIN = 2800;
-const PLACE_FLY_MS_MAX = 7500;
-const PLACE_FLY_KM = 0.45;
+const PLACE_FLY_MS_MIN = 2200;
+const PLACE_FLY_MS_MAX = 4000;
+const PLACE_FLY_KM = 0.2;
 const PLACE_ZOOM = 10;
 const PLACE_FLY_CURVE = 1.12;
 const CITY_HALF_DEG = 0.75;
 // wide view keeps the configured area in front; the fallback is only used when app-config has no aoi
 const GLOBE_ZOOM = 1.6;
+const MIN_GLOBE_SHARE = 0.3;
 const ORBIT_ALTITUDE_ZOOM = 1.1;
 const ASCEND_MS = 2800;
 const SETTLE_MS = 1800;
@@ -110,6 +113,9 @@ export { cityBounds, placeFlyMs };
 const ENTITY_EXTRA = ["-glow", "-line"] as const;
 // share of the shorter image side that fades out at each border
 const SOFT_EDGE_FRAC = 0.045;
+// newest NISAR quick-look previews drawn at once
+const BROWSE_MAX = 6;
+const BROWSE_OPACITY = 0.85;
 
 function coordsOf(b: { west: number; east: number; south: number; north: number }): Coords {
   return [
@@ -150,6 +156,9 @@ export class MapLibreScene implements SceneApi {
   private fx = new Layers3D();
   private soft = new Map<string, Promise<string>>();
   private extraSeq = new Map<string, number>();
+  private browse: NisarPass[] = [];
+  private browseKey = "";
+  private browseSeq = 0;
   private dead = false;
   private ready = false;
   private queue: Array<() => void> = [];
@@ -214,6 +223,10 @@ export class MapLibreScene implements SceneApi {
       transformRequest: tileCacheTransformRequest,
     });
     this.map.touchZoomRotate.disableRotation();
+    // a long soft coast after a drag, like a spun globe, instead of a short stop
+    this.map.dragPan.enable({ linearity: 0.25, easing: (t: number) => 1 - Math.pow(1 - t, 3), deceleration: 1600, maxSpeed: 1400 });
+    this.limitZoomOut();
+    this.map.on("resize", () => this.limitZoomOut());
     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     if (this.o.space) this.space = new SpaceScene(this.map, this.o.space);
 
@@ -286,21 +299,27 @@ export class MapLibreScene implements SceneApi {
       projection: { type: "globe" },
       sources,
       layers,
-      // space: soft limb like gev orbit; fades out as you enter study zoom
-      sky: this.o.space
-        ? {
-            "sky-color": "#02060f",
-            "horizon-color": "#1a3a6e",
-            "fog-color": "#6ec8ff",
-            "fog-ground-blend": 0.65,
-            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 4, 0.55, 7, 0.08, 9, 0],
-          }
-        : {
-            "sky-color": this.css("--scene-sphere", "#082460"),
-            "horizon-color": this.css("--scene-grid", "#2474ec"),
-            "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-          },
+      sky: this.skySpec(),
     } as StyleSpecification;
+  }
+
+  // space: a thin dim limb, desaturated so data colours win (the reference runs its
+  // atmosphere at about a third of the engine default light, saturation -12 %,
+  // brightness -8 %); fades out as you enter study zoom
+  private skySpec(): Record<string, unknown> {
+    return this.o.space
+      ? {
+          "sky-color": "#010409",
+          "horizon-color": "#1b355c",
+          "fog-color": "#6fb2dc",
+          "fog-ground-blend": 0.7,
+          "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 4, 0.4, 7, 0.06, 9, 0],
+        }
+      : {
+          "sky-color": this.css("--scene-sphere", "#082460"),
+          "horizon-color": this.css("--scene-grid", "#2474ec"),
+          "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
+        };
   }
 
   setBasemap(bt: BasemapLayers): void {
@@ -342,6 +361,7 @@ export class MapLibreScene implements SceneApi {
     this.ready = true;
     if (this.s.camera === "orbit") this.go("orbit", { fly: false, ms: 0 });
     this.buildLayers();
+    attachCatalog(map);
     this.refreshStyle();
     void this.mountSpace();
     const q = this.queue;
@@ -403,15 +423,26 @@ export class MapLibreScene implements SceneApi {
     set("tw-gap", "fill-color", this.css("--scene-hatch", "#ffb43a"));
     set("tw-area", "line-color", this.css("--scene-outline", "#f4f1e8"));
     set("tw-curtain", "line-color", this.css("--acc", "#f0a014"));
-    set("tw-ent-firms", "circle-color", this.css("--warn", "#ff7a1a"));
+    if (map.getLayer("tw-ent-firms")) map.setPaintProperty("tw-ent-firms", "circle-color", this.fireColor());
     for (const id of ["tw-ent-nisar-glow", "tw-ent-nisar-line"]) set(id, "line-color", this.css("--accB", "#5eebff"));
     set("tw-ent-nisar", "fill-color", this.css("--accB", "#5eebff"));
     this.fx.refreshColors();
-    map.setSky({
-      "sky-color": this.css("--scene-sphere", "#082460"),
-      "horizon-color": this.css("--scene-grid", "#2474ec"),
-      "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-    } as never);
+    map.setSky(this.skySpec() as never);
+  }
+
+  // hotspot ground dot in the same frp ramp as the glow sprites; theme heat colour when frp is missing
+  private fireColor(): unknown[] {
+    return [
+      "step",
+      ["to-number", ["coalesce", ["get", "frp"], ["get", "frp_mw"], -1], -1],
+      this.css("--warn", "#ff7a1a"),
+      0, "#9e2a1b",
+      5, "#d2401f",
+      20, "#f06a28",
+      50, "#fb9a2e",
+      100, "#fdc84a",
+      300, "#fff3b0",
+    ];
   }
 
   private spaceMounted = false;
@@ -444,6 +475,15 @@ export class MapLibreScene implements SceneApi {
   // geojson global (firms, etc); null limpia la capa
   setEntities(id: string, data: unknown | null): void {
     this.whenReady(() => this.applyEntities(id, data));
+  }
+
+  // quick-look previews of the newest passes in view; they follow the radar toggle
+  showNisarBrowse(passes: NisarPass[]): void {
+    this.browse = passes
+      .filter((p) => p.browseUrl && p.bounds)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, BROWSE_MAX);
+    this.whenReady(() => this.syncBrowse());
   }
 
   setActivePlace(bounds: Bounds | null): void {
@@ -494,6 +534,10 @@ export class MapLibreScene implements SceneApi {
     if (!data) {
       for (const lid of [layerId, ...ENTITY_EXTRA.map((x) => layerId + x)]) if (map.getLayer(lid)) map.removeLayer(lid);
       if (map.getSource(srcId)) map.removeSource(srcId);
+      if (id === "nisar") {
+        this.browse = [];
+        this.syncBrowse();
+      }
       return;
     }
     const fc = data as GeoJSON.GeoJSON;
@@ -531,7 +575,7 @@ export class MapLibreScene implements SceneApi {
         ? {
             // ember under the 3d column; blurred so it reads as light, and it carries the layer alone at street zoom
             "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 2.6, 6, 5, 10, 9],
-            "circle-color": this.css("--warn", "#ff7a1a"),
+            "circle-color": this.fireColor() as unknown as string,
             "circle-blur": 0.7,
             "circle-opacity": 0.9,
           }
@@ -549,10 +593,38 @@ export class MapLibreScene implements SceneApi {
   private syncSwaths(): void {
     const on = this.radarOn();
     this.fx.setSwathsVisible(on);
+    this.syncBrowse();
     if (!this.ready) return;
     for (const lid of ["tw-ent-nisar", "tw-ent-nisar-glow", "tw-ent-nisar-line"]) {
       if (this.map.getLayer(lid)) this.map.setLayoutProperty(lid, "visibility", on ? "visible" : "none");
     }
+  }
+
+  // previews sit under the swath outlines and exist only while the radar layer is on
+  private syncBrowse(): void {
+    if (!this.ready) return;
+    const want = this.radarOn() ? this.browse : [];
+    const key = want.map((p) => p.browseUrl).join("|");
+    if (key === this.browseKey) return;
+    this.browseKey = key;
+    const map = this.map;
+    const seq = ++this.browseSeq;
+    for (let i = 0; i < BROWSE_MAX; i++) {
+      if (map.getLayer(`tw-nisar-browse-${i}`)) map.removeLayer(`tw-nisar-browse-${i}`);
+      if (map.getSource(`tw-nisar-browse-${i}`)) map.removeSource(`tw-nisar-browse-${i}`);
+    }
+    if (!want.length) return;
+    // a preview that fails to load is skipped; nothing is added for it
+    void Promise.all(want.map((p) => this.loadImage(p.browseUrl as string).then(() => true, () => false))).then((ok) => {
+      if (seq !== this.browseSeq || this.dead || !this.ready) return;
+      const before = map.getLayer("tw-ent-nisar") ? "tw-ent-nisar" : undefined;
+      want.forEach((p, i) => {
+        if (!ok[i] || !p.bounds) return;
+        const id = `tw-nisar-browse-${i}`;
+        map.addSource(id, { type: "image", url: p.browseUrl as string, coordinates: coordsOf(p.bounds) });
+        map.addLayer({ id, type: "raster", source: id, paint: { "raster-opacity": BROWSE_OPACITY } }, before);
+      });
+    });
   }
 
   // entity marks stay above the dataset rasters, which are added later than them
@@ -1054,6 +1126,7 @@ export class MapLibreScene implements SceneApi {
         duration: dur,
         essential: true,
         curve: PLACE_FLY_CURVE,
+        easing: easeInOutCubic,
       };
       if (opt.fly && dur > 0) map.flyTo(opts);
       else map.easeTo(opts);
@@ -1077,7 +1150,7 @@ export class MapLibreScene implements SceneApi {
     const cam = this.territoryCam();
     if (!cam) return;
     this.territoryZoom = cam.zoom;
-    const opts = { ...cam, padding: ZERO, duration: dur, essential: true };
+    const opts = { ...cam, padding: ZERO, duration: dur, essential: true, easing: easeInOutCubic };
     if (opt.fly) map.flyTo(opts);
     else map.easeTo(opts);
   }
@@ -1143,6 +1216,15 @@ export class MapLibreScene implements SceneApi {
     window.setTimeout(() => el.remove(), 650);
   }
 
+  // the farthest a hand can zoom out keeps the globe at least MIN_GLOBE_SHARE of
+  // the screen height across, so it never shrinks to a speck among the stars
+  private limitZoomOut(): void {
+    const h = this.mapEl?.clientHeight || this.host?.clientHeight || 0;
+    if (!h) return;
+    const z = Math.log2((MIN_GLOBE_SHARE * h * Math.PI) / 512);
+    this.map.setMinZoom(clamp(z, 0, GLOBE_ZOOM - 0.3));
+  }
+
   private globeCenter(): [number, number] {
     const a = this.o.aoi;
     if (!a) return GLOBE_FALLBACK;
@@ -1151,6 +1233,47 @@ export class MapLibreScene implements SceneApi {
 
   private globeView(): { center: [number, number]; zoom: number; pitch: number; bearing: number } {
     return { center: this.globeCenter(), zoom: GLOBE_ZOOM, pitch: 0, bearing: 0 };
+  }
+
+  zoomBy(delta: number): void {
+    this.whenReady(() => {
+      const map = this.map;
+      map.easeTo({ zoom: clamp(map.getZoom() + delta, map.getMinZoom(), map.getMaxZoom()), duration: this.dur(300), essential: true });
+    });
+  }
+
+  // straight down <-> oblique, like the reference dock; 55 deg is the oblique pitch
+  toggleTilt(): void {
+    this.whenReady(() => {
+      const next = this.map.getPitch() > 5 ? 0 : 55;
+      this.s.tilt = next;
+      this.map.easeTo({ pitch: next, duration: this.dur(400), essential: true });
+      this.emit();
+    });
+  }
+
+  resetNorth(): void {
+    this.whenReady(() => {
+      this.s.northUp = true;
+      this.map.easeTo({ bearing: 0, duration: this.dur(400), essential: true });
+      this.emit();
+    });
+  }
+
+  locate(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(false);
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          this.whenReady(() => {
+            this.map.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: Math.max(this.map.getZoom(), 8), duration: this.dur(1200), essential: true });
+            resolve(true);
+          });
+        },
+        () => resolve(false),
+        { timeout: 8000 },
+      );
+    });
   }
 
   backToEarth(): Promise<void> {
@@ -1200,6 +1323,7 @@ export class MapLibreScene implements SceneApi {
         bearing: 0,
         duration: ASCEND_MS,
         curve: 1.6,
+        easing: easeInOutCubic,
         essential: true,
       });
       map.once("moveend", () => {

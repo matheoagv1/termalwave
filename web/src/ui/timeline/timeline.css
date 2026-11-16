@@ -1,0 +1,314 @@
+/* One bar along the bottom: play and step, the date, a track with a tick per
+   frame and a handle, the way to the latest date, and compare. */
+[data-tw-theme] .tw-tlb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1040px, calc(100% - 2 * var(--tlb-pad, 12px)));
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  direction: ltr;
+}
+
+[data-tw-theme] .tw-tlb button {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 8px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--fg);
+  font: 12px var(--sans);
+  cursor: pointer;
+}
+
+[data-tw-theme] .tw-tlb button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+[data-tw-theme] .tw-tlb button[aria-pressed="true"],
+[data-tw-theme] .tw-tlb button.is-on {
+  border-color: var(--acc-fg);
+  background: var(--sel);
+  color: var(--acc-fg);
+}
+
+[data-tw-theme] .tw-tlb-ctl {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+[data-tw-theme] .tw-tlb-read {
+  flex: 0 1 190px;
+  min-width: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-left: 8px;
+  border-left: 2px solid var(--acc);
+}
+
+[data-tw-theme] .tw-tlb-date {
+  font: 600 13px var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-tw-theme] .tw-tlb-hon {
+  font: 10px var(--sans);
+  color: var(--fg2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-tw-theme] .tw-tlb-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 120px;
+  height: 32px;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+}
+
+[data-tw-theme] .tw-tlb-track:focus-visible {
+  outline: 1px solid var(--acc-fg);
+  outline-offset: 2px;
+}
+
+/* Inset so the handle at either end stays inside the track. */
+[data-tw-theme] .tw-tlb-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+}
+
+[data-tw-theme] .tw-tlb-rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  background: var(--line2);
+}
+
+[data-tw-theme] .tw-tlb-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  background: var(--acc);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+[data-tw-theme] .tw-tlb-pre {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: rgba(94, 235, 255, 0.12);
+  border-top: 1px solid var(--tw-radar);
+  pointer-events: none;
+}
+
+[data-tw-theme] .tw-tlb-div {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--fg3);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+[data-tw-theme] .tw-tlb-tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  transform: translateY(-50%);
+  background: var(--fg2);
+  pointer-events: none;
+}
+
+[data-tw-theme] .tw-tlb-tick.is-thin {
+  width: 1px;
+  margin-left: 0;
+}
+
+[data-tw-theme] .tw-tlb-tick.is-before {
+  background: var(--tw-radar);
+}
+
+/* Example frames: a dashed orange mark, never a solid one. */
+[data-tw-theme] .tw-tlb-tick.is-example {
+  width: 0;
+  height: 16px;
+  background: none;
+  border-left: 2px dashed var(--tw-h-ejemplo);
+}
+
+/* Yearly composites are milestones: taller, with the year above the track. */
+[data-tw-theme] .tw-tlb-tick.is-milestone {
+  width: 3px;
+  height: 22px;
+  margin-left: -1px;
+  background: var(--acc);
+}
+
+[data-tw-theme] .tw-tlb-ms {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 2px;
+  font: 9px var(--mono);
+  color: var(--fg2);
+  white-space: nowrap;
+}
+
+[data-tw-theme] .tw-tlb-tick.is-gap {
+  height: 5px;
+  opacity: 0.45;
+}
+
+[data-tw-theme] .tw-tlb-tick.is-hover {
+  height: 20px;
+  background: var(--fg);
+}
+
+[data-tw-theme] .tw-tlb-knob {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  border: 2px solid var(--acc-fg);
+  background: var(--acc);
+  pointer-events: none;
+  transition: left 0.12s ease-out;
+}
+
+[data-tw-theme] .tw-tlb-knob.is-b {
+  border-color: var(--accB);
+  background: transparent;
+}
+
+[data-tw-theme] .tw-tlb-track.is-drag .tw-tlb-knob {
+  transition: none;
+}
+
+/* The hovered frame's date and honesty, over the track. It slides across
+   itself as it crosses the track so it never leaves it. */
+[data-tw-theme] .tw-tlb-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: calc(100% * var(--at));
+  transform: translateX(calc(var(--at) * -100%));
+  max-width: min(320px, 100%);
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--line2);
+  background: var(--panel-solid, var(--panel));
+  color: var(--fg);
+  font: 11px/1.4 var(--sans);
+  pointer-events: none;
+  z-index: 2;
+}
+
+[data-tw-theme] .tw-tlb-tip b {
+  display: block;
+  font: 600 12px var(--mono);
+  white-space: nowrap;
+}
+
+[data-tw-theme] .tw-tlb-tip span {
+  display: block;
+  color: var(--fg2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-tw-theme] .tw-tlb-legend {
+  display: flex;
+  gap: 10px;
+  flex: none;
+  font: 10px var(--sans);
+  color: var(--fg2);
+}
+
+[data-tw-theme] .tw-tlb-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+[data-tw-theme] .tw-tlb-load {
+  font: 11px var(--mono);
+  color: var(--fg2);
+  padding: 0 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tw-theme] .tw-tlb-knob {
+    transition: none;
+  }
+}
+
+/* Phones: controls, date and latest on one row, the track on its own row. */
+@media (max-width: 759px) {
+  [data-tw-theme] .tw-tlb {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 4px;
+    gap: 6px;
+  }
+
+  [data-tw-theme] .tw-tlb-read {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  [data-tw-theme] .tw-tlb-track {
+    order: 5;
+    flex: 1 1 100%;
+    height: 36px;
+  }
+
+  [data-tw-theme] .tw-tlb-knob {
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+  }
+
+  [data-tw-theme] .tw-tlb-tip {
+    bottom: calc(100% + 4px);
+  }
+}

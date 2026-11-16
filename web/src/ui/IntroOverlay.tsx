@@ -29,6 +29,8 @@ export function IntroOverlay({ sound, onDone, app }: P): React.ReactElement {
   const cardRef = React.useRef<HTMLElement>(null);
   const headRef = React.useRef<HTMLHeadingElement>(null);
   const ds = app?.state.ds ?? null;
+  // radar frames can be example data even when the dataset is not flagged mock
+  const radarExample = !!ds && (ds.isMock || ds.layers.some((l) => l.id === "radar" && l.honesty === "example"));
   const step = mission ? 2 : 1;
 
   const ping = (): void => {
@@ -111,7 +113,7 @@ export function IntroOverlay({ sound, onDone, app }: P): React.ReactElement {
 
   const tag = (m: Mission): React.ReactNode => {
     // a mock dataset means the radar frames themselves are example data
-    const h = m.id === "cambio" && ds?.isMock ? "example" : m.honesty;
+    const h = m.id === "cambio" && radarExample ? "example" : m.honesty;
     return h ? <span className={`tw-setup-tag tw-setup-tag-${h}`}>{c.tags[h]}</span> : null;
   };
 
@@ -173,9 +175,9 @@ export function IntroOverlay({ sound, onDone, app }: P): React.ReactElement {
                   <span className="tw-setup-tile-title">
                     {ds?.area.name ?? c.demoArea}
                     <span className="tw-setup-tag tw-setup-tag-measured">{c.radarTag}</span>
-                    {ds?.isMock && <span className="tw-setup-tag tw-setup-tag-example">{c.tags.example}</span>}
+                    {radarExample && <span className="tw-setup-tag tw-setup-tag-example">{c.tags.example}</span>}
                   </span>
-                  <span className="tw-setup-tile-sub">{ds?.isMock ? c.demoSubMock : c.demoSub}</span>
+                  <span className="tw-setup-tile-sub">{radarExample ? c.demoSubMock : c.demoSub}</span>
                 </span>
                 <span className="tw-setup-arrow" aria-hidden="true">→</span>
               </button>

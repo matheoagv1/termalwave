@@ -85,6 +85,37 @@ def load_layers_taxonomy(repo_root: Path) -> dict[str, Any]:
     }
 
 
+_CATALOG_REQUIRED = ("id", "tier", "kind", "url")
+_CATALOG_TIERS = {"raw", "processed", "prediction"}
+_CATALOG_KINDS = {"raster_tiles", "geojson_points", "geojson_polygons", "geojson_grid"}
+
+
+def load_catalog(repo_root: Path) -> list[dict[str, Any]]:
+    """[[catalog]] rows of every config/catalog*.toml, by file name; first id wins."""
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for path in sorted((repo_root / "config").glob("catalog*.toml")):
+        try:
+            with path.open("rb") as fh:
+                raw = tomllib.load(fh)
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            print(f"catalog: {path.name} skipped: {exc}")
+            continue
+        for row in raw.get("catalog") or []:
+            if not isinstance(row, dict) or any(not row.get(k) for k in _CATALOG_REQUIRED):
+                print(f"catalog: {path.name}: entry without id/tier/kind/url skipped")
+                continue
+            if row["tier"] not in _CATALOG_TIERS or row["kind"] not in _CATALOG_KINDS:
+                print(f"catalog: {path.name}: {row['id']} has an unknown tier or kind, skipped")
+                continue
+            if row["id"] in seen:
+                print(f"catalog: {path.name}: duplicate id {row['id']}, keeping the first")
+                continue
+            seen.add(str(row["id"]))
+            rows.append(dict(row))
+    return rows
+
+
 def load_config(path: Path, repo_root: Path) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"Config not found: {path}")
@@ -220,6 +251,8 @@ def write_web_app_config(
             for p in (tax.get("presets") or [])
             if p.get("trade")
         }
+
+    payload["catalog"] = load_catalog(repo_root)
 
     written: list[Path] = []
     for key in ("web_config_out", "web_dist_config_out"):

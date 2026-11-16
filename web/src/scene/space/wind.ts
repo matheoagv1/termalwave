@@ -2,7 +2,7 @@ import type { SpaceView } from "./camera";
 import { lonLatToEcef, projectPoint } from "./camera";
 import type { SpaceHost, SpaceLayer } from "./types";
 
-// particle wind field over the globe (GEV-like): advect in lon/lat, hide behind earth,
+// particle wind field over the globe: advect in lon/lat, hide behind earth,
 // fade out at study zoom so terrain stays readable
 
 export interface WindSample {
@@ -19,6 +19,21 @@ const N_PARTICLES = 900;
 const DEG_PER_KMH_S = 0.000012; // soft step so streaks stay readable
 const MAX_AGE = 90;
 const FADE_ZOOM = 7.5;
+
+// calm blue to strong red, saturating at 30 m/s
+const WIND_STOPS = ["#1e3a8a", "#2563eb", "#22d3ee", "#34d399", "#fbbf24", "#f97316", "#ef4444"];
+const WIND_RGB = WIND_STOPS.map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+const WIND_COLORS: string[] = Array.from({ length: 128 }, (_, i) => {
+  const pos = (i / 127) * (WIND_STOPS.length - 1);
+  const k = Math.min(WIND_STOPS.length - 2, Math.floor(pos));
+  const f = pos - k;
+  const c = WIND_RGB[k].map((v, j) => Math.round(v + (WIND_RGB[k + 1][j] - v) * f));
+  return `rgb(${c.join(",")})`;
+});
+function windColor(ms: number): string {
+  const t = Math.max(0, Math.min(30, Number.isFinite(ms) ? ms : 0)) / 30;
+  return WIND_COLORS[Math.round(t * 127)];
+}
 
 export class WindLayer implements SpaceLayer {
   readonly id = "wind";
@@ -150,9 +165,7 @@ export class WindLayer implements SpaceLayer {
     const c = this.canvas!;
     const pr = view.pixelRatio;
     ctx.clearRect(0, 0, c.width, c.height);
-    ctx.lineWidth = Math.max(1, pr * 1.1);
-    ctx.strokeStyle = `rgba(220, 235, 255, ${0.55 * alpha})`;
-    ctx.beginPath();
+    ctx.lineCap = "round";
     for (const p of this.particles) {
       const uv = this.sampleUv(p.lon, p.lat);
       if (uv) {
@@ -175,12 +188,31 @@ export class WindLayer implements SpaceLayer {
       if (scr.hidden) continue;
       const x = scr.x * pr;
       const y = scr.y * pr;
-      const len = 4 + Math.min(18, Math.hypot(uv.u, uv.v) * 0.25);
+      const speed = Math.hypot(uv.u, uv.v);
+      const len = 4 + Math.min(18, speed * 0.25);
       const ang = Math.atan2(-uv.v, uv.u);
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + Math.cos(ang) * len * pr, y + Math.sin(ang) * len * pr);
+      const tx = x - Math.cos(ang) * len * pr;
+      const ty = y - Math.sin(ang) * len * pr;
+      // fade in over the first moments of life and out over the last
+      const fade = Math.min(1, p.age / 8, (p.life - p.age) / 12) * alpha;
+      if (fade <= 0) continue;
+      // body takes the speed ramp colour (calm blue to strong red), the head is pale
+      ctx.globalAlpha = fade * 0.55;
+      ctx.lineWidth = 1 * pr;
+      ctx.strokeStyle = windColor(speed / 3.6);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.globalAlpha = fade * 0.9;
+      ctx.lineWidth = 1.35 * pr;
+      ctx.strokeStyle = "#d6f4f5";
+      ctx.beginPath();
+      ctx.moveTo(tx + (x - tx) * 0.72, ty + (y - ty) * 0.72);
+      ctx.lineTo(x, y);
+      ctx.stroke();
     }
-    ctx.stroke();
+    ctx.globalAlpha = 1;
     this.host?.invalidate();
   }
 }
