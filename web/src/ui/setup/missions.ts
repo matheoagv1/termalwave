@@ -1,6 +1,6 @@
 import type { SearchResult } from "../../tw/contract";
 import topics from "../../context/topics.json";
-import { catalogThemeIds } from "../about/methods/meta";
+import { catalog } from "../../scene/catalog";
 
 // Presets are themes of the world, picked in one tap, never professions.
 export type MissionId = "cambio" | "fuego" | "clima" | "vegetacion" | "agua" | "movimiento" | "todo" | "explore";
@@ -64,7 +64,7 @@ export function presetLayers(
 ): string[] {
   const base = [...(remote?.[themeId] ?? []), ...(THEME_LAYERS[themeId] ?? [])];
   // catalog entries tagged with this theme join it, so new layers need no edit here
-  const list = Array.from(new Set([...base, ...(themeId === "todo" ? THEME_LAYERS.todo : []), ...catalogThemeIds(themeId)]));
+  const list = Array.from(new Set([...base, ...(themeId === "todo" ? THEME_LAYERS.todo : []), ...catalog.entries().filter((e) => themeId === "todo" || e.theme === themeId).map((e) => e.id)]));
   const ids = list.filter((id) => id !== "radar");
   if (!known) return ids;
   return ids.filter((id) => {

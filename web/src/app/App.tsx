@@ -1,7 +1,6 @@
 import React from "react";
 import { PRESETS } from "../data/layer-defaults";
 import { presetLayers } from "../ui/setup/missions";
-import { isCatalogId } from "../ui/about/methods/meta";
 import { parsePasses, passFootprints } from "../data/nisar-passes";
 import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
@@ -22,7 +21,7 @@ import type {
 } from "../tw/contract";
 import { hashParams } from "./hash";
 import { cityBounds } from "../scene/maplibre-scene";
-import { syncCatalogTimeline } from "../scene/catalog";
+import { catalog, syncCatalogTimeline } from "../scene/catalog";
 import { Hud } from "../ui/Hud";
 import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
 import { Sfx } from "../ui/sfx";
@@ -156,7 +155,9 @@ export class App extends React.Component<AppProps, AppState> implements Model {
         const entry = S.ds.context[S.trade];
         const presetId = entry?.id ?? entry?.trade ?? "";
         const known = new Set([...GLOBAL_IDS, ...S.ds.layers.map((l) => l.id)]);
-        const ids = presetLayers(presetId, S.ds.presets ?? PRESETS, (id) => known.has(id) || isCatalogId(id));
+        const catalogIds = new Set(catalog.entries().map((e) => e.id));
+        const ids = presetLayers(presetId, S.ds.presets ?? PRESETS, (id) => known.has(id) || catalogIds.has(id));
+        for (const id of ids) if (catalogIds.has(id)) catalog.set(id, true);
         if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
       }
       const eff = this.effectiveExtras();

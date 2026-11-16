@@ -8,12 +8,6 @@ export type LayerMeta = Record<string, unknown> & { id: string };
 
 type Cfg = Record<string, unknown> & { layers_taxonomy?: Record<string, unknown> };
 
-// A bundled catalog fallback, if the catalog loader ships one as JSON.
-const bundled = import.meta.glob<unknown>(["../../../context/catalog*.json", "../../../data/catalog*.json"], {
-  eager: true,
-  import: "default",
-});
-
 function rowsOf(v: unknown): LayerMeta[] {
   const list = Array.isArray(v) ? v : v && typeof v === "object" && Array.isArray((v as { catalog?: unknown }).catalog) ? (v as { catalog: unknown[] }).catalog : [];
   return list.filter((r): r is LayerMeta => !!r && typeof r === "object" && typeof (r as { id?: unknown }).id === "string");
@@ -33,9 +27,8 @@ const pending: Promise<Loaded> = fetch("./app-config.json")
   .then((r) => (r.ok ? (r.json() as Promise<Cfg>) : ({} as Cfg)))
   .catch(() => ({}) as Cfg)
   .then((cfg) => {
-    const fromFiles = Object.values(bundled).flatMap(rowsOf);
     const byId = new Map<string, LayerMeta>();
-    for (const r of [...fromFiles, ...catalogOf(cfg)]) byId.set(r.id, { ...(byId.get(r.id) ?? {}), ...r });
+    for (const r of catalogOf(cfg)) byId.set(r.id, { ...(byId.get(r.id) ?? {}), ...r });
     loaded = { taxonomy: rowsOf(cfg.layers_taxonomy?.layers), catalog: [...byId.values()] };
     for (const w of waiting.splice(0)) w(loaded);
     return loaded;

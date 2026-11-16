@@ -1,6 +1,7 @@
 import React from "react";
 import { aboutCopy } from "./copy";
 import { MethodsPage } from "./methods/MethodsPage";
+import { ComparePanel } from "../compare/ComparePanel";
 import "./about.css";
 
 // Sections appended to the About dialog: NISAR method, references, AI use,
@@ -22,6 +23,7 @@ export function AboutMore({ lang }: { lang: "en" | "es" }): React.ReactElement {
         </dl>
         <p className="twa-note">{c.nisarNote}</p>
       </section>
+      <ComparePanel lang={lang} />
       <section>
         <h3>{c.refsTitle}</h3>
         <ul className="twa-refs">
