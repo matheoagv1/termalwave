@@ -49,7 +49,7 @@
       "match": { "norad": [44322, 44323, 44324], "name": "^RCM-[123]$" },
       "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "Media resolución 50 m",
       "swath_km": 350, "look": "right", "altitude_km": 600,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "terrasar", "label": "TerraSAR-X / TanDEM-X / PAZ", "operator": "DLR / Airbus / Hisdesat",
@@ -63,42 +63,42 @@
       "match": { "norad": [31598, 32376, 33412, 37216, 44873, 51444, 67304], "name": "^(COSMO-SKYMED \\d|CSG-\\d)$" },
       "kind": "sar", "band": "X", "sensor": "SAR-2000 / CSG-SAR", "mode": "Stripmap Himage",
       "swath_km": 40, "look": "right", "altitude_km": 620,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "gaofen-3", "label": "Gaofen-3", "operator": "CNSA",
       "match": { "norad": [41727, 49495, 52200], "name": "^GAOFEN-3( 0[23])?$" },
       "kind": "sar", "band": "C", "sensor": "C-SAR", "mode": "ScanSAR ancho",
       "swath_km": 500, "look": "right", "altitude_km": 755,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "kompsat-5", "label": "KOMPSAT-5", "operator": "KARI",
       "match": { "norad": [39227], "name": "^ARIRANG-5" },
       "kind": "sar", "band": "X", "sensor": "COSI", "mode": "Standard",
       "swath_km": 30, "altitude_km": 550,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "iceye", "label": "ICEYE", "operator": "ICEYE",
       "match": { "name": "^ICEYE-X\\d+" },
       "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Strip",
       "swath_km": 30, "altitude_km": 570,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "capella", "label": "Capella", "operator": "Capella Space",
       "match": { "name": "^CAPELLA-\\d+" },
       "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Stripmap",
       "swath_km": 5, "altitude_km": 596,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "umbra", "label": "Umbra", "operator": "Umbra Space",
       "match": { "name": "^UMBRA-\\d+" },
       "kind": "sar", "band": "X", "sensor": "X-SAR", "mode": "Spotlight",
       "swath_km": 5, "altitude_km": 544,
-      "sources": ["gev-pack"]
+      "sources": ["sky-pack"]
     },
     {
       "id": "viirs", "label": "Suomi NPP / NOAA-20 / NOAA-21", "operator": "NASA / NOAA",
@@ -150,6 +150,6 @@
     "avhrr-eumetsat": "https://www.eumetsat.int/avhrr",
     "s3-sentiwiki": "https://sentiwiki.copernicus.eu/web/s3-mission",
     "goes-abi": "https://www.nesdis.noaa.gov/advanced-baseline-imager-scan-mode-information",
-    "gev-pack": "God's Eye View imaging_sensors.json (MIT), which cites the operator page for each entry"
+    "sky-pack": "paquete de cielo"
   }
 }
