@@ -73,7 +73,14 @@ export function buildView(m: Model) {
   // la interfaz 2D es opcional: en modo inmersivo solo queda la escena y la cámara
   const chrome = hud && !S.immersive;
   const imm = S.immersive;
-  const layers: LayerDef[] = ds ? ds.layers : [];
+  const layers: LayerDef[] = ds
+    ? ds.layers.map((l) => {
+        const row = l as LayerDef & { label_en?: string; label_es?: string; what_en?: string; what_es?: string };
+        const label = S.lang === "es" ? row.label_es || l.label : row.label_en || l.label;
+        const note = S.lang === "es" ? row.what_es || l.note : row.what_en || l.note;
+        return label === l.label && note === l.note ? l : { ...l, label, note };
+      })
+    : [];
   const L = layers.find((l) => l.id === sc.layer) ?? null;
   const fa: Flat | null = (ds && m.flat[m.idx[sc.tickId] ?? -1]) || null;
   const nameOf = (f: Flat): string => T.tickName(f.seg.kind, f.tick.label);

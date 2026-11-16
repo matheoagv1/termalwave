@@ -16,8 +16,27 @@ from termalwave.providers.registry import (
 )
 
 
+_LAYER_TEXT = (
+    "label",
+    "label_en",
+    "label_es",
+    "what_en",
+    "what_es",
+    "decision_en",
+    "decision_es",
+    "nodata_en",
+    "nodata_es",
+    "caveats_en",
+    "caveats_es",
+    "unit",
+    "product",
+    "formula",
+    "notes",
+)
+
+
 def load_layers_taxonomy(repo_root: Path) -> dict[str, Any]:
-    """category/core/presets from config/layers.toml (challenge taxonomy)."""
+    """category/core/presets plus bilingual copy from config/layers.toml."""
     path = repo_root / "config" / "layers.toml"
     if not path.is_file():
         return {"policy": {}, "layers": [], "presets": []}
@@ -27,15 +46,25 @@ def load_layers_taxonomy(repo_root: Path) -> dict[str, Any]:
     for row in raw.get("layers") or []:
         if not isinstance(row, dict) or not row.get("id"):
             continue
-        layers.append(
-            {
-                "id": str(row["id"]),
-                "category": str(row.get("category") or "data"),
-                "core": bool(row.get("core", False)),
-                "label": str(row.get("label") or row["id"]),
-                "notes": str(row.get("notes") or ""),
-            }
-        )
+        item: dict[str, Any] = {
+            "id": str(row["id"]),
+            "category": str(row.get("category") or "data"),
+            "core": bool(row.get("core", False)),
+        }
+        for key in _LAYER_TEXT:
+            if key not in row or row[key] in (None, ""):
+                continue
+            item[key] = row[key]
+        if "range" in row:
+            item["range"] = [float(v) for v in row["range"]]
+        if isinstance(row.get("ramp"), list) and row["ramp"]:
+            item["ramp"] = [
+                {"at": float(stop["at"]), "color": str(stop["color"])}
+                for stop in row["ramp"]
+                if isinstance(stop, dict) and "at" in stop and stop.get("color")
+            ]
+        item.setdefault("label", str(row.get("label") or row["id"]))
+        layers.append(item)
     presets = []
     for row in raw.get("presets") or []:
         if not isinstance(row, dict) or not row.get("id"):
