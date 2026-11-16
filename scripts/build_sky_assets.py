@@ -2,7 +2,7 @@
 constellation figures + names (d3-celestial, BSD-3).
 
 usage: build_sky_assets.py [--gev DIR] [--d3 DIR]
-  --gev  god's eye view sky data dir (default references/gods-eye-view/src/data/local_data/sky)
+  --gev  sky data dir (default under references/)
   --d3   dir with constellations.lines.json, constellations.json, LICENSE
          (default: fetched from github once)
 """

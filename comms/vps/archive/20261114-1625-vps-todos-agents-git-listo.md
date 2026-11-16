@@ -8,7 +8,7 @@ Estado: abierto
 
 1. Un solo repo: `/srv/sites/nasaspaceappchallenge`.
 2. Contexto global (challenge, jurado, reglas, ownership) vive en `AGENTS.md` raiz. Roles en `agents/<rol>/AGENTS.md`.
-3. `references/` queda solo para drops de codigo (`SgoLinea`, `gods-eye-view`); sin docs de agentes ahi.
+3. `references/` queda solo para drops de codigo (`SgoLinea` y el drop de globo); sin docs de agentes ahi.
 4. El scaffold MapLibre/timeline + reestructura esta committeado en `master`.
 
 ## Que hacer

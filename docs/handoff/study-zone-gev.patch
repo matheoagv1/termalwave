@@ -112,7 +112,7 @@ index 368c7aa..8880954 100644
  export type BasemapLayers = BasemapTiles & { underlay?: BasemapTiles };
 @@ -50,11 +51,52 @@ const URBAN_DETAIL = 1.35;
  const URBAN_PITCH = 6;
- // busqueda de lugar desde orbita; duracion y zoom tipo gev
+ // busqueda de lugar desde orbita; duracion y zoom de la vista orbital
  const PLACE_FLY_MS = 3000;
 +const PLACE_FLY_MS_MIN = 2800;
 +const PLACE_FLY_MS_MAX = 7500;
@@ -192,7 +192,7 @@ index 368c7aa..8880954 100644
        projection: { type: "globe" },
        sources,
        layers,
-+      // space: soft limb like gev orbit; fades out as you enter study zoom
++      // space: soft limb; fades out as you enter study zoom
        sky: this.o.space
          ? {
 -            "sky-color": "#000000",

@@ -150,6 +150,6 @@
     "avhrr-eumetsat": "https://www.eumetsat.int/avhrr",
     "s3-sentiwiki": "https://sentiwiki.copernicus.eu/web/s3-mission",
     "goes-abi": "https://www.nesdis.noaa.gov/advanced-baseline-imager-scan-mode-information",
-    "gev-pack": "God's Eye View imaging_sensors.json (MIT), which cites the operator page for each entry"
+    "gev-pack": "imaging_sensors.json (MIT), which cites the operator page for each entry"
   }
 }

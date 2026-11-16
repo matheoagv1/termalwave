@@ -10,4 +10,4 @@ Aca se dropean proyectos ajenos para mirar patrones (mapa, globo, capas, caching
 Drops esperados en este server (si estan presentes):
 
 - `SgoLinea/` — MapLibre / UI patterns
-- `gods-eye-view/` — globo / capas / caching
+- drop de globo — capas / caching
