@@ -56,13 +56,15 @@
     {
       "id": "incendios",
       "label": "Incendios",
-      "unit": "",
+      "unit": "detecciones",
       "range": [
         0,
-        1
+        203
       ],
       "ramp": [],
-      "note": ""
+      "note": "NASA FIRMS (VIIRS SNPP)",
+      "honesty": "measured",
+      "decimals": 0
     },
     {
       "id": "change",
@@ -123,7 +125,19 @@
               "mean": 0.21745326967592593
             },
             "contaminacion": null,
-            "incendios": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2018.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 99
+            },
             "change": null,
             "rvi": null
           }
@@ -149,7 +163,19 @@
               "mean": 0.17796006944444445
             },
             "contaminacion": null,
-            "incendios": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2020.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 203
+            },
             "change": null,
             "rvi": null
           }
@@ -188,7 +214,19 @@
               "mean": 5.9596875,
               "quality": "partial"
             },
-            "incendios": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2022.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 114
+            },
             "change": null,
             "rvi": null
           }
@@ -226,7 +264,19 @@
               "source": "Open-Meteo Air Quality (CAMS)",
               "mean": 6.158072916666666
             },
-            "incendios": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2024.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 155
+            },
             "change": null,
             "rvi": null
           }
@@ -282,7 +332,19 @@
               "mean": 5.766377314814815,
               "quality": "partial"
             },
-            "incendios": null,
+            "incendios": {
+              "url": "./overlays/timeline/incendios/2026.png",
+              "bounds": {
+                "west": -64.35,
+                "east": -64.15,
+                "south": -27.9,
+                "north": -27.7
+              },
+              "kind": "composite",
+              "honesty": "measured",
+              "source": "NASA FIRMS (VIIRS SNPP)",
+              "mean": 48
+            },
             "change": {
               "url": "./overlays/nisar/change_20261021_20261102_HV.png",
               "bounds": {
