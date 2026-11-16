@@ -38,7 +38,7 @@ export class MockScene {
     this.cbC = new Set(); this.cbP = new Set();
     this.ds = null; this.ticks = {}; this.aspect = 0.884; this.areaLL = [-64.25, -27.8];
     this.pad = { top: 60, right: 20, bottom: 20, left: 460 }; this.padC = { ...this.pad };
-    this.p = 0; this.fly = null; this.lon0 = -105; this.lat0 = -15; this.front = 0; this.W = 800; this.H = 600; this.dpr = 1;
+    this.p = 0; this.fly = null; this.lon0 = -63.5; this.lat0 = -27.5; this.front = 0; this.W = 800; this.H = 600; this.dpr = 1;
     this._dirty = true;
   }
 
@@ -163,6 +163,7 @@ export class MockScene {
     this.ds = ds; const b = ds.area.bounds;
     this.aspect = ((b.east - b.west) * Math.cos(ds.area.center[1] * RAD)) / (b.north - b.south);
     this.areaLL = ds.area.center; this.ticks = {};
+    if (this.s.camera === 'orbit') { this.lon0 = this.areaLL[0]; this.lat0 = this.areaLL[1]; }
     ds.segments.forEach((s) => s.ticks.forEach((t) => { this.ticks[t.id] = t; }));
     this._drawBase(); this._applyFrame(); this._applyCompare(); this._dirty = true; this._apply(performance.now());
   }
@@ -267,7 +268,15 @@ export class MockScene {
     });
   }
 
-  resetToOrbit() { if (this.s.focus) delete this.s.focus; this._applyFocus(); return this.flyTo('orbit'); }
+  resetToOrbit() { return this.backToEarth(); }
+  backToEarth() {
+    if (this.ds) this.areaLL = this.ds.area.center;
+    return this.flyTo('orbit');
+  }
+  fitBounds(bounds) {
+    this.areaLL = [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2];
+    return this.flyTo('territory');
+  }
 
   _geom() {
     const p = this.padC, fw = Math.max(80, this.W - p.left - p.right), fh = Math.max(80, this.H - p.top - p.bottom);
@@ -298,7 +307,6 @@ export class MockScene {
     if (this.p === 0 && this.s.camera === 'orbit' && !this.drag) {
       const f = this.s.focus;
       if (f) { this.lon0 += (((f.lonlat[0] - this.lon0 + 540) % 360) - 180) * 0.06; this.lat0 += (f.lonlat[1] - this.lat0) * 0.06; this._dirty = true; }
-      else if (!rm) { this.lon0 += 3 * dt; this._dirty = true; }
     }
     if (moving || this._dirty || this.p < 1) { this._apply(t); this._dirty = false; }
   };

@@ -1,3 +1,4 @@
+import type { Lang } from "./i18n";
 import type { BasemapOption,
   CameraMode,
   Dataset,
@@ -71,6 +72,7 @@ export type AppState = {
   // focos de calor globales (FIRMS): estado de la consulta, no del mapa
   nisar: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
   firms: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
+  lang: Lang;
 };
 
 export type AppProps = {

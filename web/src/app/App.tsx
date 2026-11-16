@@ -1,6 +1,6 @@
 import React from "react";
-import { T } from "../tw/catalog.es-AR.js";
 import { PRESETS } from "../data/layer-defaults";
+import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
 const GLOBAL_IDS = ["clouds", "firms", "wind"];
 import { longHelp } from "../ui/tip-help";
@@ -53,13 +53,13 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     activePlace: null,
     toast: "",
     help: false,
-    ficha: false,
+    ficha: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     sheet: false,
     tab: "area",
     trade: 0,
     explore: false,
     status: { online: true, terrain: true, basemap: true },
-    dockOpen: false,
+    dockOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     basemap: this.props.basemaps?.[0]?.id ?? "",
     tlOpen: typeof window !== "undefined" ? window.innerWidth >= 760 : true,
     immersive: false,
@@ -74,6 +74,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     extras: ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
     nisar: { status: "idle", count: 0, msg: "" },
+    lang: detectLangSafe(),
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -105,6 +106,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   // ciclo de vida
 
   componentDidMount(): void {
+    persistLang(this.state.lang);
     if (this.rootRef.current) {
       this.ro = new ResizeObserver(() => this.measure());
       this.ro.observe(this.rootRef.current);
@@ -233,7 +235,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     this.scene = this.props.makeScene({
       ...status,
       reducedMotion: this.rmKey,
-      labels: { curtain: T.compare.curtain },
+      labels: { curtain: this.copy.compare.curtain },
     });
     const host = this.sceneRef.current;
     if (!host) return;
@@ -595,7 +597,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const nx = this.flat[ni];
     if (!nx) return;
     if (nx.seg.id !== cur.seg.id) {
-      this.showToast(T.timeline.crossing(nx.seg.label, this.granText(nx.seg)));
+      this.showToast(this.copy.timeline.crossing(nx.seg.label, this.granText(nx.seg)));
       this.extra = 1100;
     }
     this.setTarget(nx.tick.id);
@@ -612,8 +614,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const a = seg.ticks[0];
     const b = seg.ticks[1];
     if (seg.kind === "acquisition" && a && b)
-      return T.acqEvery(Math.round((+new Date(b.start) - +new Date(a.start)) / 864e5));
-    return seg.kind === "acquisition" ? T.kind.acquisition.toLowerCase() : T.granEvery[seg.granularity];
+      return this.copy.acqEvery(Math.round((+new Date(b.start) - +new Date(a.start)) / 864e5));
+    return seg.kind === "acquisition" ? this.copy.kind.acquisition.toLowerCase() : this.copy.granEvery[seg.granularity];
   }
 
   toggleCompare = (): void => {
@@ -635,15 +637,20 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   enter = (): void => {
     if (!this.state.ds || !this.scene) return;
-    const place = this.state.activePlace;
-    if (!place?.bounds) {
-      this.showToast(T.search.needPlace);
+    const bounds = this.state.activePlace?.bounds ?? this.state.ds.area.bounds;
+    if (!bounds) {
+      this.showToast(this.copy.search.needPlace);
       return;
     }
+    this.frameBounds(bounds);
+  };
+
+  frameBounds = (bounds: { west: number; east: number; south: number; north: number }): void => {
+    if (!this.scene) return;
     this.setState({ explore: false, ficha: this.state.W >= 760, dockOpen: true });
-    this.scene.setActivePlace?.(place.bounds);
-    this.scene.set({ focus: null });
-    void this.scene.flyTo("territory");
+    this.scene.setActivePlace?.(bounds);
+    if (this.scene.fitBounds) void this.scene.fitBounds(bounds);
+    else void this.scene.flyTo("territory");
   };
 
   private extKey = "";
@@ -738,7 +745,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   toggleExtra = (id: string): void => {
     if (!GLOBAL_IDS.includes(id) && !this.state.activePlace) {
-      this.showToast(T.search.needPlace);
+      this.showToast(this.copy.search.needPlace);
       return;
     }
     const cur = this.state.extras;
@@ -747,7 +754,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   setLayer = (id: string): void => {
     if (!this.state.activePlace) {
-      this.showToast(T.search.needPlace);
+      this.showToast(this.copy.search.needPlace);
       return;
     }
     this.scene?.set({ layer: id });
@@ -765,9 +772,24 @@ export class App extends React.Component<AppProps, AppState> implements Model {
 
   toOrbit = (): void => {
     this.stopPlay();
-    this.setState({ pick: null, explore: false });
-    void this.scene?.resetToOrbit();
+    if (this.scene?.backToEarth) void this.scene.backToEarth();
+    else void this.scene?.resetToOrbit();
   };
+
+  setLang = (lang: Lang): void => {
+    if (lang === this.state.lang) return;
+    persistLang(lang);
+    this.setState({ lang });
+  };
+
+  private get copy() {
+    return copyOf(this.state.lang);
+  }
+
+  private langApi(): LangApi {
+    const lang = this.state.lang;
+    return { lang, setLang: this.setLang, t: makeT(lang), fmt: fmt(lang), copy: this.copy };
+  }
 
   retry = (): void => {
     void this.boot();
@@ -821,12 +843,12 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       explore: true,
     });
     this.scene.setActivePlace?.(bounds);
-    this.showToast(T.search.going(r.label));
+    this.showToast(this.copy.search.going(r.label));
     this.scene.set({ focus: null });
     void this.scene.flyTo("territory").then(() => {
       this.setState({
         moniOpen: true,
-        helpText: T.search.whatSee(r.label),
+        helpText: this.copy.search.whatSee(r.label),
         ficha: this.state.W >= 760,
         dockOpen: true,
         explore: false,
@@ -906,6 +928,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     const v = buildView(this);
     const blur = v.sceneSoft && !this.rm();
     return (
+      <LangProvider value={this.langApi()}>
       <div
         data-tw-theme={this.theme}
         ref={this.rootRef}
@@ -925,6 +948,15 @@ export class App extends React.Component<AppProps, AppState> implements Model {
         />
         <Hud v={v} a={this} tlRef={this.tlRef} />
       </div>
+      </LangProvider>
     );
+  }
+}
+
+function detectLangSafe(): Lang {
+  try {
+    return detectLang();
+  } catch {
+    return "en";
   }
 }

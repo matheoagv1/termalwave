@@ -13,7 +13,7 @@ const copy = layersCopy as LayersCopy;
 const DEFAULTS: Record<string, Omit<LayerDef, "id" | "label">> = {
   radar: {
     unit: "dB",
-    range: [-20, -4],
+    range: [-30, -5],
     decimals: 1,
     ramp: [
       { at: 0, color: "#0c1622" },

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "gl-matrix": "^3.4.4",
+    "lucide-react": "^1.73.0",
     "maplibre-gl": "^5.24.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
