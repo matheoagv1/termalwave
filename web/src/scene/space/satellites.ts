@@ -92,10 +92,12 @@ const DEG = Math.PI / 180;
 const SRC = { track: "tw-sat-track", swath: "tw-sat-swath", footprint: "tw-sat-footprint" } as const;
 const LAYERS = ["tw-sat-swath", "tw-sat-footprint-fill", "tw-sat-footprint-line", "tw-sat-track"] as const;
 
+const ORBIT_CYAN = "#5eebff";
+
 function kindColor(k: SensorKind): string {
   switch (k) {
     case "sar":
-      return "#ffc24d";
+      return ORBIT_CYAN;
     case "optical":
       return "#6fd3ff";
     case "weather":
@@ -111,8 +113,8 @@ function kindColor(k: SensorKind): string {
   }
 }
 
-// NISAR: color propio, no el kindColor SAR compartido
-const NISAR_COLOR = "#ff6b1a";
+// nisar shares the thin cyan of the other sar orbits so it is not read as heat
+const NISAR_COLOR = ORBIT_CYAN;
 const NISAR_PULSE_MS = 1500;
 
 function isNisar(name: string): boolean {
@@ -656,7 +658,7 @@ export class SatellitesLayer implements SpaceLayer {
     };
     add({ id: "tw-sat-swath", type: "fill", source: SRC.swath, layout: { visibility: vis }, paint: { "fill-color": ["get", "color"], "fill-opacity": ["get", "alpha"], "fill-antialias": false } });
     add({ id: "tw-sat-footprint-fill", type: "fill", source: SRC.footprint, layout: { visibility: vis }, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.07 } });
-    add({ id: "tw-sat-footprint-line", type: "line", source: SRC.footprint, layout: { visibility: vis }, paint: { "line-color": ["get", "color"], "line-width": 1.2, "line-opacity": 0.8, "line-dasharray": [3, 2] } });
+    add({ id: "tw-sat-footprint-line", type: "line", source: SRC.footprint, layout: { visibility: vis }, paint: { "line-color": ["get", "color"], "line-width": 1, "line-opacity": 0.85 } });
     add({
       id: "tw-sat-track",
       type: "line",
@@ -664,7 +666,7 @@ export class SatellitesLayer implements SpaceLayer {
       layout: { visibility: vis, "line-join": "round" },
       paint: {
         "line-color": ["get", "color"],
-        "line-width": ["case", ["get", "nisar"], 2.2, ["case", ["get", "next"], 1.35, 0.85]],
+        "line-width": ["case", ["get", "nisar"], 1, ["case", ["get", "next"], 1, 0.75]],
         "line-opacity": ["case", ["get", "nisar"], 0.92, ["case", ["get", "next"], 0.55, 0.22]],
       },
     });
@@ -746,7 +748,7 @@ export class SatellitesLayer implements SpaceLayer {
     const reduced = reducedMotionOn();
     const lowZ = map.getZoom() < 6;
     const pulse = nisarPulse(t, reduced);
-    const nisarW = lowZ && !reduced ? 1.4 + 1.2 * pulse : 2.2;
+    const nisarW = lowZ && !reduced ? 0.8 + 0.4 * pulse : 1;
     const nisarA = lowZ && !reduced ? 0.5 + 0.45 * pulse : 0.92;
     map.setPaintProperty("tw-sat-track", "line-width", [
       "case",

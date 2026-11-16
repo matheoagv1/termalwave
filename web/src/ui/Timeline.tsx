@@ -208,6 +208,9 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
           {v.compareOn && v.tlOpen && (
             <div style={s("font:11px var(--sans);color:var(--fg2);padding:2px 0;line-height:1.35")}>{v.compareHint}</div>
           )}
+          {v.beforeNisar && (
+            <div style={s("font:11px var(--sans);color:var(--fg2)")}>{t.timeline.beforeNisar}</div>
+          )}
           {v.tlOpen && (
             <>
               <div
@@ -262,7 +265,7 @@ export function Timeline({ v, a, tlRef }: P): React.ReactElement {
                             title={tk.title}
                             aria-label={tk.title}
                             aria-current={tk.cur ? "true" : undefined}
-                            style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px solid var(--line2);cursor:pointer;background:${tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
+                            style={s(`display:block;width:100%;min-width:64px;height:${Math.max(tk.h, 36)}px;padding:0 5px;border:1px solid ${tk.before ? "var(--tw-radar)" : "var(--line2)"};cursor:pointer;background:${tk.before && !tk.hot ? "rgba(94,235,255,.14)" : tk.bg};box-shadow:${tk.ring};color:var(--fg);font:600 11px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}
                           >
                             {tk.title.split(" · ")[0].replace(/^Compuesto /, "")}
                           </button>

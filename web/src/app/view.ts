@@ -469,11 +469,13 @@ export function buildView(m: Model) {
             .filter(Boolean)
             .join(" · ");
           const hot = isA || isB;
+          const before = +new Date(tk.end) < Date.UTC(2025, 7, 1);
           return {
             key: tk.id,
             title,
             cur: isA,
             hot,
+            before,
             h: hot ? 28 : 26,
             ring: hot ? `inset 0 0 0 2px ${isA ? "var(--acc-fg)" : "var(--accB)"}` : "none",
             bg: layersBg.length ? layersBg.join(",") + "," + base : base,
@@ -788,6 +790,8 @@ export function buildView(m: Model) {
     showExplore: cam === "orbit" && S.explore && !err,
     showErr: cam === "orbit" && !!err,
     errCode: (err && err.code) || "", entryLines,
+    beforeNisar: segs.some((seg) => seg.ticks.some((tk) => tk.before)),
+    orbitLegend: chrome,
     railsOn: chrome,
     railL: S.railL,
     railR: S.railR,

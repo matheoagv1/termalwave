@@ -1008,6 +1008,20 @@ export class MapLibreScene implements SceneApi {
     return this.backToEarth();
   }
 
+  // decorative ring for the zoom-out, not a measurement
+  private spellRing(): void {
+    if (this.o.reducedMotion || !this.host) return;
+    const el = document.createElement("div");
+    el.setAttribute("aria-hidden", "true");
+    el.style.cssText = "position:absolute;left:50%;top:50%;width:140px;height:140px;margin:-70px 0 0 -70px;border:1px solid rgba(94,235,255,.35);border-radius:50%;pointer-events:none;z-index:4;transform:scale(.15);opacity:.7;transition:transform 600ms ease-out,opacity 600ms ease-out";
+    this.host.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.transform = "scale(7)";
+      el.style.opacity = "0";
+    });
+    window.setTimeout(() => el.remove(), 650);
+  }
+
   private globeCenter(): [number, number] {
     const a = this.o.aoi;
     if (!a) return GLOBE_FALLBACK;
@@ -1049,6 +1063,7 @@ export class MapLibreScene implements SceneApi {
         return;
       }
       this.flyingHome = true;
+      this.spellRing();
       let cancelled = false;
       const onUser = (): void => {
         cancelled = true;

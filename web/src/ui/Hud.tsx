@@ -28,6 +28,12 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
   return (
     <div style={s("position:absolute;inset:0;pointer-events:none;z-index:20")}>
       <TopBar v={v} a={a} />
+      {v.orbitLegend && (
+        <div style={s(`position:absolute;left:${lay.pad};bottom:${v.frameBottom};display:flex;align-items:center;gap:8px;pointer-events:none;z-index:18;font:11px var(--sans);color:var(--fg2)`)}>
+          <span style={s("width:22px;height:0;border-top:1px solid var(--tw-radar)")} />
+          {t.orbits.legend}
+        </div>
+      )}
       {!v.isM && v.railsOn && <LeftRail v={v} a={a} />}
       {!v.isM && v.railsOn && <RightRail v={v} a={a} />}
       {v.isM && v.railsOn && <MobileBar v={v} a={a} />}
