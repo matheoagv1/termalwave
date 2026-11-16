@@ -74,7 +74,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
     extras: ["clouds", "firms"],
     firms: { status: "idle", count: 0, msg: "" },
     nisar: { status: "idle", count: 0, msg: "" },
+    clouds: { status: "idle", msg: "" },
     lang: detectLangSafe(),
+    railL: wideScreen() ? "data" : "",
+    railR: wideScreen() ? "area" : "",
   };
 
   sceneRef = React.createRef<HTMLDivElement>();
@@ -704,6 +707,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
   // capas globales (nubes, focos de calor): viven en extras pero no son rasters del dataset
   private firmsOn = false;
   private firmsSeq = 0;
+  private cloudsOn = false;
+  private cloudsSeq = 0;
 
   applyGlobals(): void {
     const on = this.state.extras;
@@ -714,6 +719,25 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       this.scene?.setSpaceLayer?.("clouds", this.state.extras.includes("clouds"));
       this.scene?.setSpaceLayer?.("wind", this.state.extras.includes("wind"));
     }, 3500);
+    const clouds = on.includes("clouds");
+    if (clouds !== this.cloudsOn) {
+      this.cloudsOn = clouds;
+      const cseq = ++this.cloudsSeq;
+      if (!clouds) this.setState({ clouds: { status: "idle", msg: "" } });
+      else {
+        this.setState({ clouds: { status: "loading", msg: "" } });
+        fetch("/api/clouds", { credentials: "same-origin" })
+          .then((r) => {
+            if (cseq !== this.cloudsSeq) return;
+            if (!r.ok) throw new Error(String(r.status));
+            this.setState({ clouds: { status: "ok", msg: "" } });
+          })
+          .catch(() => {
+            if (cseq !== this.cloudsSeq) return;
+            this.setState({ clouds: { status: "unavailable", msg: "" } });
+          });
+      }
+    }
     const f = on.includes("firms");
     if (f === this.firmsOn) return;
     this.firmsOn = f;
@@ -951,6 +975,10 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       </LangProvider>
     );
   }
+}
+
+function wideScreen(): boolean {
+  return typeof window !== "undefined" && window.innerWidth >= 760;
 }
 
 function detectLangSafe(): Lang {

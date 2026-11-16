@@ -4,6 +4,7 @@ import { s } from "../app/css";
 import type { View } from "../app/view";
 import { Icon } from "./icons";
 import { IntroOverlay } from "./IntroOverlay";
+import { InspectBody, LeftRail, MobileBar, MobileSheet, RightRail } from "./rails";
 import { MonigoteBuddy } from "./MonigoteBuddy";
 import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
@@ -19,6 +20,10 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
   return (
     <div style={s("position:absolute;inset:0;pointer-events:none;z-index:20")}>
       <TopBar v={v} a={a} />
+      {!v.isM && v.railsOn && <LeftRail v={v} a={a} />}
+      {!v.isM && v.railsOn && <RightRail v={v} a={a} />}
+      {v.isM && v.railsOn && <MobileBar v={v} a={a} />}
+      {v.isM && v.railsOn && <MobileSheet v={v} a={a} />}
 
       {v.immersive && v.hudToggleOn && (
         <button
@@ -335,9 +340,9 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
               onClick={a.closePick}
               aria-label={t.detail.close}
               title={t.detail.close}
-              style={s(`width:${lay.hit};height:${lay.hit};margin:-8px -8px 0 0;border:0;background:transparent;cursor:pointer;font-size:16px`)}
+              style={s(`width:${lay.hit};height:${lay.hit};margin:-8px -8px 0 0;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
             >
-              ×
+              <Icon.close size={16} strokeWidth={2.25} aria-hidden />
             </button>
           </div>
           <div style={s("font:600 20px var(--mono)")}>{v.dc.value}</div>
@@ -482,11 +487,16 @@ function TopBar({ v, a }: { v: View; a: App }): React.ReactElement {
           aria-label={t.top.searchClose}
           style={s(`pointer-events:auto;width:40px;height:40px;${PANEL};cursor:pointer;flex:none`)}
         >
-          ×
+          <Icon.close size={16} strokeWidth={2.25} aria-hidden />
         </button>
       )}
       {v.brandOn && (
         <div style={s(`pointer-events:auto;margin-left:auto;height:40px;display:flex;align-items:center;gap:10px;padding:0 0 0 10px;margin-right:calc(-1 * ${lay.pad});${PANEL};flex:none`)}>
+          {v.chipLabel && (
+            <span title={v.chipTitle || v.chipLabel} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--tw-h-ejemplo);color:var(--fg)")}>
+              {v.chipLabel}
+            </span>
+          )}
           {v.mock && (
             <span title={t.mock.detail} style={s("font:10px var(--mono);padding:1px 6px;border:1px solid var(--warn);color:var(--warn)")}>
               {t.mock.tag}
@@ -639,7 +649,7 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         title={t.camera.tiltUp}
         style={s(btn)}
       >
-        +
+        <Icon.zoomIn size={16} strokeWidth={2.25} aria-hidden />
       </button>
       <div
         title={v.tiltTitle}
@@ -655,7 +665,7 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         title={t.camera.tiltDown}
         style={s(btn)}
       >
-        −
+        <Icon.zoomOut size={16} strokeWidth={2.25} aria-hidden />
       </button>
       <button
         className="tw-hov"
@@ -664,9 +674,7 @@ function CameraControls({ v, a }: { v: View; a: App }): React.ReactElement {
         title={`${t.camera.reset} (O)`}
         style={s(`height:${lay.hit};border:0;box-shadow:${lay.sepSh};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
       >
-        <span style={s("width:16px;height:16px;border:2px solid var(--fg);border-radius:50%;position:relative")}>
-          <span style={s("position:absolute;left:5px;top:-2px;bottom:-2px;width:2px;background:var(--fg)")} />
-        </span>
+        <Icon.earth size={16} strokeWidth={2.25} aria-hidden />
       </button>
     </div>
   );
@@ -701,7 +709,9 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
         {v.mOpenOrDesk && (
           <>
             <div role="tablist" style={s("display:flex;align-items:stretch;flex:none")}>
-              {v.cardOpen && (
+              {v.railsOn ? (
+                <span style={s("flex:1;display:flex;align-items:center;padding:0 12px;font:12px var(--sans)")}>{v.railTitle}</span>
+              ) : v.cardOpen ? (
                 <>
                   <button
                     role="tab"
@@ -728,23 +738,24 @@ function InfoCard({ v, a }: { v: View; a: App }): React.ReactElement {
                     {t.card.tabSources}
                   </button>
                 </>
-              )}
+              ) : null}
               <button
                 className="tw-hov"
-                onClick={() => (v.isM ? a.set({ sheet: !a.state.sheet }) : a.set({ ficha: !a.state.ficha }))}
+                onClick={() => (v.railsOn ? a.set({ railR: "" }) : v.isM ? a.set({ sheet: !a.state.sheet }) : a.set({ ficha: !a.state.ficha }))}
                 aria-expanded={v.cardOpen}
-                aria-label={v.cardToggleText}
-                title={v.cardToggleText}
-                style={s(`margin-left:auto;width:${lay.hit};height:${lay.hit};border:0;background:transparent;cursor:pointer;font:600 14px var(--mono)`)}
+                aria-label={v.railsOn ? t.card.close : v.cardToggleText}
+                title={v.railsOn ? t.card.close : v.cardToggleText}
+                style={s(`margin-left:auto;width:${lay.hit};height:${lay.hit};border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center`)}
               >
-                {v.cardToggleGlyph}
+                {v.railsOn ? <Icon.close size={16} strokeWidth={2.25} aria-hidden /> : v.cardToggleGlyph}
               </button>
             </div>
-            {v.cardOpen && (
+            {v.cardOpen && !v.legendOn && (
               <div
                 role="tabpanel"
                 style={s("overflow-x:hidden;overflow-y:auto;padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px;min-height:0")}
               >
+                {v.isInspect && <InspectBody v={v} />}
                 {v.isTabArea && (
                   <>
                     <div>

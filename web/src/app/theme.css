@@ -12,6 +12,16 @@ body {
   --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   --pixel: "Press Start 2P", ui-monospace, monospace;
+  --tw-radar: #5eebff;
+  --tw-heat: #ff3a12;
+  --tw-heat-mid: #ff7a1a;
+  --tw-h-medido: var(--tw-radar);
+  --tw-h-derivado: #5cb0ff;
+  --tw-h-modelo: #8b93a7;
+  --tw-h-inferido: #ffd020;
+  --tw-h-ejemplo: var(--tw-heat-mid);
+  --tw-glass-bg: rgba(14, 21, 34, 0.74);
+  --tw-glass-border: rgba(94, 235, 255, 0.1);
 }
 
 [data-tw-theme="dark"] {

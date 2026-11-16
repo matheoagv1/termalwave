@@ -19,6 +19,9 @@ export type Status = { online: boolean; terrain: boolean; basemap: boolean };
 
 export type AppError = { code?: string; message?: string };
 
+export type RailL = "" | "data" | "models" | "inference" | "utilities" | "annotate" | "visual";
+export type RailR = "" | "area" | "insight" | "sources" | "legend" | "inspect";
+
 export type ActivePlace = {
   label: string;
   lonlat: [number, number];
@@ -72,7 +75,10 @@ export type AppState = {
   // focos de calor globales (FIRMS): estado de la consulta, no del mapa
   nisar: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
   firms: { status: "idle" | "loading" | "ok" | "empty" | "error"; count: number; msg: string };
+  clouds: { status: "idle" | "loading" | "ok" | "unavailable"; msg: string };
   lang: Lang;
+  railL: RailL;
+  railR: RailR;
 };
 
 export type AppProps = {
