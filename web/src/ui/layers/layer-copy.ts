@@ -2,6 +2,30 @@ import type { Lang } from "../../app/i18n";
 
 // Panel strings live here so the layer UI ships without touching the shared catalogs.
 const en = {
+  lang: "en" as "en" | "es",
+  prov: {
+    title: "How this is made",
+    sourceTitle: "Source",
+    open: "How this is made",
+    inputs: "Inputs",
+    method: "Method",
+    meaning: "What the number means",
+    confidence: "Confidence",
+    confFrom: "Where the confidence comes from",
+    confPerPixel: "Each place on the map carries its own confidence, computed by the method above.",
+    confFixed: "One confidence for the whole layer, set by the method above.",
+    confNone: "This layer does not publish a confidence yet. Read it as a hint, not a result.",
+    limits: "Limits",
+    honesty: "Data type",
+    dataDate: "date",
+    link: "open source",
+    noInputs: "The inputs of this layer are not listed yet.",
+    noMethod: "The method of this layer is not written yet.",
+    unitIs: (u: string): string => `Unit: ${u}.`,
+    rangeIs: (r: string): string => `Range: ${r}.`,
+    relative: "A relative scale: higher means more of what the layer shows. It has no physical unit.",
+    formula: "Formula",
+  },
   panelTitle: "Layers",
   panelLead: "Turn a layer on to see it on the globe. Open a row to learn what it means.",
   tier: {
@@ -65,7 +89,7 @@ const en = {
     example: "Example image for demonstration. Not real data.",
   },
   preNisar: "This date is before the NISAR launch (July 2025). This image does not come from NISAR.",
-  passes: "NISAR passes",
+  passes: "Radar passes",
   passesIdle: "Search for a place to check NISAR coverage.",
   passesList: "Passes over this area",
   latest: "Latest data published by the source.",
@@ -73,6 +97,30 @@ const en = {
 };
 
 const es: typeof en = {
+  lang: "es",
+  prov: {
+    title: "Cómo se hace",
+    sourceTitle: "Fuente",
+    open: "Cómo se hace",
+    inputs: "Datos de entrada",
+    method: "Método",
+    meaning: "Qué significa el número",
+    confidence: "Confianza",
+    confFrom: "De dónde sale la confianza",
+    confPerPixel: "Cada lugar del mapa trae su propia confianza, calculada con el método de arriba.",
+    confFixed: "Una sola confianza para toda la capa, fijada por el método de arriba.",
+    confNone: "Esta capa todavía no publica confianza. Leela como una pista, no como un resultado.",
+    limits: "Límites",
+    honesty: "Tipo de dato",
+    dataDate: "fecha",
+    link: "abrir fuente",
+    noInputs: "Todavía no se listan los datos de entrada de esta capa.",
+    noMethod: "Todavía no se escribió el método de esta capa.",
+    unitIs: (u: string): string => `Unidad: ${u}.`,
+    rangeIs: (r: string): string => `Rango: ${r}.`,
+    relative: "Escala relativa: más alto significa más de lo que muestra la capa. No tiene unidad física.",
+    formula: "Fórmula",
+  },
   panelTitle: "Capas",
   panelLead: "Encender una capa la muestra en el globo. Abrir una fila explica qué significa.",
   tier: {
@@ -136,7 +184,7 @@ const es: typeof en = {
     example: "Imagen de ejemplo para demostración. No son datos reales.",
   },
   preNisar: "Esta fecha es anterior al lanzamiento de NISAR (julio de 2025). Esta imagen no proviene de NISAR.",
-  passes: "Pasadas de NISAR",
+  passes: "Pasadas del radar",
   passesIdle: "Hace falta buscar un lugar para consultar la cobertura de NISAR.",
   passesList: "Pasadas sobre esta área",
   latest: "Último dato publicado por la fuente.",
@@ -156,8 +204,8 @@ export type MetaRow = Record<string, string>;
 export const BUNDLED_META: Record<string, MetaRow> = {
   radar: {
     tier: "raw",
-    label_en: "NISAR radar",
-    label_es: "Radar NISAR",
+    label_en: "Ground change",
+    label_es: "Cambio del suelo",
     what_en: "Shows how strongly the ground reflects the L-band radar signal of NISAR, in decibels.",
     what_es: "Muestra cuánta señal del radar de banda L de NISAR refleja el terreno, en decibeles.",
     decision_en: "Compare two dates to see where the surface changed, for example flooding, clearing or new construction.",
@@ -174,8 +222,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   },
   suelo: {
     tier: "processed",
-    label_en: "Soil condition",
-    label_es: "Estado del suelo",
+    label_en: "Soil moisture",
+    label_es: "Humedad del suelo",
     what_en: "Shows a relative index of soil wetness estimated from radar backscatter.",
     what_es: "Muestra un índice relativo de humedad del suelo estimado a partir de la retrodispersión del radar.",
     decision_en: "Helps judge which areas look wetter or drier than usual, for example to plan field visits.",
@@ -186,11 +234,15 @@ export const BUNDLED_META: Record<string, MetaRow> = {
     caveats_es: "Es una inferencia a partir del radar, no una medición de laboratorio. El bosque y el arbustal leñoso limitan su confiabilidad.",
     unit: "relative index (W_t)",
     formula: "W_t = (B_t - B_dry) / (B_wet - B_dry), with B in dB",
+    method_en: "Take the NISAR radar brightness of each pixel on each date, in decibels. Find the driest and the wettest value that pixel reached over the whole record. Place today's value between those two ends: 0 is as dry as it got, 1 is as wet as it got. Wet soil reflects more radar signal, which is why brightness can stand in for wetness where the ground is bare or has low crops.",
+    method_es: "Se toma el brillo de radar de NISAR de cada píxel en cada fecha, en decibeles. Se buscan el valor más seco y el más húmedo que alcanzó ese píxel en todo el registro. El valor de hoy se ubica entre esos dos extremos: 0 es lo más seco que estuvo y 1 lo más húmedo. El suelo húmedo refleja más señal de radar; por eso el brillo sirve como indicio de humedad donde el suelo está desnudo o con cultivos bajos.",
+    meaning_en: "0 means as dry as this pixel ever looked to the radar, 1 as wet. It is relative to the pixel itself, so two places cannot be compared by the number alone.",
+    meaning_es: "0 significa lo más seco que el radar vio ese píxel y 1 lo más húmedo. Es relativo al propio píxel, así que dos lugares no se comparan solo por el número.",
   },
   contaminacion: {
     tier: "processed",
-    label_en: "Pollution",
-    label_es: "Contaminación",
+    label_en: "Pollution signs",
+    label_es: "Señales de contaminación",
     what_en: "Shows a relative pollution index, not a measured concentration.",
     what_es: "Muestra un índice relativo de contaminación, no una concentración medida.",
     decision_en: "Helps spot areas that deserve a closer look or an on-site measurement.",
@@ -199,11 +251,15 @@ export const BUNDLED_META: Record<string, MetaRow> = {
     nodata_es: "Un área transparente no tiene valor de índice. No significa que el aire, el agua o el suelo estén limpios.",
     caveats_en: "It is an index built by inference. It cannot be read as micrograms per cubic meter or any other concentration.",
     caveats_es: "Es un índice construido por inferencia. No puede leerse como microgramos por metro cúbico ni como otra concentración.",
+    method_en: "In this build the layer is an example picture. The planned method compares each pixel's radar brightness with its own usual range and flags values far outside it. An unusual return can come from water, metal, digging or pollution, so it only points to a place to inspect.",
+    method_es: "En esta versión la capa es una imagen de ejemplo. El método previsto compara el brillo de radar de cada píxel con su rango habitual y marca los valores que se alejan mucho. Una señal rara puede venir de agua, metal, movimiento de tierra o contaminación, así que solo indica un lugar para revisar.",
+    meaning_en: "0 is a usual radar return for that place, 1 is very unusual. It is not a concentration.",
+    meaning_es: "0 es una señal de radar habitual para ese lugar y 1 es muy rara. No es una concentración.",
   },
   incendios: {
     tier: "raw",
-    label_en: "Fires",
-    label_es: "Incendios",
+    label_en: "Area fires",
+    label_es: "Fuego en el área",
     what_en: "Shows thermal hotspots detected by satellite, from NASA FIRMS.",
     what_es: "Muestra puntos de calor detectados por satélite, según NASA FIRMS.",
     decision_en: "Helps see where a fire may be burning now or recently, to alert people or send resources.",
@@ -218,6 +274,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   firms: {
     tier: "raw",
     honesty: "measured",
+    label_en: "Active fires",
+    label_es: "Incendios activos",
     decision_en: "Helps see where a fire may be burning now, anywhere on the globe.",
     decision_es: "Ayuda a ver dónde puede haber un incendio activo ahora, en cualquier lugar del globo.",
     nodata_en: "No points means no detection in the last 24 hours. It does not prove there is no fire.",
@@ -229,6 +287,9 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   clouds: {
     tier: "raw",
     honesty: "measured",
+    label_en: "Clouds now",
+    label_es: "Nubes ahora",
+    product: "NOAA nowCOAST, NESDIS global infrared mosaic",
     decision_en: "Helps judge whether optical images of an area are likely to be blocked. Radar sees through clouds.",
     decision_es: "Ayuda a estimar si las imágenes ópticas de un área pueden estar tapadas. El radar atraviesa las nubes.",
     nodata_en: "A clear area has no cloud detected in the mosaic at that moment.",
@@ -239,6 +300,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   wind: {
     tier: "raw",
     honesty: "model",
+    label_en: "Wind now",
+    label_es: "Viento ahora",
     decision_en: "Helps anticipate where smoke or a fire front may move.",
     decision_es: "Ayuda a anticipar hacia dónde puede moverse el humo o un frente de fuego.",
     nodata_en: "An area without streaks has no wind value loaded yet.",
@@ -250,6 +313,8 @@ export const BUNDLED_META: Record<string, MetaRow> = {
   "nisar-passes": {
     tier: "raw",
     honesty: "measured",
+    label_en: "Radar passes",
+    label_es: "Pasadas del radar",
     what_en: "Lists the NISAR acquisitions that cover the framed area.",
     what_es: "Lista las adquisiciones de NISAR que cubren el área encuadrada.",
     decision_en: "Tells whether NISAR data exists for this place before reading the radar layer.",
@@ -260,4 +325,18 @@ export const BUNDLED_META: Record<string, MetaRow> = {
     caveats_es: "Los productos provisionales pueden cambiar cuando se validan.",
     product: "NISAR L2 GCOV",
   },
+};
+
+export type BundledInput = { name: string; agency: string; product: string; url: string };
+
+// Sources of the layers above, for the "How this is made" panel. Catalog entries bring their own.
+export const BUNDLED_INPUTS: Record<string, BundledInput[]> = {
+  radar: [{ name: "NISAR L-band radar", agency: "NASA / ISRO, distributed by ASF DAAC", product: "NISAR L2 GCOV", url: "https://search.asf.alaska.edu/" }],
+  suelo: [{ name: "NISAR L-band radar", agency: "NASA / ISRO, distributed by ASF DAAC", product: "NISAR L2 GCOV", url: "https://search.asf.alaska.edu/" }],
+  contaminacion: [{ name: "NISAR L-band radar", agency: "NASA / ISRO, distributed by ASF DAAC", product: "NISAR L2 GCOV", url: "https://search.asf.alaska.edu/" }],
+  incendios: [{ name: "Fire detections", agency: "NASA FIRMS", product: "VIIRS S-NPP and MODIS active fires", url: "https://firms.modaps.eosdis.nasa.gov/" }],
+  firms: [{ name: "Fire detections", agency: "NASA FIRMS", product: "VIIRS and MODIS active fires, last 24 h", url: "https://firms.modaps.eosdis.nasa.gov/" }],
+  clouds: [{ name: "Infrared cloud mosaic", agency: "NOAA nowCOAST / NESDIS", product: "Global infrared mosaic", url: "https://nowcoast.noaa.gov/" }],
+  wind: [{ name: "Wind at 10 m", agency: "Open-Meteo (CC BY 4.0)", product: "Weather model forecast", url: "https://open-meteo.com/" }],
+  "nisar-passes": [{ name: "NISAR acquisitions", agency: "NASA Earthdata CMR", product: "NISAR L2 GCOV granules", url: "https://cmr.earthdata.nasa.gov/" }],
 };

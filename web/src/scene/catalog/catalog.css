@@ -1,0 +1,18 @@
+/* inspector popup for catalog features: flat, square, terminal tone */
+.twc-pop .maplibregl-popup-content {
+  border-radius: 0;
+  background: var(--bg, #0b0f14);
+  color: var(--fg, #f4f1e8);
+  border: 1px solid var(--line, #2a3340);
+  padding: 8px 22px 8px 10px;
+  font: 12px/1.4 "IBM Plex Sans", system-ui, sans-serif;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.twc-pop .maplibregl-popup-tip { display: none; }
+.twc-pop .maplibregl-popup-close-button { color: inherit; font-size: 14px; border-radius: 0; }
+.twc-pop .maplibregl-popup-close-button:focus-visible { outline: 1px solid var(--acc, #f0a014); }
+.twc-pop-k { font-family: var(--pixel, monospace); font-size: 8px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--acc, #f0a014); margin-bottom: 4px; }
+.twc-pop-name { margin-bottom: 2px; }
+.twc-pop-v { font-family: "IBM Plex Mono", monospace; font-size: 14px; }
+.twc-pop-sub { opacity: 0.7; font-size: 11px; margin-top: 2px; }
+.twc-spark { display: block; margin-top: 6px; color: var(--accB, #5eebff); }

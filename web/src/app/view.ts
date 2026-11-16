@@ -1,6 +1,7 @@
 import { layersAviso, sourceNote } from "../data/layer-defaults";
 import { isExampleHonesty, isPlaceholderRange, isRadarLayer, RADAR_HH, RADAR_HV, radarPol } from "../data/radar-scale";
 import bundledThemes from "../context/themes.json";
+import { topicCopy } from "../ui/setup/missions";
 import { copyOf, fmt, fmtOf, type Copy } from "./i18n";
 import type { NisarPass } from "../data/nisar-passes";
 import type { LayerDef, LayerTheme, SceneApi, SearchResult, TimeSegment, ViewScale } from "../tw/contract";
@@ -389,7 +390,7 @@ export function buildView(m: Model) {
   const trades = ds
     ? ds.context.map((c, i) => ({
         id: c.id ?? String(i),
-        trade: c.label ?? c.trade,
+        trade: topicCopy(c.id, S.lang)?.label ?? c.label ?? c.trade,
         on: i === S.trade,
         line: i === S.trade ? "var(--acc-fg)" : "var(--line2)",
         bg: i === S.trade ? "var(--sel)" : "transparent",
@@ -875,7 +876,7 @@ export function buildView(m: Model) {
     ser,
     imgRows,
     trades,
-    tradeText: ds && ds.context[S.trade] ? ds.context[S.trade]?.text ?? "" : "",
+    tradeText: ds && ds.context[S.trade] ? topicCopy(ds.context[S.trade]?.id, S.lang)?.text ?? ds.context[S.trade]?.text ?? "" : "",
     sample: mock && !!(ds && ds.context.length),
     noTrades: !!ds && ds.context.length === 0, leg,
     dc, toast: S.toast,

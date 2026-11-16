@@ -10,6 +10,7 @@ import { TipLayer } from "./TipLayer";
 import { Timeline } from "./Timeline";
 import { hudCopy } from "./hud/copy";
 import { AboutMore } from "./about/AboutMore";
+import { ProvenanceCard } from "./layers/Provenance";
 import "./hud/hud.css";
 
 type P = { v: View; a: App; tlRef: React.RefObject<HTMLDivElement> };
@@ -369,6 +370,7 @@ export function Hud({ v, a, tlRef }: P): React.ReactElement {
           <div style={s("font:11px var(--mono);color:var(--fg2)")}>
             {t.detail.at}: {v.dc.moment}
           </div>
+          <ProvenanceCard id={a.state.scene.layer} lang={a.state.lang} />
           {v.dc.spotSerOn && (
             <div style={s("margin-top:4px")}>
               <div style={s("font:10px var(--mono);color:var(--fg3);margin-bottom:2px")}>{t.explore.series}</div>

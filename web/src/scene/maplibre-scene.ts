@@ -18,6 +18,7 @@ import type {
   SceneState,
   TimeTick,
 } from "../tw/contract";
+import { attachCatalog } from "./catalog";
 import { Layers3D } from "./layers3d";
 import { BodiesLayer } from "./space/bodies";
 import { CloudsLayer } from "./space/clouds";
@@ -353,6 +354,7 @@ export class MapLibreScene implements SceneApi {
     this.ready = true;
     if (this.s.camera === "orbit") this.go("orbit", { fly: false, ms: 0 });
     this.buildLayers();
+    attachCatalog(map);
     this.refreshStyle();
     void this.mountSpace();
     const q = this.queue;

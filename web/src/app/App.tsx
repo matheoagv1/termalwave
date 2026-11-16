@@ -1,5 +1,7 @@
 import React from "react";
 import { PRESETS } from "../data/layer-defaults";
+import { presetLayers } from "../ui/setup/missions";
+import { isCatalogId } from "../ui/about/methods/meta";
 import { parsePasses, passFootprints } from "../data/nisar-passes";
 import { copyOf, detectLang, fmt, LangProvider, makeT, persistLang, type Lang, type LangApi } from "./i18n";
 
@@ -20,6 +22,7 @@ import type {
 } from "../tw/contract";
 import { hashParams } from "./hash";
 import { cityBounds } from "../scene/maplibre-scene";
+import { syncCatalogTimeline } from "../scene/catalog";
 import { Hud } from "../ui/Hud";
 import { readIntroPrefs, writeIntroPrefs } from "../ui/intro-prefs";
 import { Sfx } from "../ui/sfx";
@@ -152,7 +155,8 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       if ((S.trade !== ps.trade || S.ds !== ps.ds) && S.ds) {
         const entry = S.ds.context[S.trade];
         const presetId = entry?.id ?? entry?.trade ?? "";
-        const ids = (S.ds.presets ?? PRESETS)[presetId] ?? [];
+        const known = new Set([...GLOBAL_IDS, ...S.ds.layers.map((l) => l.id)]);
+        const ids = presetLayers(presetId, S.ds.presets ?? PRESETS, (id) => known.has(id) || isCatalogId(id));
         if (ids.join() !== S.extras.join()) this.setState({ extras: ids });
       }
       const eff = this.effectiveExtras();
@@ -163,6 +167,7 @@ export class App extends React.Component<AppProps, AppState> implements Model {
       }
     }
     this.syncNisar();
+    syncCatalogTimeline(S.ds, S.scene.tickId);
     const el = this.tlRef.current;
     if (el && this.tlEl !== el) {
       this.tlEl = el;

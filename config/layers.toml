@@ -13,8 +13,8 @@ tier = "raw"
 category = "data"
 core = true
 label = "Radar"
-label_en = "Radar"
-label_es = "Radar"
+label_en = "Ground change"
+label_es = "Cambio del suelo"
 unit = "dB"
 range = [-30.0, -5.0]
 product = "NISAR_L2_GCOV"
@@ -51,8 +51,8 @@ tier = "processed"
 category = "inference"
 core = false
 label = "Suelo"
-label_en = "Soil"
-label_es = "Suelo"
+label_en = "Soil moisture"
+label_es = "Humedad del suelo"
 unit = ""
 range = [0.0, 1.0]
 product = ""
@@ -73,8 +73,8 @@ tier = "processed"
 category = "inference"
 core = false
 label = "Contaminacion"
-label_en = "Contamination"
-label_es = "Contaminación"
+label_en = "Pollution signs"
+label_es = "Señales de contaminación"
 unit = "index"
 range = [0.0, 1.0]
 product = ""
@@ -95,8 +95,8 @@ tier = "raw"
 category = "data"
 core = false
 label = "Incendios"
-label_en = "Fires"
-label_es = "Incendios"
+label_en = "Area fires"
+label_es = "Fuego en el área"
 unit = ""
 range = [0.0, 1.0]
 product = "FIRMS"
@@ -111,45 +111,38 @@ caveats_en = "The painted frame is an example unless a FIRMS record is attached.
 caveats_es = "El cuadro pintado es un ejemplo, salvo que haya un registro de FIRMS."
 notes = "FIRMS thermal detections when the feed has them."
 
-# Preset stubs: enable lists only; core radar stays on.
+# Presets are themes of the world (what you want to look at), one tap, never trades.
+# id = topic id in web/src/context/topics.json. enable lists layer ids; ids that do not
+# exist in a build are skipped by the UI. Radar is core and stays on in every preset.
+# `trade` is no longer written: the pipeline falls back to `id` (termalwave/process/config.py).
 [[presets]]
-id = "emergencias"
-trade = "Gestión de emergencias"
-enable = ["incendios", "radar"]
-# radar redundant but documents intent; UI ignores disable of core
+id = "cambio"
+enable = ["radar"]
 
 [[presets]]
-id = "agricultura"
-trade = "Agricultura"
-enable = ["suelo", "radar"]
+id = "fuego"
+enable = ["incendios", "firms", "wind", "radar"]
 
 [[presets]]
-id = "ambiente"
-trade = "Ambiente y conservación"
-enable = ["suelo", "incendios", "radar"]
+id = "clima"
+enable = ["clouds", "wind", "radar"]
 
 [[presets]]
-id = "ganaderia"
-trade = "Ganadería y pasturas"
-enable = ["suelo", "radar"]
+id = "vegetacion"
+enable = ["radar"]
 
 [[presets]]
 id = "agua"
-trade = "Gestión del agua"
 enable = ["suelo", "radar"]
 
-# no extra layers beyond radar core (empty enable = core only)
 [[presets]]
-id = "ordenamiento"
-trade = "Ordenamiento territorial"
+id = "movimiento"
 enable = ["radar"]
 
 [[presets]]
-id = "infraestructura"
-trade = "Infraestructura"
-enable = ["radar"]
+id = "todo"
+enable = ["incendios", "firms", "wind", "clouds", "suelo", "contaminacion", "radar"]
 
 [[presets]]
-id = "ciencia"
-trade = "Ciencia y educación"
-enable = ["radar"]
+id = "ambiente"
+enable = ["suelo", "contaminacion", "radar"]

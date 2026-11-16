@@ -1,5 +1,6 @@
 import React from "react";
 import { aboutCopy } from "./copy";
+import { MethodsPage } from "./methods/MethodsPage";
 import "./about.css";
 
 // Sections appended to the About dialog: NISAR method, references, AI use,
@@ -8,6 +9,7 @@ export function AboutMore({ lang }: { lang: "en" | "es" }): React.ReactElement {
   const c = aboutCopy(lang);
   return (
     <>
+      <MethodsPage lang={lang} />
       <section>
         <h3>{c.nisarTitle}</h3>
         <dl>
